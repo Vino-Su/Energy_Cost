@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>首页 - 酷哇APP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            width: 100%;
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 56px;
+        }
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            height: 44px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 0 16px;
+        }
+        .top-nav-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .top-nav-right {
+            position: absolute;
+            right: 16px;
+            font-size: 14px;
+            color: #1677ff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .content-area {
+            padding-top: 44px;
+            padding-bottom: 56px;
+        }
+        .project-bar {
+            background: #ffffff;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .project-name {
+            font-size: 14px;
+            color: #000000d9;
+            font-weight: 500;
+        }
+        .project-switch {
+            font-size: 13px;
+            color: #1677ff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .entry-card {
+            background: #ffffff;
+            border-radius: 12px;
+            margin: 16px;
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            text-decoration: none;
+            transition: transform 0.15s;
+        }
+        .entry-card:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        .entry-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .entry-icon.fuel { background: #fff7e6; }
+        .entry-icon.water { background: #e6f4ff; }
+        .entry-icon.charge { background: #f6ffed; }
+        .entry-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+        .entry-text h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+            margin-bottom: 4px;
+        }
+        .entry-text p {
+            font-size: 13px;
+            color: #00000073;
+        }
+        .arrow-right {
+            margin-left: auto;
+            color: #00000040;
+        }
+        .bottom-tab {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            height: 56px;
+            background: #ffffff;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            z-index: 1000;
+        }
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            text-decoration: none;
+            color: #00000073;
+            font-size: 10px;
+            transition: color 0.2s;
+        }
+        .tab-item.active {
+            color: #1677ff;
+        }
+        .tab-item svg {
+            width: 24px;
+            height: 24px;
+        }
+        .section-title {
+            font-size: 14px;
+            color: #00000073;
+            padding: 16px 16px 8px;
+        }
+        .recent-records {
+            margin: 0 16px;
+        }
+        .record-card-mini {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .record-card-mini .left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .tag-fuel { background: #fff7e6; color: #fa8c16; }
+        .tag-water { background: #e6f4ff; color: #1677ff; }
+        .tag-charge { background: #f6ffed; color: #52c41a; }
+        .record-plate { font-size: 14px; color: #000000d9; font-weight: 500; }
+        .record-amount { font-size: 16px; color: #ff4d4f; font-weight: 600; }
+        .record-time { font-size: 12px; color: #00000073; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+        <div class="top-nav-title">酷哇能耗管理</div>
+        <div class="top-nav-right" onclick="showProjectPicker()">
+            <span>切换项目</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <!-- 项目栏 -->
+        <div class="project-bar">
+            <div>
+                <div style="font-size:12px;color:#00000073;margin-bottom:2px;">当前项目</div>
+                <div class="project-name" id="currentProject">深圳南山智慧环卫项目</div>
+            </div>
+            <div class="project-switch" onclick="showProjectPicker()">
+                <span>切换</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </div>
+
+        <!-- 上报入口 -->
+        <div class="section-title">能耗上报</div>
+
+        <a href="fuel-report.html" class="entry-card">
+            <div class="entry-icon fuel">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="#fa8c16"/></svg>
+            </div>
+            <div class="entry-text">
+                <h3>加油上报</h3>
+                <p>记录车辆加油信息</p>
+            </div>
+            <svg class="arrow-right" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+
+        <a href="water-report.html" class="entry-card">
+            <div class="entry-icon water">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.15 0-6-2.38-6-6.2 0-2.34 1.78-5.23 6-8.92 4.22 3.69 6 6.58 6 8.92 0 3.82-2.85 6.2-6 6.2z" fill="#1677ff"/></svg>
+            </div>
+            <div class="entry-text">
+                <h3>加水上报</h3>
+                <p>记录车辆加水信息</p>
+            </div>
+            <svg class="arrow-right" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+
+        <a href="charge-report.html" class="entry-card">
+            <div class="entry-icon charge">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" fill="#52c41a"/></svg>
+            </div>
+            <div class="entry-text">
+                <h3>充电上报</h3>
+                <p>记录车辆充电信息</p>
+            </div>
+            <svg class="arrow-right" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+
+        <!-- 最近记录 -->
+        <div class="section-title">最近上报</div>
+        <div class="recent-records">
+            <a href="record-detail.html?type=fuel" class="record-card-mini" style="text-decoration:none;color:inherit;">
+                <div class="left">
+                    <span class="tag tag-fuel">加油</span>
+                    <div>
+                        <div class="record-plate">粤B·12345</div>
+                        <div class="record-time">2026-06-22 09:30</div>
+                    </div>
+                </div>
+                <div class="record-amount">¥420.00</div>
+            </a>
+            <a href="record-detail.html?type=charge" class="record-card-mini" style="text-decoration:none;color:inherit;">
+                <div class="left">
+                    <span class="tag tag-charge">充电</span>
+                    <div>
+                        <div class="record-plate">粤B·67890</div>
+                        <div class="record-time">2026-06-21 18:15</div>
+                    </div>
+                </div>
+                <div class="record-amount">¥85.50</div>
+            </a>
+            <a href="record-detail.html?type=water" class="record-card-mini" style="text-decoration:none;color:inherit;">
+                <div class="left">
+                    <span class="tag tag-water">加水</span>
+                    <div>
+                        <div class="record-plate">粤B·12345</div>
+                        <div class="record-time">2026-06-21 14:00</div>
+                    </div>
+                </div>
+                <div class="record-amount">¥35.00</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- 底部Tab -->
+    <div class="bottom-tab">
+        <a href="home.html" class="tab-item active">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span>首页</span>
+        </a>
+        <a href="home.html" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>上报</span>
+        </a>
+        <a href="records.html" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span>记录</span>
+        </a>
+        <a href="#" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>我的</span>
+        </a>
+    </div>
+
+    <!-- 项目选择弹窗 -->
+    <div id="projectPicker" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:2000;max-width:430px;margin:0 auto;" onclick="closeProjectPicker(event)">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;" onclick="event.stopPropagation()">
+            <div style="padding:16px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:16px;font-weight:600;">选择项目</span>
+                <span style="font-size:14px;color:#1677ff;" onclick="closeProjectPicker()">关闭</span>
+            </div>
+            <div style="padding:8px 0;">
+                <div class="project-option" style="padding:14px 16px;font-size:14px;color:#1677ff;background:#e6f4ff;" onclick="selectProject('深圳南山智慧环卫项目')">深圳南山智慧环卫项目</div>
+                <div class="project-option" style="padding:14px 16px;font-size:14px;color:#000000d9;" onclick="selectProject('广州天河环卫项目')">广州天河环卫项目</div>
+                <div class="project-option" style="padding:14px 16px;font-size:14px;color:#000000d9;" onclick="selectProject('北京朝阳清洁项目')">北京朝阳清洁项目</div>
+                <div class="project-option" style="padding:14px 16px;font-size:14px;color:#000000d9;" onclick="selectProject('上海浦东环卫项目')">上海浦东环卫项目</div>
+            </div>
+            <div style="height:20px;background:#fff;"></div>
+        </div>
+    </div>
+
+    <script>
+        function showProjectPicker() {
+            document.getElementById('projectPicker').style.display = 'block';
+        }
+        function closeProjectPicker(e) {
+            document.getElementById('projectPicker').style.display = 'none';
+        }
+        function selectProject(name) {
+            document.getElementById('currentProject').textContent = name;
+            closeProjectPicker();
+        }
+    </script>
+</body>
+</html>

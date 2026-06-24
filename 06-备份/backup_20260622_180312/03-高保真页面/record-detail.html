@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>记录详情 - 酷哇APP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            width: 100%;
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            height: 44px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 0 16px;
+        }
+        .top-nav-back {
+            position: absolute;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            color: #000000d9;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .top-nav-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .top-nav-right {
+            position: absolute;
+            right: 16px;
+            color: #1677ff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .content-area {
+            padding-top: 44px;
+            padding-bottom: 80px;
+        }
+        .detail-card {
+            background: #ffffff;
+            border-radius: 12px;
+            margin: 12px 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .tag {
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .tag-fuel { background: #fff7e6; color: #fa8c16; }
+        .tag-water { background: #e6f4ff; color: #1677ff; }
+        .tag-charge { background: #f6ffed; color: #52c41a; }
+        .detail-amount {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ff4d4f;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-size: 14px;
+            color: #00000073;
+        }
+        .detail-value {
+            font-size: 14px;
+            color: #000000d9;
+            font-weight: 500;
+        }
+        .photo-section {
+            margin-top: 12px;
+        }
+        .photo-title {
+            font-size: 14px;
+            color: #00000073;
+            margin-bottom: 8px;
+        }
+        .photo-grid {
+            display: flex;
+            gap: 12px;
+        }
+        .photo-item {
+            width: 96px;
+            height: 96px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .bottom-actions {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            padding: 12px 16px 16px;
+            background: #ffffff;
+            border-top: 1px solid #e8e8e8;
+            z-index: 1000;
+            display: flex;
+            gap: 12px;
+        }
+        .btn-edit {
+            flex: 1;
+            height: 44px;
+            background: #1677ff;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-edit:active {
+            opacity: 0.85;
+        }
+        .btn-delete {
+            width: 100px;
+            height: 44px;
+            background: #ffffff;
+            color: #ff4d4f;
+            border: 1px solid #ff4d4f;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-delete:active {
+            background: #fff2f0;
+        }
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+            max-width: 430px;
+            margin: 0 auto;
+            align-items: center;
+            justify-content: center;
+        }
+        .confirm-box {
+            width: 280px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        .confirm-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+            margin-bottom: 8px;
+        }
+        .confirm-text {
+            font-size: 14px;
+            color: #00000073;
+            margin-bottom: 20px;
+        }
+        .confirm-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .confirm-btn {
+            flex: 1;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+        .confirm-btn.cancel {
+            background: #f5f5f5;
+            color: #000000d9;
+        }
+        .confirm-btn.confirm {
+            background: #ff4d4f;
+            color: #ffffff;
+        }
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 3000;
+            display: none;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+        <a href="records.html" class="top-nav-back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            <span>返回</span>
+        </a>
+        <div class="top-nav-title">记录详情</div>
+        <div class="top-nav-right" onclick="editRecord()">编辑</div>
+    </div>
+
+    <div class="content-area">
+        <!-- 费用概览 -->
+        <div class="detail-card">
+            <div class="detail-header">
+                <div>
+                    <span class="tag tag-fuel" id="typeTag">加油</span>
+                    <div style="font-size:13px;color:#00000073;margin-top:6px;" id="plateDisplay">粤B·12345</div>
+                </div>
+                <div class="detail-amount" id="amountDisplay">¥420.00</div>
+            </div>
+        </div>
+
+        <!-- 详细信息 -->
+        <div class="detail-card">
+            <div class="detail-row">
+                <span class="detail-label">VIN码</span>
+                <span class="detail-value" id="vinDisplay">LSVAG2180E2100001</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">上报人</span>
+                <span class="detail-value">张三</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">上报时间</span>
+                <span class="detail-value" id="timeDisplay">2026-06-22 09:30</span>
+            </div>
+            <div class="detail-row" id="priceRow">
+                <span class="detail-label">加油单价</span>
+                <span class="detail-value" id="priceDisplay">7.50 元/L</span>
+            </div>
+            <div class="detail-row" id="qtyRow">
+                <span class="detail-label">加油量</span>
+                <span class="detail-value" id="qtyDisplay">56.00 L</span>
+            </div>
+            <div class="detail-row" id="degreeRow" style="display:none;">
+                <span class="detail-label">充电度数</span>
+                <span class="detail-value" id="degreeDisplay">45.50 度</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">当前里程数</span>
+                <span class="detail-value" id="mileageDisplay">12,580 km</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">所属项目</span>
+                <span class="detail-value">深圳南山智慧环卫项目</span>
+            </div>
+        </div>
+
+        <!-- 照片 -->
+        <div class="detail-card">
+            <div class="photo-section">
+                <div class="photo-title">仪表盘里程照片</div>
+                <div class="photo-grid">
+                    <div class="photo-item">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e8e8e8' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3E里程照片%3C/text%3E%3C/svg%3E" alt="里程照片">
+                    </div>
+                </div>
+            </div>
+            <div class="photo-section" style="margin-top:16px;">
+                <div class="photo-title">交易凭证</div>
+                <div class="photo-grid">
+                    <div class="photo-item">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e8e8e8' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3E交易凭证%3C/text%3E%3C/svg%3E" alt="交易凭证">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部操作 -->
+    <div class="bottom-actions">
+        <button class="btn-edit" onclick="editRecord()">编辑</button>
+        <button class="btn-delete" onclick="showDeleteConfirm()">删除</button>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="confirm-modal" id="deleteModal">
+        <div class="confirm-box">
+            <div class="confirm-title">确认删除</div>
+            <div class="confirm-text">删除后无法恢复，是否确认删除该记录？</div>
+            <div class="confirm-buttons">
+                <button class="confirm-btn cancel" onclick="hideDeleteConfirm()">取消</button>
+                <button class="confirm-btn confirm" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">删除成功</div>
+
+    <script>
+        // 根据URL参数模拟不同记录类型
+        const params = new URLSearchParams(window.location.search);
+        const type = params.get('type') || 'fuel';
+
+        function initDetail() {
+            const tag = document.getElementById('typeTag');
+            const priceRow = document.getElementById('priceRow');
+            const qtyRow = document.getElementById('qtyRow');
+            const degreeRow = document.getElementById('degreeRow');
+            const priceDisplay = document.getElementById('priceDisplay');
+            const qtyDisplay = document.getElementById('qtyDisplay');
+            const amountDisplay = document.getElementById('amountDisplay');
+            const plateDisplay = document.getElementById('plateDisplay');
+            const mileageDisplay = document.getElementById('mileageDisplay');
+
+            if (type === 'fuel') {
+                tag.textContent = '加油';
+                tag.className = 'tag tag-fuel';
+                priceDisplay.textContent = '7.50 元/L';
+                qtyDisplay.textContent = '56.00 L';
+                amountDisplay.textContent = '¥420.00';
+                plateDisplay.textContent = '粤B·12345';
+                mileageDisplay.textContent = '12,580 km';
+                degreeRow.style.display = 'none';
+                priceRow.style.display = 'flex';
+                qtyRow.style.display = 'flex';
+            } else if (type === 'water') {
+                tag.textContent = '加水';
+                tag.className = 'tag tag-water';
+                priceDisplay.textContent = '7.00 元/吨';
+                qtyDisplay.textContent = '5.00 吨';
+                amountDisplay.textContent = '¥35.00';
+                plateDisplay.textContent = '粤B·12345';
+                mileageDisplay.textContent = '12,580 km';
+                degreeRow.style.display = 'none';
+                priceRow.style.display = 'flex';
+                qtyRow.style.display = 'flex';
+            } else if (type === 'charge') {
+                tag.textContent = '充电';
+                tag.className = 'tag tag-charge';
+                amountDisplay.textContent = '¥85.50';
+                plateDisplay.textContent = '粤B·67890';
+                mileageDisplay.textContent = '8,920 km';
+                degreeRow.style.display = 'flex';
+                priceRow.style.display = 'none';
+                qtyRow.style.display = 'none';
+            }
+        }
+
+        function editRecord() {
+            if (type === 'fuel') {
+                window.location.href = 'fuel-report.html';
+            } else if (type === 'water') {
+                window.location.href = 'water-report.html';
+            } else if (type === 'charge') {
+                window.location.href = 'charge-report.html';
+            }
+        }
+
+        function showDeleteConfirm() {
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function hideDeleteConfirm() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function confirmDelete() {
+            hideDeleteConfirm();
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+                window.location.href = 'records.html';
+            }, 1500);
+        }
+
+        // 点击遮罩关闭弹窗
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideDeleteConfirm();
+            }
+        });
+
+        initDetail();
+    </script>
+</body>
+</html>
