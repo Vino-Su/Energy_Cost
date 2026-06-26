@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>充电上报 - 酷哇APP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="components/app-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            margin: 0 auto;
+            max-width: 430px;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            width: 100%;
+            margin: 0;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 430px;
+            height: 44px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 0 16px;
+        }
+        .top-nav-back {
+            position: absolute;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            color: #000000d9;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .top-nav-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .content-area {
+            padding-top: 44px;
+            padding-bottom: 80px;
+        }
+        .form-card {
+            background: #ffffff;
+            border-radius: 12px;
+            margin: 12px 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .form-label {
+            font-size: 14px;
+            color: #000000d9;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .form-label .required {
+            color: #ff4d4f;
+            margin-right: 2px;
+        }
+        .form-input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 14px;
+            color: #000000d9;
+            font-family: inherit;
+            background: #ffffff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px #e6f4ff;
+        }
+        .form-input.error {
+            border-color: #ff4d4f;
+        }
+        .form-input:read-only {
+            background: #f5f5f5;
+            color: #00000073;
+        }
+        .form-input::placeholder {
+            color: #00000040;
+        }
+        .error-text {
+            font-size: 12px;
+            color: #ff4d4f;
+            margin-top: 4px;
+            display: none;
+        }
+        .error-text.show {
+            display: block;
+        }
+        .select-trigger {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #000000d9;
+            background: #ffffff;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .select-trigger:focus, .select-trigger:active {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px #e6f4ff;
+        }
+        .select-trigger .placeholder {
+            color: #00000040;
+        }
+        .form-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .form-label-row .form-label {
+            margin-bottom: 0;
+        }
+        .vehicle-toggle {
+            display: inline-flex;
+            gap: 8px;
+        }
+        .vehicle-toggle-btn {
+            height: 28px;
+            padding: 0 14px;
+            background: #ffffff;
+            border: 1px solid #e8e8e8;
+            border-radius: 14px;
+            font-size: 13px;
+            color: #00000073;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .vehicle-toggle-btn.active {
+            background: #e6f4ff;
+            color: #1677ff;
+            border-color: #1677ff;
+            font-weight: 500;
+        }
+        .vehicle-hint {
+            font-size: 12px;
+            color: #00000073;
+            margin-top: 4px;
+        }
+        .vehicle-hint.error-hint {
+            color: #ff4d4f;
+        }
+        .vehicle-hint.unicorn-hint {
+            color: #1677ff;
+        }
+
+        /* 拍照区置顶样式 */
+        .photo-card {
+            background: #ffffff;
+            border-radius: 12px;
+            margin: 12px 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .photo-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .photo-section-title svg {
+            width: 18px;
+            height: 18px;
+            color: #1677ff;
+        }
+        .photo-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .photo-item {
+            flex: 1;
+            min-width: 96px;
+            max-width: calc(33.333% - 8px);
+        }
+        .photo-label {
+            font-size: 13px;
+            color: #000000d9;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .photo-label .required {
+            color: #ff4d4f;
+            margin-right: 2px;
+        }
+        .upload-area {
+            width: 96px;
+            height: 96px;
+            border: 1px dashed #d9d9d9;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #fafafa;
+            transition: border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .upload-area:active {
+            border-color: #1677ff;
+            background: #e6f4ff;
+        }
+        .upload-area svg {
+            width: 24px;
+            height: 24px;
+            color: #00000073;
+            margin-bottom: 4px;
+        }
+        .upload-area span {
+            font-size: 12px;
+            color: #00000073;
+        }
+        .upload-preview {
+            width: 96px;
+            height: 96px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .upload-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .upload-preview .delete-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            background: #ff4d4f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .upload-hint {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #00000073;
+            line-height: 16px;
+        }
+        .ocr-status {
+            margin-top: 6px;
+            font-size: 11px;
+            line-height: 16px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+        .ocr-status.show {
+            display: flex;
+        }
+        .ocr-status.loading {
+            color: #1677ff;
+        }
+        .ocr-status.success {
+            color: #52c41a;
+        }
+        .ocr-status.error {
+            color: #ff4d4f;
+        }
+        .ocr-status .ocr-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: ocrPulse 1.2s infinite;
+        }
+        @keyframes ocrPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .ocr-status svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+        }
+
+        .bottom-submit {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 430px;
+            padding: 12px 16px 16px;
+            background: #ffffff;
+            border-top: 1px solid #e8e8e8;
+            z-index: 1000;
+        }
+        .submit-btn {
+            width: 100%;
+            height: 44px;
+            background: #1677ff;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .submit-btn:active {
+            opacity: 0.85;
+        }
+        .submit-btn:disabled {
+            background: #85a5cc;
+            cursor: not-allowed;
+        }
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 3000;
+            display: none;
+            white-space: nowrap;
+        }
+        .picker-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+        .picker-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
+        }
+        .picker-header {
+            padding: 16px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .picker-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .picker-close {
+            font-size: 14px;
+            color: #1677ff;
+        }
+        .picker-option {
+            padding: 14px 16px;
+            font-size: 14px;
+            color: #000000d9;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #000000d9;
+        }
+        .radio-circle {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .radio-item.active .radio-circle {
+            border-color: #1677ff;
+            background: #1677ff;
+        }
+        .radio-item.active .radio-circle::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+        }
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+            max-width: 430px;
+            margin: 0 auto;
+            align-items: center;
+            justify-content: center;
+        }
+        .confirm-box {
+            width: 280px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        .confirm-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+            margin-bottom: 8px;
+        }
+        .confirm-text {
+            font-size: 14px;
+            color: #00000073;
+            margin-bottom: 20px;
+        }
+        .confirm-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .confirm-btn {
+            flex: 1;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+        .confirm-btn.cancel {
+            background: #f5f5f5;
+            color: #000000d9;
+        }
+        .confirm-btn.confirm {
+            background: #1677ff;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+        <a href="home.html" class="top-nav-back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            <span>返回</span>
+        </a>
+        <div class="top-nav-title">充电上报</div>
+        <div class="project-switcher" role="button" aria-label="切换项目" onclick="CityStewardCommon.openProjectPicker()">
+            <span class="project-switcher-text">选择项目</span>
+            <svg class="project-switcher-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <!-- 拍照区 -->
+        <div class="photo-card">
+            <div class="photo-section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                <span>拍照区</span>
+            </div>
+            <div class="photo-row">
+                <!-- 充电明细截图 -->
+                <div class="photo-item">
+                    <label class="photo-label"><span class="required">*</span>充电明细</label>
+                    <div class="upload-row" id="detailRow">
+                        <div class="upload-area" id="detailUpload" onclick="showUploadOptions('detail')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            <span>上传</span>
+                        </div>
+                    </div>
+                    <div class="upload-hint" id="detailUploadHint">支持 OCR 识别</div>
+                    <div class="ocr-status loading" id="detailOcrLoading">
+                        <span class="ocr-dot"></span>
+                        <span>正在识别中</span>
+                    </div>
+                    <div class="ocr-status success" id="detailOcrSuccess">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        <span>识别成功</span>
+                    </div>
+                    <div class="ocr-status error" id="detailOcrError">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span>识别失败</span>
+                    </div>
+                    <div class="error-text" id="detailError"></div>
+                </div>
+
+                <!-- 里程照片 -->
+                <div class="photo-item">
+                    <label class="photo-label"><span id="odometerRequired" class="required">*</span>里程照片</label>
+                    <div class="upload-row" id="odometerRow">
+                        <div class="upload-area" id="odometerUpload" onclick="showUploadOptions('odometer')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            <span>上传</span>
+                        </div>
+                    </div>
+                    <div class="upload-hint" id="odometerUploadHint">支持 OCR 识别</div>
+                    <div class="ocr-status loading" id="odometerOcrLoading">
+                        <span class="ocr-dot"></span>
+                        <span>正在识别中</span>
+                    </div>
+                    <div class="ocr-status success" id="odometerOcrSuccess">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        <span>识别成功</span>
+                    </div>
+                    <div class="ocr-status error" id="odometerOcrError">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span>识别失败</span>
+                    </div>
+                    <div class="error-text" id="odometerError"></div>
+                </div>
+
+                <!-- 支付照片 -->
+                <div class="photo-item" id="paymentPhotoItem" style="display:none;">
+                    <label class="photo-label"><span class="required">*</span>支付照片</label>
+                    <div class="upload-row" id="paymentRow">
+                        <div class="upload-area" id="paymentUpload" onclick="showUploadOptions('payment')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            <span>上传</span>
+                        </div>
+                    </div>
+                    <div class="upload-hint" id="paymentUploadHint">暂不参与 OCR</div>
+                    <div class="error-text" id="paymentError"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 信息区 -->
+        <div class="form-card">
+            <!-- 车辆信息 -->
+            <div class="form-group">
+                <div class="form-label-row">
+                    <label class="form-label"><span class="required">*</span><span id="vehicleLabelText">车牌号</span></label>
+                    <div class="vehicle-toggle">
+                        <button class="vehicle-toggle-btn active" id="btnPlate" onclick="switchVehicleMode('plate')">车牌号</button>
+                        <button class="vehicle-toggle-btn" id="btnVin" onclick="switchVehicleMode('vin')">车架号</button>
+                    </div>
+                </div>
+
+                <div id="plateInputWrap">
+                    <div class="scan-input-wrap">
+                        <input type="text" class="form-input scan-input" id="plateInput" placeholder="请输入车牌号" value="" onfocus="showPlateHistory()" oninput="showPlateHistory()" onblur="hidePlateHistoryDelay()">
+                        <div class="scan-btn" role="button" aria-label="扫码识别车牌号" onclick="CityStewardCommon.openScan('plate', function(result){ document.getElementById('plateInput').value = result; checkPlate(); })">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                                <rect x="7" y="7" width="3" height="3"/>
+                                <rect x="14" y="7" width="3" height="3"/>
+                                <rect x="7" y="14" width="3" height="3"/>
+                                <rect x="14" y="14" width="10" height="3"/>
+                                <rect x="14" y="18" width="10" height="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="history-list" id="plateHistoryList" style="display:none;"></div>
+                    <div class="vehicle-hint" id="plateHint"></div>
+                    <div class="error-text" id="plateError"></div>
+                </div>
+
+                <div id="vinInputWrap" style="display:none;">
+                    <div class="scan-input-wrap">
+                        <input type="text" class="form-input scan-input" id="vinInput" placeholder="请输入车架号" value="" onfocus="showVinHistory()" oninput="showVinHistory()" onblur="hideVinHistoryDelay()">
+                        <div class="scan-btn" role="button" aria-label="扫码识别车架号" onclick="CityStewardCommon.openScan('vin', function(result){ document.getElementById('vinInput').value = result; checkVin(); })">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                                <rect x="7" y="7" width="3" height="3"/>
+                                <rect x="14" y="7" width="3" height="3"/>
+                                <rect x="7" y="14" width="3" height="3"/>
+                                <rect x="14" y="14" width="10" height="3"/>
+                                <rect x="14" y="18" width="10" height="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="history-list" id="vinHistoryList" style="display:none;"></div>
+                    <div class="vehicle-hint" id="vinHint"></div>
+                    <div class="error-text" id="vinError"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>上报人</label>
+                <input type="text" class="form-input" value="张三" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>支付方式</label>
+                <div class="radio-group" id="paymentMethod">
+                    <label class="radio-item active" data-value="charge_card" onclick="selectPayment('charge_card')">
+                        <span class="radio-circle"></span>
+                        <span>充电卡</span>
+                    </label>
+                    <label class="radio-item" data-value="cash" onclick="selectPayment('cash')">
+                        <span class="radio-circle"></span>
+                        <span>现金</span>
+                    </label>
+                    <label class="radio-item" data-value="online" onclick="selectPayment('online')">
+                        <span class="radio-circle"></span>
+                        <span>线上支付</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>充电开始时间</label>
+                <div class="select-trigger" onclick="showTimePicker('start')">
+                    <span id="startTime" class="placeholder">请选择开始时间</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="error-text" id="startTimeError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>充电结束时间</label>
+                <div class="select-trigger" onclick="showTimePicker('end')">
+                    <span id="endTime" class="placeholder">请选择结束时间</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="error-text" id="endTimeError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>充电度数（度）</label>
+                <input type="number" class="form-input" id="chargeDegree" placeholder="OCR识别自动填充" value="" step="0.1" onblur="validateNumber(this, '充电度数')">
+                <div class="error-text" id="chargeDegreeError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>充电金额（元）</label>
+                <input type="number" class="form-input" id="chargeAmount" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '金额')">
+                <div class="error-text" id="chargeAmountError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span id="mileageRequired" class="required">*</span>当前里程数（km）</label>
+                <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
+                <div class="vehicle-hint" id="mileageHint"></div>
+                <div class="error-text" id="mileageError"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部提交 -->
+    <div class="bottom-submit">
+        <button class="submit-btn" id="submitBtn" onclick="submitForm()">提交</button>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 上传方式选择 -->
+    <div class="picker-overlay" id="uploadPicker" onclick="closePicker(event, 'uploadPicker')">
+        <div class="picker-panel" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <span class="picker-title">选择上传方式</span>
+                <span class="picker-close" onclick="closePickerDirect('uploadPicker')">关闭</span>
+            </div>
+            <div class="picker-option" onclick="selectUploadType('camera')">
+                <span>拍照上传</span>
+            </div>
+            <div class="picker-option" onclick="selectUploadType('local')">
+                <span>本地上传</span>
+            </div>
+            <div style="height:20px;background:#fff;"></div>
+        </div>
+    </div>
+
+    <!-- 时间选择器 -->
+    <div class="picker-overlay" id="timePicker" onclick="closePicker(event, 'timePicker')">
+        <div class="picker-panel" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <span class="picker-title" id="timePickerTitle">选择时间</span>
+                <span class="picker-close" onclick="closePickerDirect('timePicker')">关闭</span>
+            </div>
+            <div style="padding:16px;background:#fff;">
+                <input type="datetime-local" class="form-input" id="timeInput" style="width:100%;">
+            </div>
+            <div style="padding: 12px 16px 20px; display:flex; gap:12px; background:#fff;">
+                <button class="confirm-btn cancel" style="flex:1;" onclick="closePickerDirect('timePicker')">取消</button>
+                <button class="confirm-btn confirm" style="flex:1;" onclick="confirmTimePicker()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟车辆数据
+        const vehicleData = {
+            '粤B·12345': 'LSVAG2180E2100001',
+            '粤B·67890': 'LSVAG2180E2100002',
+            '粤B·54321': 'LSVAG2180E2100003',
+            '粤B·11111': 'LSVAG2180E2100004'
+        };
+        const vehicleTypes = {
+            '粤B·12345': 'normal',
+            '粤B·67890': 'normal',
+            '粤B·54321': 'normal',
+            '粤B·11111': 'unicorn'
+        };
+        const vinToPlate = {};
+        for (const [plate, vin] of Object.entries(vehicleData)) {
+            vinToPlate[vin] = plate;
+        }
+        // 模拟上次里程数
+        const lastMileage = {
+            '粤B·12345': 12000,
+            '粤B·67890': 8500,
+            '粤B·54321': 15000,
+            '粤B·11111': 9000
+        };
+
+        // 用户历史填报记录
+        const plateHistory = ['粤B·12345', '粤B·67890', '粤B·54321', '粤B·11111', '沪A·88888'];
+        const vinHistory = ['LSVAG2180E2100001', 'LSVAG2180E2100002', 'LSVAG2180E2100003', 'LSVAG2180E2100004', 'LSVHJ2180E2200001'];
+
+        // 模拟 OCR 识别结果池
+        const mockDetailOcrResults = [
+            { startTime: '2026-06-25 08:00', endTime: '2026-06-25 10:30', degree: 45.5, amount: 68.25 },
+            { startTime: '2026-06-24 18:00', endTime: '2026-06-24 19:45', degree: 32.0, amount: 48.00 },
+            { startTime: '2026-06-23 12:00', endTime: '2026-06-23 14:20', degree: 58.8, amount: 88.20 }
+        ];
+        const mockOdometerOcrResults = [12560, 13200, 11800, 14500];
+
+        let currentVehicleMode = 'plate';
+        let currentUploadType = null;
+        let currentPayment = 'charge_card';
+        let currentTimeTarget = 'start';
+        let detailPhoto = null;
+        let odometerPhoto = null;
+        let paymentPhoto = null;
+        let isDetailOcrRunning = false;
+        let isOdometerOcrRunning = false;
+
+        function switchVehicleMode(mode) {
+            currentVehicleMode = mode;
+            document.getElementById('btnPlate').classList.toggle('active', mode === 'plate');
+            document.getElementById('btnVin').classList.toggle('active', mode === 'vin');
+            document.getElementById('plateInputWrap').style.display = mode === 'plate' ? 'block' : 'none';
+            document.getElementById('vinInputWrap').style.display = mode === 'vin' ? 'block' : 'none';
+            document.getElementById('vehicleLabelText').textContent = mode === 'plate' ? '车牌号' : '车架号';
+            clearError('plate');
+            clearError('vin');
+            document.getElementById('plateHistoryList').style.display = 'none';
+            document.getElementById('vinHistoryList').style.display = 'none';
+            updateUnicornState();
+        }
+
+        function showPlateHistory() {
+            const input = document.getElementById('plateInput');
+            const list = document.getElementById('plateHistoryList');
+            const keyword = input.value.trim();
+            const filtered = keyword ? plateHistory.filter(p => p.includes(keyword)) : plateHistory;
+            if (filtered.length === 0) {
+                list.style.display = 'none';
+                return;
+            }
+            list.innerHTML = filtered.map(plate => {
+                const vin = vehicleData[plate];
+                const hint = vin ? '对应车架号：' + vin : '此车牌暂无对应车架号';
+                return '<div class="history-item" onclick="selectPlateHistory(\'' + plate + '\')">' +
+                    '<span class="history-text">' + plate + '</span>' +
+                    '<span class="history-hint">' + hint + '</span>' +
+                    '</div>';
+            }).join('');
+            list.style.display = 'block';
+        }
+
+        function selectPlateHistory(plate) {
+            document.getElementById('plateInput').value = plate;
+            document.getElementById('plateHistoryList').style.display = 'none';
+            checkPlate();
+            updateUnicornState();
+        }
+
+        function hidePlateHistoryDelay() {
+            setTimeout(() => {
+                document.getElementById('plateHistoryList').style.display = 'none';
+                checkPlate();
+                updateUnicornState();
+            }, 200);
+        }
+
+        function showVinHistory() {
+            const input = document.getElementById('vinInput');
+            const list = document.getElementById('vinHistoryList');
+            const keyword = input.value.trim();
+            const filtered = keyword ? vinHistory.filter(v => v.includes(keyword)) : vinHistory;
+            if (filtered.length === 0) {
+                list.style.display = 'none';
+                return;
+            }
+            list.innerHTML = filtered.map(vin => {
+                const plate = vinToPlate[vin];
+                const hint = plate ? '对应车牌号：' + plate : '此车架暂无对应车牌号';
+                return '<div class="history-item" onclick="selectVinHistory(\'' + vin + '\')">' +
+                    '<span class="history-text">' + vin + '</span>' +
+                    '<span class="history-hint">' + hint + '</span>' +
+                    '</div>';
+            }).join('');
+            list.style.display = 'block';
+        }
+
+        function selectVinHistory(vin) {
+            document.getElementById('vinInput').value = vin;
+            document.getElementById('vinHistoryList').style.display = 'none';
+            checkVin();
+            updateUnicornState();
+        }
+
+        function hideVinHistoryDelay() {
+            setTimeout(() => {
+                document.getElementById('vinHistoryList').style.display = 'none';
+                checkVin();
+                updateUnicornState();
+            }, 200);
+        }
+
+        function getTargetPlate() {
+            const plate = document.getElementById('plateInput').value.trim();
+            const vin = document.getElementById('vinInput').value.trim();
+            if (plate) return plate;
+            if (vin && vinToPlate[vin]) return vinToPlate[vin];
+            return '';
+        }
+
+        function isUnicornVehicle() {
+            const plate = getTargetPlate();
+            return plate && vehicleTypes[plate] === 'unicorn';
+        }
+
+        function updateUnicornState() {
+            const unicorn = isUnicornVehicle();
+            const mileageRequired = document.getElementById('mileageRequired');
+            const odometerRequired = document.getElementById('odometerRequired');
+            const mileageHint = document.getElementById('mileageHint');
+            mileageRequired.style.display = unicorn ? 'none' : 'inline';
+            odometerRequired.style.display = unicorn ? 'none' : 'inline';
+            if (unicorn) {
+                mileageHint.textContent = '独角兽车型无需填写里程';
+                mileageHint.className = 'vehicle-hint unicorn-hint';
+                document.getElementById('mileageError').textContent = '';
+                document.getElementById('mileageError').classList.remove('show');
+                document.getElementById('mileage').classList.remove('error');
+                document.getElementById('odometerError').textContent = '';
+                document.getElementById('odometerError').classList.remove('show');
+            } else {
+                mileageHint.textContent = '';
+            }
+        }
+
+        function checkPlate() {
+            const plate = document.getElementById('plateInput').value.trim();
+            const hint = document.getElementById('plateHint');
+            const error = document.getElementById('plateError');
+            if (!plate) {
+                hint.textContent = '';
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+                document.getElementById('plateInput').classList.remove('error');
+                return;
+            }
+            if (vehicleData[plate]) {
+                hint.textContent = '对应车架号：' + vehicleData[plate];
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+                document.getElementById('plateInput').classList.remove('error');
+            } else {
+                hint.textContent = '此车牌暂无对应车架号';
+                hint.className = 'vehicle-hint error-hint';
+                error.textContent = '车牌号不存在或不属于当前项目';
+                error.classList.add('show');
+                document.getElementById('plateInput').classList.add('error');
+            }
+        }
+
+        function checkVin() {
+            const vin = document.getElementById('vinInput').value.trim();
+            const hint = document.getElementById('vinHint');
+            const error = document.getElementById('vinError');
+            if (!vin) {
+                hint.textContent = '';
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+                document.getElementById('vinInput').classList.remove('error');
+                return;
+            }
+            if (vinToPlate[vin]) {
+                hint.textContent = '对应车牌号：' + vinToPlate[vin];
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+                document.getElementById('vinInput').classList.remove('error');
+            } else {
+                hint.textContent = '此车架暂无对应车牌号';
+                hint.className = 'vehicle-hint error-hint';
+                error.textContent = '车架号不存在或不属于当前项目';
+                error.classList.add('show');
+                document.getElementById('vinInput').classList.add('error');
+            }
+        }
+
+        function selectPayment(method) {
+            currentPayment = method;
+            document.querySelectorAll('#paymentMethod .radio-item').forEach(el => {
+                el.classList.toggle('active', el.getAttribute('data-value') === method);
+            });
+            const showPaymentPhoto = method === 'online';
+            document.getElementById('paymentPhotoItem').style.display = showPaymentPhoto ? 'block' : 'none';
+            if (!showPaymentPhoto) {
+                document.getElementById('paymentError').textContent = '';
+                document.getElementById('paymentError').classList.remove('show');
+            }
+        }
+
+        function validateNumber(input, label) {
+            const value = parseFloat(input.value);
+            const id = input.id + 'Error';
+            const el = document.getElementById(id);
+            if (input.value && (isNaN(value) || value < 0)) {
+                el.textContent = label + '必须为非负数';
+                el.classList.add('show');
+                input.classList.add('error');
+                return false;
+            } else {
+                el.textContent = '';
+                el.classList.remove('show');
+                input.classList.remove('error');
+                return true;
+            }
+        }
+
+        function checkMileage() {
+            const input = document.getElementById('mileage');
+            const value = parseFloat(input.value) || 0;
+            const error = document.getElementById('mileageError');
+            const targetPlate = getTargetPlate();
+            const last = lastMileage[targetPlate] || 0;
+            if (value < 0) {
+                error.textContent = '里程数必须为非负数';
+                error.classList.add('show');
+                input.classList.add('error');
+                return false;
+            }
+            if (value > 0 && last > 0 && value < last) {
+                error.textContent = '里程不能低于该车辆上次已填报的里程数（' + last + ' km）';
+                error.classList.add('show');
+                input.classList.add('error');
+                return false;
+            } else {
+                error.textContent = '';
+                error.classList.remove('show');
+                input.classList.remove('error');
+                return true;
+            }
+        }
+
+        function clearError(type) {
+            if (type === 'plate') {
+                document.getElementById('plateError').textContent = '';
+                document.getElementById('plateError').classList.remove('show');
+                document.getElementById('plateInput').classList.remove('error');
+            } else {
+                document.getElementById('vinError').textContent = '';
+                document.getElementById('vinError').classList.remove('show');
+                document.getElementById('vinInput').classList.remove('error');
+            }
+        }
+
+        // 上传方式选择
+        function showUploadOptions(type) {
+            currentUploadType = type;
+            document.getElementById('uploadPicker').style.display = 'block';
+        }
+        function selectUploadType(source) {
+            document.getElementById('uploadPicker').style.display = 'none';
+            if (source === 'camera') {
+                simulateUpload(currentUploadType, 'camera');
+            } else {
+                simulateUpload(currentUploadType, 'local');
+            }
+        }
+
+        // 模拟上传 + OCR
+        function simulateUpload(type, source) {
+            if (type === 'detail') {
+                detailPhoto = { id: Date.now(), source: source };
+                renderDetailPhoto();
+                runDetailOcr();
+            } else if (type === 'odometer') {
+                odometerPhoto = { id: Date.now(), source: source };
+                renderOdometerPhoto();
+                runOdometerOcr();
+            } else if (type === 'payment') {
+                paymentPhoto = { id: Date.now(), source: source };
+                renderPaymentPhoto();
+            }
+        }
+
+        function renderDetailPhoto() {
+            const row = document.getElementById('detailRow');
+            const hint = document.getElementById('detailUploadHint');
+            if (!detailPhoto) {
+                row.innerHTML = '<div class="upload-area" id="detailUpload" onclick="showUploadOptions(\'detail\')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+                    '<span>上传</span></div>';
+                hint.style.display = 'block';
+                return;
+            }
+            row.innerHTML = '<div class="upload-preview" id="detail_preview_' + detailPhoto.id + '">' +
+                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E明细%3C/text%3E%3C/svg%3E" alt="充电明细">' +
+                '<div class="delete-btn" onclick="deleteDetailPhoto()">×</div></div>';
+            hint.style.display = 'none';
+        }
+
+        function renderOdometerPhoto() {
+            const row = document.getElementById('odometerRow');
+            const hint = document.getElementById('odometerUploadHint');
+            if (!odometerPhoto) {
+                row.innerHTML = '<div class="upload-area" id="odometerUpload" onclick="showUploadOptions(\'odometer\')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+                    '<span>上传</span></div>';
+                hint.style.display = 'block';
+                return;
+            }
+            row.innerHTML = '<div class="upload-preview" id="odometer_preview_' + odometerPhoto.id + '">' +
+                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E里程%3C/text%3E%3C/svg%3E" alt="里程照片">' +
+                '<div class="delete-btn" onclick="deleteOdometerPhoto()">×</div></div>';
+            hint.style.display = 'none';
+        }
+
+        function renderPaymentPhoto() {
+            const row = document.getElementById('paymentRow');
+            if (!paymentPhoto) {
+                row.innerHTML = '<div class="upload-area" id="paymentUpload" onclick="showUploadOptions(\'payment\')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+                    '<span>上传</span></div>';
+                return;
+            }
+            row.innerHTML = '<div class="upload-preview" id="payment_preview_' + paymentPhoto.id + '">' +
+                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E支付%3C/text%3E%3C/svg%3E" alt="支付照片">' +
+                '<div class="delete-btn" onclick="deletePaymentPhoto()">×</div></div>';
+        }
+
+        function deleteDetailPhoto() {
+            detailPhoto = null;
+            renderDetailPhoto();
+            clearDetailOcrStatus();
+            const startEl = document.getElementById('startTime');
+            startEl.textContent = '请选择开始时间';
+            startEl.classList.add('placeholder');
+            startEl.removeAttribute('data-value');
+            const endEl = document.getElementById('endTime');
+            endEl.textContent = '请选择结束时间';
+            endEl.classList.add('placeholder');
+            endEl.removeAttribute('data-value');
+            document.getElementById('chargeDegree').value = '';
+            document.getElementById('chargeAmount').value = '';
+            clearNumberErrors();
+        }
+
+        function deleteOdometerPhoto() {
+            odometerPhoto = null;
+            renderOdometerPhoto();
+            clearOdometerOcrStatus();
+            document.getElementById('mileage').value = '';
+            document.getElementById('mileageError').textContent = '';
+            document.getElementById('mileageError').classList.remove('show');
+            document.getElementById('mileage').classList.remove('error');
+        }
+
+        function deletePaymentPhoto() {
+            paymentPhoto = null;
+            renderPaymentPhoto();
+            document.getElementById('paymentError').textContent = '';
+            document.getElementById('paymentError').classList.remove('show');
+        }
+
+        // OCR 状态控制
+        function clearDetailOcrStatus() {
+            document.getElementById('detailOcrLoading').classList.remove('show');
+            document.getElementById('detailOcrSuccess').classList.remove('show');
+            document.getElementById('detailOcrError').classList.remove('show');
+            document.getElementById('detailError').textContent = '';
+            document.getElementById('detailError').classList.remove('show');
+        }
+
+        function clearOdometerOcrStatus() {
+            document.getElementById('odometerOcrLoading').classList.remove('show');
+            document.getElementById('odometerOcrSuccess').classList.remove('show');
+            document.getElementById('odometerOcrError').classList.remove('show');
+            document.getElementById('odometerError').textContent = '';
+            document.getElementById('odometerError').classList.remove('show');
+        }
+
+        function setOcrStatus(type, status) {
+            if (type === 'detail') {
+                document.getElementById('detailOcrLoading').classList.remove('show');
+                document.getElementById('detailOcrSuccess').classList.remove('show');
+                document.getElementById('detailOcrError').classList.remove('show');
+                document.getElementById('detailOcrLoading').classList.toggle('show', status === 'loading');
+                document.getElementById('detailOcrSuccess').classList.toggle('show', status === 'success');
+                document.getElementById('detailOcrError').classList.toggle('show', status === 'error');
+            } else {
+                document.getElementById('odometerOcrLoading').classList.remove('show');
+                document.getElementById('odometerOcrSuccess').classList.remove('show');
+                document.getElementById('odometerOcrError').classList.remove('show');
+                document.getElementById('odometerOcrLoading').classList.toggle('show', status === 'loading');
+                document.getElementById('odometerOcrSuccess').classList.toggle('show', status === 'success');
+                document.getElementById('odometerOcrError').classList.toggle('show', status === 'error');
+            }
+        }
+
+        // 模拟充电明细 OCR
+        function runDetailOcr() {
+            isDetailOcrRunning = true;
+            updateSubmitButton();
+            setOcrStatus('detail', 'loading');
+
+            setTimeout(function() {
+                const success = Math.random() > 0.2;
+                if (success) {
+                    const result = mockDetailOcrResults[Math.floor(Math.random() * mockDetailOcrResults.length)];
+                    fillDetailOcrResult(result);
+                    setOcrStatus('detail', 'success');
+                } else {
+                    setOcrStatus('detail', 'error');
+                }
+                isDetailOcrRunning = false;
+                updateSubmitButton();
+            }, 1500);
+        }
+
+        function fillDetailOcrResult(result) {
+            const startEl = document.getElementById('startTime');
+            if (!startEl.getAttribute('data-value')) {
+                startEl.textContent = result.startTime;
+                startEl.classList.remove('placeholder');
+                startEl.setAttribute('data-value', result.startTime.replace(' ', 'T'));
+            }
+            const endEl = document.getElementById('endTime');
+            if (!endEl.getAttribute('data-value')) {
+                endEl.textContent = result.endTime;
+                endEl.classList.remove('placeholder');
+                endEl.setAttribute('data-value', result.endTime.replace(' ', 'T'));
+            }
+            const degreeInput = document.getElementById('chargeDegree');
+            if (!degreeInput.value) degreeInput.value = result.degree.toFixed(1);
+            const amountInput = document.getElementById('chargeAmount');
+            if (!amountInput.value) amountInput.value = result.amount.toFixed(2);
+        }
+
+        // 模拟里程照片 OCR
+        function runOdometerOcr() {
+            isOdometerOcrRunning = true;
+            updateSubmitButton();
+            setOcrStatus('odometer', 'loading');
+
+            setTimeout(function() {
+                const success = Math.random() > 0.2;
+                if (success) {
+                    const mileage = mockOdometerOcrResults[Math.floor(Math.random() * mockOdometerOcrResults.length)];
+                    const mileageInput = document.getElementById('mileage');
+                    if (!mileageInput.value) mileageInput.value = mileage;
+                    setOcrStatus('odometer', 'success');
+                    checkMileage();
+                } else {
+                    setOcrStatus('odometer', 'error');
+                }
+                isOdometerOcrRunning = false;
+                updateSubmitButton();
+            }, 1500);
+        }
+
+        function updateSubmitButton() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = isDetailOcrRunning || isOdometerOcrRunning;
+        }
+
+        // 时间选择器
+        function showTimePicker(target) {
+            currentTimeTarget = target;
+            const title = target === 'start' ? '选择充电开始时间' : '选择充电结束时间';
+            document.getElementById('timePickerTitle').textContent = title;
+            const timeEl = document.getElementById(target + 'Time');
+            const input = document.getElementById('timeInput');
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const defaultValue = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            input.value = timeEl.getAttribute('data-value') || defaultValue;
+            document.getElementById('timePicker').style.display = 'block';
+        }
+
+        function confirmTimePicker() {
+            const input = document.getElementById('timeInput');
+            const value = input.value;
+            if (!value) {
+                showToast('请选择时间');
+                return;
+            }
+            const timeEl = document.getElementById(currentTimeTarget + 'Time');
+            timeEl.setAttribute('data-value', value);
+            timeEl.textContent = value.replace('T', ' ');
+            timeEl.classList.remove('placeholder');
+            closePickerDirect('timePicker');
+        }
+
+        function closePicker(e, id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        function closePickerDirect(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        function clearNumberErrors() {
+            ['chargeDegree', 'chargeAmount'].forEach(id => {
+                document.getElementById(id + 'Error').textContent = '';
+                document.getElementById(id + 'Error').classList.remove('show');
+                document.getElementById(id).classList.remove('error');
+            });
+        }
+
+        function clearAllErrors() {
+            document.querySelectorAll('.error-text').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
+            document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+        }
+
+        // 项目切换后重置表单（由 app-common.js 调用）
+        function resetReportForm() {
+            document.getElementById('plateInput').value = '';
+            document.getElementById('vinInput').value = '';
+            document.getElementById('plateHint').textContent = '';
+            document.getElementById('vinHint').textContent = '';
+            selectPayment('charge_card');
+            const startEl = document.getElementById('startTime');
+            startEl.textContent = '请选择开始时间';
+            startEl.classList.add('placeholder');
+            startEl.removeAttribute('data-value');
+            const endEl = document.getElementById('endTime');
+            endEl.textContent = '请选择结束时间';
+            endEl.classList.add('placeholder');
+            endEl.removeAttribute('data-value');
+            document.getElementById('chargeDegree').value = '';
+            document.getElementById('chargeAmount').value = '';
+            document.getElementById('mileage').value = '';
+            detailPhoto = null;
+            odometerPhoto = null;
+            paymentPhoto = null;
+            renderDetailPhoto();
+            renderOdometerPhoto();
+            renderPaymentPhoto();
+            clearDetailOcrStatus();
+            clearOdometerOcrStatus();
+            clearAllErrors();
+            updateUnicornState();
+        }
+
+        function scrollToFirstError() {
+            const firstError = document.querySelector('.form-input.error, .error-text.show');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function submitForm() {
+            if (isDetailOcrRunning || isOdometerOcrRunning) {
+                showToast('正在识别中，请稍候');
+                return;
+            }
+
+            let hasError = false;
+            clearAllErrors();
+
+            // 充电明细校验
+            if (!detailPhoto) {
+                document.getElementById('detailError').textContent = '请上传充电明细截图';
+                document.getElementById('detailError').classList.add('show');
+                hasError = true;
+            }
+
+            // 里程照片校验（独角兽车型非必填）
+            const unicorn = isUnicornVehicle();
+            if (!unicorn && !odometerPhoto) {
+                document.getElementById('odometerError').textContent = '请上传里程照片';
+                document.getElementById('odometerError').classList.add('show');
+                hasError = true;
+            }
+
+            // 车牌号/车架号校验
+            const plate = document.getElementById('plateInput').value.trim();
+            const vin = document.getElementById('vinInput').value.trim();
+            if (!plate && !vin) {
+                const errorEl = currentVehicleMode === 'plate' ? document.getElementById('plateError') : document.getElementById('vinError');
+                const inputEl = currentVehicleMode === 'plate' ? document.getElementById('plateInput') : document.getElementById('vinInput');
+                errorEl.textContent = '车牌号与车架号至少填写一个';
+                errorEl.classList.add('show');
+                inputEl.classList.add('error');
+                hasError = true;
+            } else if (plate && !vehicleData[plate]) {
+                document.getElementById('plateError').textContent = '车牌号不存在或不属于当前项目';
+                document.getElementById('plateError').classList.add('show');
+                document.getElementById('plateInput').classList.add('error');
+                hasError = true;
+            } else if (vin && !vinToPlate[vin]) {
+                document.getElementById('vinError').textContent = '车架号不存在或不属于当前项目';
+                document.getElementById('vinError').classList.add('show');
+                document.getElementById('vinInput').classList.add('error');
+                hasError = true;
+            }
+
+            // 充电时间校验
+            const startTime = document.getElementById('startTime').getAttribute('data-value');
+            const endTime = document.getElementById('endTime').getAttribute('data-value');
+            if (!startTime) {
+                document.getElementById('startTimeError').textContent = '请选择充电开始时间';
+                document.getElementById('startTimeError').classList.add('show');
+                hasError = true;
+            }
+            if (!endTime) {
+                document.getElementById('endTimeError').textContent = '请选择充电结束时间';
+                document.getElementById('endTimeError').classList.add('show');
+                hasError = true;
+            }
+            if (startTime && endTime && new Date(startTime) > new Date(endTime)) {
+                document.getElementById('endTimeError').textContent = '结束时间不能早于开始时间';
+                document.getElementById('endTimeError').classList.add('show');
+                hasError = true;
+            }
+
+            // 充电度数校验
+            const chargeDegree = document.getElementById('chargeDegree');
+            if (!chargeDegree.value) {
+                document.getElementById('chargeDegreeError').textContent = '请输入充电度数';
+                document.getElementById('chargeDegreeError').classList.add('show');
+                chargeDegree.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(chargeDegree, '充电度数')) {
+                hasError = true;
+            }
+
+            // 充电金额校验
+            const chargeAmount = document.getElementById('chargeAmount');
+            if (!chargeAmount.value) {
+                document.getElementById('chargeAmountError').textContent = '请输入充电金额';
+                document.getElementById('chargeAmountError').classList.add('show');
+                chargeAmount.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(chargeAmount, '金额')) {
+                hasError = true;
+            }
+
+            // 当前里程数校验（独角兽车型非必填）
+            const mileage = document.getElementById('mileage');
+            if (!unicorn && !mileage.value) {
+                document.getElementById('mileageError').textContent = '请输入当前里程数';
+                document.getElementById('mileageError').classList.add('show');
+                mileage.classList.add('error');
+                hasError = true;
+            } else if (mileage.value && !checkMileage()) {
+                hasError = true;
+            }
+
+            // 线上支付时支付照片必填
+            if (currentPayment === 'online' && !paymentPhoto) {
+                document.getElementById('paymentError').textContent = '请上传支付照片';
+                document.getElementById('paymentError').classList.add('show');
+                hasError = true;
+            }
+
+            if (hasError) {
+                showToast('请完善表单信息');
+                setTimeout(scrollToFirstError, 100);
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中…';
+
+            setTimeout(function() {
+                showToast('提交成功');
+                setTimeout(() => {
+                    window.location.href = 'records.html';
+                }, 1500);
+            }, 800);
+        }
+
+        // 初始化
+        selectPayment('charge_card');
+        updateUnicornState();
+    </script>
+    <script src="components/app-common.js"></script>
+</body>
+</html>

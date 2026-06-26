@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>酷哇APP - 车辆能耗成本管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .header {
+            height: 64px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .header-sub {
+            font-size: 12px;
+            color: #00000073;
+            margin-left: 8px;
+        }
+        .main {
+            padding-top: 64px;
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 240px;
+            background: #ffffff;
+            border-right: 1px solid #e8e8e8;
+            padding: 16px;
+            position: fixed;
+            top: 64px;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+        .nav-group {
+            margin-bottom: 24px;
+        }
+        .nav-group-title {
+            font-size: 12px;
+            color: #00000073;
+            padding: 0 12px;
+            margin-bottom: 8px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #000000d9;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover {
+            background: #f5f5f5;
+            color: #1677ff;
+        }
+        .nav-item.active {
+            background: #e6f4ff;
+            color: #1677ff;
+            font-weight: 500;
+        }
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .content {
+            margin-left: 240px;
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .preview-frame {
+            width: 375px;
+            height: 812px;
+            background: #ffffff;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        .preview-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #fff;
+        }
+        .preview-label {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #00000073;
+        }
+        .web-iframe {
+            width: 100%;
+            height: calc(100vh - 112px);
+            border: none;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <span class="header-title">酷哇APP · 车辆能耗成本管理</span>
+            <span class="header-sub">高保真原型入口</span>
+        </div>
+        <div style="font-size:13px;color:#00000073;">需求文档 V1.0 · 本版本暂不涉及审批</div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <div class="nav-group">
+                <div class="nav-group-title">移动端原型</div>
+                <div class="nav-item active" onclick="showMobile('home.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    城市管家工作台
+                </div>
+                <div class="nav-item" onclick="showMobile('fuel-report.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    加油上报
+                </div>
+                <div class="nav-item" onclick="showMobile('fuel-report-ocr.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    加油上报（OCR）
+                </div>
+                <div class="nav-item" onclick="showMobile('water-report.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.15 0-6-2.38-6-6.2 0-2.34 1.78-5.23 6-8.92 4.22 3.69 6 6.58 6 8.92 0 3.82-2.85 6.2-6 6.2z"/></svg>
+                    加水上报
+                </div>
+                <div class="nav-item" onclick="showMobile('charge-report.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+                    充电上报
+                </div>
+                <div class="nav-item" onclick="showMobile('records.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    上报记录
+                </div>
+                <div class="nav-item" onclick="showMobile('record-detail.html?type=fuel', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    记录详情
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-title">WEB 管理端</div>
+                <div class="nav-item" onclick="showWeb('web-fuel-records.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    加油记录明细
+                </div>
+                <div class="nav-item" onclick="showWeb('web-water-records.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.15 0-6-2.38-6-6.2 0-2.34 1.78-5.23 6-8.92 4.22 3.69 6 6.58 6 8.92 0 3.82-2.85 6.2-6 6.2z"/></svg>
+                    加水记录明细
+                </div>
+                <div class="nav-item" onclick="showWeb('web-charge-records.html', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+                    充电记录明细
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="mobilePreview" class="preview-frame">
+                <iframe id="mobileFrame" src="home.html" title="移动端预览"></iframe>
+            </div>
+            <div id="webPreview" class="hidden" style="width:100%;">
+                <iframe id="webFrame" class="web-iframe" src="" title="WEB 端预览"></iframe>
+            </div>
+            <div id="previewLabel" class="preview-label">移动端原型预览 · 375px</div>
+        </div>
+    </div>
+
+    <script>
+        function clearActive() {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        }
+        function showMobile(url, el) {
+            clearActive();
+            el.classList.add('active');
+            document.getElementById('mobilePreview').classList.remove('hidden');
+            document.getElementById('webPreview').classList.add('hidden');
+            document.getElementById('mobileFrame').src = url;
+            document.getElementById('previewLabel').textContent = '移动端原型预览 · 375px 基准';
+        }
+        function showWeb(url, el) {
+            clearActive();
+            el.classList.add('active');
+            document.getElementById('mobilePreview').classList.add('hidden');
+            document.getElementById('webPreview').classList.remove('hidden');
+            document.getElementById('webFrame').src = url;
+            document.getElementById('previewLabel').textContent = 'WEB 管理端预览 · 自适应布局';
+        }
+    </script>
+</body>
+</html>

@@ -7,20 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            margin: 0 auto;
+            max-width: 430px;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f5f5;
             width: 100%;
-            max-width: 430px;
-            margin: 0 auto;
+            margin: 0;
             min-height: 100vh;
             padding-bottom: 80px;
         }
         .top-nav {
             position: fixed;
             top: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            margin: 0 auto;
             width: 100%;
             max-width: 430px;
             height: 44px;
@@ -116,6 +122,7 @@
         .photo-grid {
             display: flex;
             gap: 12px;
+            flex-wrap: wrap;
         }
         .photo-item {
             width: 96px;
@@ -123,17 +130,57 @@
             border-radius: 8px;
             overflow: hidden;
             background: #f5f5f5;
+            position: relative;
         }
         .photo-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+        .photo-item .delete-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            background: #ff4d4f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .upload-area {
+            width: 96px;
+            height: 96px;
+            border: 1px dashed #d9d9d9;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #fafafa;
+            flex-shrink: 0;
+        }
+        .upload-area svg {
+            width: 24px;
+            height: 24px;
+            color: #00000073;
+            margin-bottom: 4px;
+        }
+        .upload-area span {
+            font-size: 12px;
+            color: #00000073;
+        }
         .bottom-actions {
             position: fixed;
             bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            margin: 0 auto;
             width: 100%;
             max-width: 430px;
             padding: 12px 16px 16px;
@@ -240,20 +287,98 @@
             display: none;
             white-space: nowrap;
         }
+        .form-input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 14px;
+            color: #000000d9;
+            font-family: inherit;
+            background: #ffffff;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px #e6f4ff;
+        }
+        .form-input:read-only {
+            background: #f5f5f5;
+            color: #00000073;
+        }
+        .select-trigger {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #000000d9;
+            background: #ffffff;
+            cursor: pointer;
+        }
+        .edit-mode .detail-value {
+            display: none;
+        }
+        .edit-mode .detail-value-input {
+            display: block;
+        }
+        .detail-value-input {
+            display: none;
+            text-align: right;
+        }
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #000000d9;
+        }
+        .radio-circle {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .radio-item.active .radio-circle {
+            border-color: #1677ff;
+            background: #1677ff;
+        }
+        .radio-item.active .radio-circle::after {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background: #fff;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
     <!-- 顶部导航 -->
     <div class="top-nav">
-        <a href="records.html" class="top-nav-back">
+        <a href="home.html" class="top-nav-back">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
             <span>返回</span>
         </a>
         <div class="top-nav-title">记录详情</div>
-        <div class="top-nav-right" onclick="editRecord()">编辑</div>
+        <div class="top-nav-right" style="color:#ff4d4f;font-size:14px;" role="button" aria-label="删除" onclick="showDeleteConfirm()">删除</div>
     </div>
 
-    <div class="content-area">
+    <div class="content-area" id="contentArea">
         <!-- 费用概览 -->
         <div class="detail-card">
             <div class="detail-header">
@@ -266,56 +391,110 @@
         </div>
 
         <!-- 详细信息 -->
-        <div class="detail-card">
+        <div class="detail-card" id="detailInfo">
             <div class="detail-row">
-                <span class="detail-label">VIN码</span>
+                <span class="detail-label">费用类型</span>
+                <span class="detail-value" id="typeDisplay">加油</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">车牌号</span>
+                <span class="detail-value" id="plateValue">粤B·12345</span>
+                <div class="detail-value-input"><input type="text" class="form-input" id="plateEdit" value="粤B·12345" readonly style="width:140px;text-align:right;"></div>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">车架号</span>
                 <span class="detail-value" id="vinDisplay">LSVAG2180E2100001</span>
+                <div class="detail-value-input"><input type="text" class="form-input" id="vinEdit" value="LSVAG2180E2100001" readonly style="width:180px;text-align:right;"></div>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">金额</span>
+                <span class="detail-value" id="amountValue">¥420.00</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="amountEdit" value="420.00" step="0.01" style="width:120px;text-align:right;"></div>
             </div>
             <div class="detail-row">
                 <span class="detail-label">上报人</span>
                 <span class="detail-value">张三</span>
+                <div class="detail-value-input"><input type="text" class="form-input" value="张三" readonly style="width:100px;text-align:right;"></div>
             </div>
             <div class="detail-row">
                 <span class="detail-label">上报时间</span>
                 <span class="detail-value" id="timeDisplay">2026-06-22 09:30</span>
+                <div class="detail-value-input"><div class="select-trigger" id="timeEdit" style="width:160px;" onclick="showTimePicker()">2026-06-22 09:30<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
             </div>
-            <div class="detail-row" id="priceRow">
-                <span class="detail-label">加油单价</span>
-                <span class="detail-value" id="priceDisplay">7.50 元/L</span>
-            </div>
-            <div class="detail-row" id="qtyRow">
-                <span class="detail-label">加油量</span>
-                <span class="detail-value" id="qtyDisplay">56.00 L</span>
-            </div>
-            <div class="detail-row" id="degreeRow" style="display:none;">
-                <span class="detail-label">充电度数</span>
-                <span class="detail-value" id="degreeDisplay">45.50 度</span>
+            <div class="detail-row">
+                <span class="detail-label">项目</span>
+                <span class="detail-value">深圳南山智慧环卫项目</span>
+                <div class="detail-value-input"><input type="text" class="form-input" value="深圳南山智慧环卫项目" readonly style="width:180px;text-align:right;"></div>
             </div>
             <div class="detail-row">
                 <span class="detail-label">当前里程数</span>
                 <span class="detail-value" id="mileageDisplay">12,580 km</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="mileageEdit" value="12580" style="width:120px;text-align:right;"></div>
             </div>
-            <div class="detail-row">
-                <span class="detail-label">所属项目</span>
-                <span class="detail-value">深圳南山智慧环卫项目</span>
+            <div class="detail-row" id="priceRow">
+                <span class="detail-label" id="priceLabel">加油单价</span>
+                <span class="detail-value" id="priceDisplay">7.50 元/L</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="priceEdit" value="7.50" step="0.01" style="width:100px;text-align:right;"></div>
+            </div>
+            <div class="detail-row" id="qtyRow">
+                <span class="detail-label" id="qtyLabel">加油量</span>
+                <span class="detail-value" id="qtyDisplay">56.00 L</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="qtyEdit" value="56.00" step="0.01" style="width:100px;text-align:right;"></div>
+            </div>
+            <div class="detail-row" id="degreeRow" style="display:none;">
+                <span class="detail-label">充电度数</span>
+                <span class="detail-value" id="degreeDisplay">45.50 度</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="degreeEdit" value="45.50" step="0.1" style="width:100px;text-align:right;"></div>
+            </div>
+            <div class="detail-row" id="paymentRow">
+                <span class="detail-label">支付方式</span>
+                <span class="detail-value" id="paymentDisplay">油卡</span>
+                <div class="detail-value-input">
+                    <div class="radio-group" id="paymentMethod">
+                        <label class="radio-item active" data-value="oil_card" onclick="selectPayment('oil_card')"><span class="radio-circle"></span><span>油卡</span></label>
+                        <label class="radio-item" data-value="cash" onclick="selectPayment('cash')"><span class="radio-circle"></span><span>现金</span></label>
+                        <label class="radio-item" data-value="online" onclick="selectPayment('online')"><span class="radio-circle"></span><span>线上支付</span></label>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-row" id="oilCardRow">
+                <span class="detail-label">关联油卡</span>
+                <span class="detail-value" id="oilCardDisplay">CARD001</span>
+                <div class="detail-value-input"><input type="text" class="form-input" id="oilCardEdit" value="CARD001" style="width:140px;text-align:right;"></div>
             </div>
         </div>
 
         <!-- 照片 -->
         <div class="detail-card">
-            <div class="photo-section">
+            <div class="photo-section" id="odometerPhotoSection">
                 <div class="photo-title">仪表盘里程照片</div>
-                <div class="photo-grid">
+                <div class="photo-grid" id="odometerPhotos">
                     <div class="photo-item">
                         <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e8e8e8' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3E里程照片%3C/text%3E%3C/svg%3E" alt="里程照片">
                     </div>
                 </div>
             </div>
-            <div class="photo-section" style="margin-top:16px;">
-                <div class="photo-title">交易凭证</div>
-                <div class="photo-grid">
+            <div class="photo-section" id="receiptPhotoSection" style="margin-top:16px;">
+                <div class="photo-title" id="receiptTitle">交易凭证</div>
+                <div class="photo-grid" id="receiptPhotos">
                     <div class="photo-item">
                         <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e8e8e8' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3E交易凭证%3C/text%3E%3C/svg%3E" alt="交易凭证">
+                    </div>
+                </div>
+            </div>
+            <div class="photo-section" id="chargeDetailPhotoSection" style="margin-top:16px;display:none;">
+                <div class="photo-title">充电明细截图</div>
+                <div class="photo-grid" id="chargeDetailPhotos">
+                    <div class="photo-item">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e8e8e8' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3E充电明细%3C/text%3E%3C/svg%3E" alt="充电明细截图">
+                    </div>
+                </div>
+            </div>
+            <div class="photo-section" id="paymentPhotoSection" style="margin-top:16px;display:none;">
+                <div class="photo-title">支付照片</div>
+                <div class="photo-grid" id="paymentPhotos">
+                    <div class="photo-item">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e8e8e8' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='10'%3E支付照片%3C/text%3E%3C/svg%3E" alt="支付照片">
                     </div>
                 </div>
             </div>
@@ -323,84 +502,167 @@
     </div>
 
     <!-- 底部操作 -->
-    <div class="bottom-actions">
+    <div class="bottom-actions" id="bottomActions">
         <button class="btn-edit" onclick="editRecord()">编辑</button>
-        <button class="btn-delete" onclick="showDeleteConfirm()">删除</button>
+    </div>
+
+    <!-- 编辑模式底部操作 -->
+    <div class="bottom-actions" id="editActions" style="display:none;">
+        <button class="btn-edit" onclick="saveEdit()">保存</button>
+        <button class="btn-delete" onclick="cancelEdit()">取消</button>
     </div>
 
     <!-- 删除确认弹窗 -->
     <div class="confirm-modal" id="deleteModal">
         <div class="confirm-box">
             <div class="confirm-title">确认删除</div>
-            <div class="confirm-text">删除后无法恢复，是否确认删除该记录？</div>
+            <div class="confirm-text">确定删除该信息吗？删除后数据不可恢复。</div>
             <div class="confirm-buttons">
                 <button class="confirm-btn cancel" onclick="hideDeleteConfirm()">取消</button>
-                <button class="confirm-btn confirm" onclick="confirmDelete()">确认删除</button>
+                <button class="confirm-btn confirm" onclick="confirmDelete()">确定</button>
             </div>
         </div>
     </div>
 
     <!-- Toast -->
-    <div class="toast" id="toast">删除成功</div>
+    <div class="toast" id="toast"></div>
 
     <script>
         // 根据URL参数模拟不同记录类型
         const params = new URLSearchParams(window.location.search);
         const type = params.get('type') || 'fuel';
+        let isEditMode = false;
 
         function initDetail() {
             const tag = document.getElementById('typeTag');
+            const typeDisplay = document.getElementById('typeDisplay');
             const priceRow = document.getElementById('priceRow');
             const qtyRow = document.getElementById('qtyRow');
             const degreeRow = document.getElementById('degreeRow');
+            const paymentRow = document.getElementById('paymentRow');
+            const oilCardRow = document.getElementById('oilCardRow');
+            const chargeDetailSection = document.getElementById('chargeDetailPhotoSection');
+            const paymentSection = document.getElementById('paymentPhotoSection');
+            const receiptSection = document.getElementById('receiptPhotoSection');
             const priceDisplay = document.getElementById('priceDisplay');
             const qtyDisplay = document.getElementById('qtyDisplay');
+            const degreeDisplay = document.getElementById('degreeDisplay');
+            const paymentDisplay = document.getElementById('paymentDisplay');
             const amountDisplay = document.getElementById('amountDisplay');
             const plateDisplay = document.getElementById('plateDisplay');
+            const plateValue = document.getElementById('plateValue');
             const mileageDisplay = document.getElementById('mileageDisplay');
+            const priceLabel = document.getElementById('priceLabel');
+            const qtyLabel = document.getElementById('qtyLabel');
+            const receiptTitle = document.getElementById('receiptTitle');
+            const paymentMethod = document.getElementById('paymentMethod');
 
             if (type === 'fuel') {
                 tag.textContent = '加油';
                 tag.className = 'tag tag-fuel';
+                typeDisplay.textContent = '加油';
+                priceLabel.textContent = '加油单价';
+                qtyLabel.textContent = '加油量';
                 priceDisplay.textContent = '7.50 元/L';
                 qtyDisplay.textContent = '56.00 L';
                 amountDisplay.textContent = '¥420.00';
+                document.getElementById('amountValue').textContent = '¥420.00';
                 plateDisplay.textContent = '粤B·12345';
+                plateValue.textContent = '粤B·12345';
                 mileageDisplay.textContent = '12,580 km';
+                paymentDisplay.textContent = '油卡';
+                paymentMethod.innerHTML = `
+                    <label class="radio-item active" data-value="oil_card" onclick="selectPayment('oil_card')"><span class="radio-circle"></span><span>油卡</span></label>
+                    <label class="radio-item" data-value="cash" onclick="selectPayment('cash')"><span class="radio-circle"></span><span>现金</span></label>
+                    <label class="radio-item" data-value="online" onclick="selectPayment('online')"><span class="radio-circle"></span><span>线上支付</span></label>`;
                 degreeRow.style.display = 'none';
                 priceRow.style.display = 'flex';
                 qtyRow.style.display = 'flex';
+                paymentRow.style.display = 'none';
+                oilCardRow.style.display = 'flex';
+                receiptTitle.textContent = '交易凭证';
+                receiptSection.style.display = 'block';
+                chargeDetailSection.style.display = 'none';
+                paymentSection.style.display = 'none';
             } else if (type === 'water') {
                 tag.textContent = '加水';
                 tag.className = 'tag tag-water';
-                priceDisplay.textContent = '7.00 元/吨';
+                typeDisplay.textContent = '加水';
+                qtyLabel.textContent = '加水量';
                 qtyDisplay.textContent = '5.00 吨';
                 amountDisplay.textContent = '¥35.00';
+                document.getElementById('amountValue').textContent = '¥35.00';
                 plateDisplay.textContent = '粤B·12345';
+                plateValue.textContent = '粤B·12345';
                 mileageDisplay.textContent = '12,580 km';
+                paymentDisplay.textContent = '月付';
+                paymentMethod.innerHTML = `
+                    <label class="radio-item active" data-value="monthly" onclick="selectPayment('monthly')"><span class="radio-circle"></span><span>月付</span></label>
+                    <label class="radio-item" data-value="cash" onclick="selectPayment('cash')"><span class="radio-circle"></span><span>现金</span></label>
+                    <label class="radio-item" data-value="online" onclick="selectPayment('online')"><span class="radio-circle"></span><span>线上支付</span></label>`;
                 degreeRow.style.display = 'none';
-                priceRow.style.display = 'flex';
+                priceRow.style.display = 'none';
                 qtyRow.style.display = 'flex';
+                paymentRow.style.display = 'flex';
+                oilCardRow.style.display = 'none';
+                receiptTitle.textContent = '支付照片';
+                receiptSection.style.display = 'block';
+                chargeDetailSection.style.display = 'none';
+                paymentSection.style.display = 'none';
             } else if (type === 'charge') {
                 tag.textContent = '充电';
                 tag.className = 'tag tag-charge';
+                typeDisplay.textContent = '充电';
                 amountDisplay.textContent = '¥85.50';
+                document.getElementById('amountValue').textContent = '¥85.50';
                 plateDisplay.textContent = '粤B·67890';
+                plateValue.textContent = '粤B·67890';
                 mileageDisplay.textContent = '8,920 km';
+                paymentDisplay.textContent = '充电卡';
+                paymentMethod.innerHTML = `
+                    <label class="radio-item active" data-value="charge_card" onclick="selectPayment('charge_card')"><span class="radio-circle"></span><span>充电卡</span></label>
+                    <label class="radio-item" data-value="cash" onclick="selectPayment('cash')"><span class="radio-circle"></span><span>现金</span></label>
+                    <label class="radio-item" data-value="online" onclick="selectPayment('online')"><span class="radio-circle"></span><span>线上支付</span></label>`;
                 degreeRow.style.display = 'flex';
                 priceRow.style.display = 'none';
                 qtyRow.style.display = 'none';
+                paymentRow.style.display = 'flex';
+                oilCardRow.style.display = 'none';
+                receiptSection.style.display = 'none';
+                chargeDetailSection.style.display = 'block';
+                paymentSection.style.display = 'block';
             }
         }
 
+        function selectPayment(method) {
+            document.querySelectorAll('#paymentMethod .radio-item').forEach(el => {
+                el.classList.toggle('active', el.getAttribute('data-value') === method);
+            });
+        }
+
         function editRecord() {
-            if (type === 'fuel') {
-                window.location.href = 'fuel-report.html';
-            } else if (type === 'water') {
-                window.location.href = 'water-report.html';
-            } else if (type === 'charge') {
-                window.location.href = 'charge-report.html';
-            }
+            isEditMode = true;
+            document.getElementById('contentArea').classList.add('edit-mode');
+            document.getElementById('bottomActions').style.display = 'none';
+            document.getElementById('editActions').style.display = 'flex';
+            document.querySelector('.top-nav-right').style.display = 'none';
+        }
+
+        function saveEdit() {
+            isEditMode = false;
+            document.getElementById('contentArea').classList.remove('edit-mode');
+            document.getElementById('bottomActions').style.display = 'flex';
+            document.getElementById('editActions').style.display = 'none';
+            document.querySelector('.top-nav-right').style.display = 'block';
+            showToast('保存成功');
+        }
+
+        function cancelEdit() {
+            isEditMode = false;
+            document.getElementById('contentArea').classList.remove('edit-mode');
+            document.getElementById('bottomActions').style.display = 'flex';
+            document.getElementById('editActions').style.display = 'none';
+            document.querySelector('.top-nav-right').style.display = 'block';
         }
 
         function showDeleteConfirm() {
@@ -413,12 +675,22 @@
 
         function confirmDelete() {
             hideDeleteConfirm();
-            const toast = document.getElementById('toast');
-            toast.style.display = 'block';
+            showToast('删除成功');
             setTimeout(() => {
-                toast.style.display = 'none';
                 window.location.href = 'records.html';
             }, 1500);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        function showTimePicker() {
+            if (!isEditMode) return;
+            alert('时间选择器：支持选择日期和时间');
         }
 
         // 点击遮罩关闭弹窗

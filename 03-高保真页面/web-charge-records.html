@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>充电记录明细 - 车辆能耗成本管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            color: #000000d9;
+            font-size: 14px;
+            line-height: 22px;
+        }
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 224px;
+            height: 100vh;
+            background: #fff;
+            border-right: 1px solid #f0f0f0;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .sidebar-logo {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1677ff;
+        }
+        .sidebar-menu-group { padding: 8px 0; }
+        .sidebar-group-title {
+            padding: 8px 24px;
+            font-size: 12px;
+            color: #00000073;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sidebar-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 24px;
+            margin: 0 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #000000d9;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .sidebar-menu-item:hover {
+            background: #f5f5f5;
+            color: #1677ff;
+        }
+        .sidebar-menu-item.active {
+            background: #e6f4ff;
+            color: #1677ff;
+            font-weight: 500;
+        }
+        .sidebar-menu-item svg {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        /* 顶部导航 */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 224px;
+            right: 0;
+            height: 64px;
+            background: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 99;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .breadcrumb a { color: #00000073; text-decoration: none; }
+        .breadcrumb a:hover { color: #1677ff; }
+        .breadcrumb .current { color: #000000d9; font-weight: 500; }
+        .breadcrumb-sep { color: #00000040; }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            position: relative;
+        }
+        .user-info:hover { background: #f5f5f5; }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1677ff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .user-name { font-size: 14px; color: #000000d9; }
+        .user-dropdown-icon { color: #00000073; width: 16px; height: 16px; }
+        /* 主内容区 */
+        .main-content {
+            margin-left: 224px;
+            padding-top: 64px;
+            min-height: 100vh;
+        }
+        .content-wrapper { padding: 24px; }
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000000d9;
+            margin-bottom: 24px;
+            line-height: 30px;
+        }
+        /* 卡片 */
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        /* 筛选区 */
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-item .label {
+            font-size: 14px;
+            color: #000000d9;
+            white-space: nowrap;
+            min-width: max-content;
+        }
+        .filter-item .required::before {
+            content: '*';
+            color: #ff4d4f;
+            margin-right: 4px;
+        }
+        .filter-item input,
+        .filter-item select {
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #000000d9;
+            outline: none;
+            width: 180px;
+            transition: border-color 0.2s;
+        }
+        .filter-item input:focus,
+        .filter-item select:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+        }
+        .filter-item input::placeholder { color: #00000040; }
+        .filter-item .date-range {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-item .date-range input { width: 140px; }
+        .filter-item .date-range .sep { color: #00000073; }
+        /* 按钮 */
+        .btn {
+            height: 32px;
+            padding: 0 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            font-weight: 400;
+        }
+        .btn-primary {
+            background: #1677ff;
+            color: #fff;
+            border-color: #1677ff;
+        }
+        .btn-primary:hover { background: #4096ff; border-color: #4096ff; }
+        .btn-default {
+            background: #fff;
+            color: #000000d9;
+            border-color: #d9d9d9;
+        }
+        .btn-default:hover { color: #1677ff; border-color: #1677ff; }
+        .btn-danger {
+            background: #fff;
+            color: #ff4d4f;
+            border-color: #d9d9d9;
+        }
+        .btn-danger:hover { color: #ff7875; border-color: #ff7875; }
+        .btn-sm { height: 24px; padding: 0 8px; font-size: 12px; }
+        .btn-link {
+            background: transparent;
+            border: none;
+            color: #1677ff;
+            padding: 0 4px;
+            height: auto;
+        }
+        .btn-link:hover { color: #4096ff; text-decoration: underline; }
+        .btn-text {
+            background: transparent;
+            border: none;
+            color: #000000d9;
+            padding: 0 4px;
+            height: auto;
+        }
+        .btn-text:hover { color: #1677ff; }
+        .btn-text-danger {
+            background: transparent;
+            border: none;
+            color: #ff4d4f;
+            padding: 0 4px;
+            height: auto;
+        }
+        .btn-text-danger:hover { color: #ff7875; }
+        /* 操作按钮区 */
+        .action-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+        /* 表格 */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1300px;
+        }
+        th {
+            background: #fafafa;
+            font-weight: 500;
+            color: #000000d9;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #000000d9;
+            font-size: 14px;
+        }
+        tr:hover td { background: #fafafa; }
+        .text-left { text-align: left !important; }
+        .text-right { text-align: right !important; }
+        .text-center { text-align: center !important; }
+        .th-center { text-align: center !important; }
+        .th-right { text-align: right !important; }
+        /* 复选框 */
+        .checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #1677ff; }
+        /* 固定复选框列 */
+        .table-wrapper > table th:first-child,
+        .table-wrapper > table td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+        .table-wrapper > table th:first-child {
+            background: #fafafa;
+            z-index: 11;
+        }
+        .table-wrapper > table td:first-child {
+            background: #fff;
+        }
+        .table-wrapper > table tr:hover td:first-child {
+            background: #fafafa;
+        }
+        .table-wrapper > table th:first-child::after,
+        .table-wrapper > table td:first-child::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 30px;
+            transform: translateX(100%);
+            pointer-events: none;
+            box-shadow: inset 10px 0 8px -8px rgba(5, 5, 5, 0.06);
+        }
+        /* 缩略图 */
+        .thumb-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 4px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 1px solid #f0f0f0;
+            transition: transform 0.2s;
+        }
+        .thumb-img:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        /* 分页 */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px 0 0;
+            font-size: 14px;
+            color: #000000d9;
+        }
+        .pagination-bar select {
+            height: 32px;
+            padding: 0 8px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+        .pagination-bar .page-btn {
+            min-width: 32px;
+            height: 32px;
+            padding: 0 8px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #000000d9;
+        }
+        .pagination-bar .page-btn:hover:not(:disabled) { color: #1677ff; border-color: #1677ff; }
+        .pagination-bar .page-btn:disabled { color: #00000040; cursor: not-allowed; }
+        .pagination-bar .page-btn.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+        /* 弹窗遮罩 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 8px;
+            width: 600px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: modalIn 0.2s ease-out;
+        }
+        .modal-lg { width: 800px; }
+        .modal-sm { width: 420px; }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-title { font-size: 16px; font-weight: 500; color: #000000d9; }
+        .modal-close {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            color: #00000073;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .modal-close:hover { background: #f5f5f5; color: #000000d9; }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        /* 表单 */
+        .form-row { display: flex; align-items: center; margin-bottom: 16px; }
+        .form-row .form-label {
+            width: 120px;
+            text-align: right;
+            padding-right: 12px;
+            font-size: 14px;
+            color: #000000d9;
+            flex-shrink: 0;
+        }
+        .form-row .form-label.required::before { content: '*'; color: #ff4d4f; margin-right: 4px; }
+        .form-row .form-input { flex: 1; }
+        .form-row .form-input input,
+        .form-row .form-input select,
+        .form-row .form-input textarea {
+            width: 100%;
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #000000d9;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-row .form-input input:focus,
+        .form-row .form-input select:focus,
+        .form-row .form-input textarea:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+        }
+        .form-row .form-input input:disabled,
+        .form-row .form-input select:disabled { background: #f5f5f5; color: #00000040; cursor: not-allowed; }
+        .form-row .form-input input::placeholder { color: #00000040; }
+        .form-row .form-input .hint { font-size: 12px; color: #00000073; margin-top: 4px; }
+        .form-row .form-input .error { font-size: 12px; color: #ff4d4f; margin-top: 4px; }
+        /* 上传 */
+        .upload-area {
+            border: 2px dashed #d9d9d9;
+            border-radius: 6px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .upload-area:hover { border-color: #1677ff; }
+        .upload-area .upload-icon { font-size: 24px; color: #00000073; margin-bottom: 8px; }
+        .upload-area .upload-text { font-size: 14px; color: #000000d9; }
+        .upload-area .upload-hint { font-size: 12px; color: #00000073; margin-top: 4px; }
+        .upload-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .upload-preview-item {
+            width: 80px;
+            height: 80px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 1px solid #f0f0f0;
+            position: relative;
+        }
+        .upload-preview-item .remove {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 18px;
+            height: 18px;
+            background: #ff4d4f;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            border: 1px solid #f0f0f0;
+        }
+        .toast.show { display: flex; animation: toastIn 0.3s ease-out; }
+        .toast.success { border-left: 4px solid #52c41a; }
+        .toast.error { border-left: 4px solid #ff4d4f; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        /* 图片预览 */
+        .img-preview-modal .modal-body {
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+        .img-preview-modal img { max-width: 100%; max-height: 70vh; object-fit: contain; }
+        /* 导入区域 */
+        .import-template {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .import-template-text { font-size: 14px; color: #000000d9; }
+        .import-template-text span { color: #52c41a; font-weight: 500; }
+        /* 变更记录表格 */
+        .change-table th, .change-table td { padding: 10px 16px; }
+        /* 数字字体 */
+        .num-font { font-family: 'DIN', 'SF UI Text', Arial, sans-serif; }
+        /* 用户下拉 */
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 56px;
+            right: 16px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #f0f0f0;
+            min-width: 160px;
+            z-index: 101;
+        }
+        .user-dropdown.show { display: block; }
+        .user-dropdown-item {
+            padding: 10px 16px;
+            font-size: 14px;
+            color: #000000d9;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-dropdown-item:hover { background: #f5f5f5; color: #1677ff; }
+        .user-dropdown-divider { height: 1px; background: #f0f0f0; margin: 4px 0; }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2" style="margin-right:10px;flex-shrink:0;">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+            </svg>
+            车辆管理平台
+        </div>
+        <div class="sidebar-menu-group">
+            <div class="sidebar-group-title">能耗管理</div>
+            <a href="web-fuel-records.html" class="sidebar-menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                加油记录
+            </a>
+            <a href="web-water-records.html" class="sidebar-menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.15 0-6-2.38-6-6.2 0-2.34 1.78-5.23 6-8.92 4.22 3.69 6 6.58 6 8.92 0 3.82-2.85 6.2-6 6.2z"/></svg>
+                加水记录
+            </a>
+            <a href="web-charge-records.html" class="sidebar-menu-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+                充电记录
+            </a>
+        </div>
+    </aside>
+
+    <!-- 顶部导航 -->
+    <header class="top-header">
+        <div class="breadcrumb">
+            <a href="#">首页</a>
+            <span class="breadcrumb-sep">/</span>
+            <a href="#">能耗管理</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="current">充电记录</span>
+        </div>
+        <div class="user-info" onclick="toggleUserDropdown()">
+            <div class="user-avatar">张</div>
+            <span class="user-name">张经理</span>
+            <svg class="user-dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            <div class="user-dropdown" id="userDropdown">
+                <div class="user-dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    个人中心
+                </div>
+                <div class="user-dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    系统设置
+                </div>
+                <div class="user-dropdown-divider"></div>
+                <div class="user-dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    退出登录
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="content-wrapper">
+            <h1 class="page-title">充电记录明细</h1>
+
+            <!-- 筛选区 -->
+            <div class="card">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <span class="label">充电时间</span>
+                        <div class="date-range">
+                            <input type="date" id="startDate" value="2026-01-01">
+                            <span class="sep">至</span>
+                            <input type="date" id="endDate" value="2026-06-24">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <span class="label">车牌号</span>
+                        <input type="text" placeholder="请输入车牌号" id="plateFilter">
+                    </div>
+                    <div class="filter-item">
+                        <span class="label">车架号</span>
+                        <input type="text" placeholder="请输入车架号" id="vinFilter">
+                    </div>
+                    <div class="filter-item">
+                        <span class="label">上报人</span>
+                        <input type="text" placeholder="请输入上报人" id="reporterFilter">
+                    </div>
+                    <div class="filter-item">
+                        <span class="label">项目名称</span>
+                        <select id="projectFilter">
+                            <option value="">全部项目</option>
+                            <option value="深圳南山智慧环卫项目">深圳南山智慧环卫项目</option>
+                            <option value="广州天河环卫项目">广州天河环卫项目</option>
+                            <option value="北京朝阳清洁项目">北京朝阳清洁项目</option>
+                            <option value="上海浦东环卫项目">上海浦东环卫项目</option>
+                        </select>
+                    </div>
+                    <div class="filter-item" style="margin-left:auto;">
+                        <button class="btn btn-primary" onclick="handleSearch()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            查询
+                        </button>
+                        <button class="btn btn-default" onclick="handleReset()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 12"/><path d="M3 3v9h9"/></svg>
+                            重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-bar">
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    新增记录
+                </button>
+                <button class="btn btn-default" onclick="openImportModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    导入
+                </button>
+                <button class="btn btn-default" onclick="handleExport()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    导出
+                </button>
+            </div>
+
+            <!-- 表格区 -->
+            <div class="card" style="padding:0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="th-center" style="width:48px;"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                <th style="width:90px;">车牌号</th>
+                                <th style="width:140px;">车架号</th>
+                                <th style="width:120px;">所属项目</th>
+                                <th style="width:70px;">上报人</th>
+                                <th class="th-center" style="width:80px;">支付方式</th>
+                                <th class="th-center" style="width:100px;">充电时间</th>
+                                <th class="th-right" style="width:90px;">充电度数（度）</th>
+                                <th class="th-right" style="width:90px;">充电金额（元）</th>
+                                <th class="th-right" style="width:100px;">当前里程数（km）</th>
+                                <th class="th-center" style="width:80px;">仪表盘里程照片</th>
+                                <th class="th-center" style="width:80px;">充电截图明细</th>
+                                <th class="th-center" style="width:80px;">支付照片</th>
+                                <th class="th-center" style="width:160px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- JS填充 -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <div class="pagination-bar" style="padding:16px 24px;">
+                    <span>共 <span id="totalCount">0</span> 条</span>
+                    <select id="pageSize" onchange="changePageSize()">
+                        <option value="10" selected>10条/页</option>
+                        <option value="20">20条/页</option>
+                        <option value="50">50条/页</option>
+                        <option value="100">100条/页</option>
+                    </select>
+                    <button class="page-btn" onclick="prevPage()" id="prevBtn">&lt;</button>
+                    <button class="page-btn active" id="pageNum">1</button>
+                    <button class="page-btn" onclick="nextPage()" id="nextBtn">&gt;</button>
+                    <span>第 <span id="currentPage">1</span> / <span id="totalPages">1</span> 页</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 新增/编辑弹窗 -->
+    <div class="modal-overlay" id="formModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="formModalTitle">新增充电记录</span>
+                <span class="modal-close" onclick="closeModal('formModal')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <span class="form-label required">车牌号</span>
+                    <div class="form-input"><input type="text" id="formPlate" placeholder="请输入车牌号"></div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">车架号</span>
+                    <div class="form-input"><input type="text" id="formVin" placeholder="请输入车架号"></div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">所属项目</span>
+                    <div class="form-input">
+                        <select id="formProject">
+                            <option value="">请选择项目</option>
+                            <option value="深圳南山智慧环卫项目">深圳南山智慧环卫项目</option>
+                            <option value="广州天河环卫项目">广州天河环卫项目</option>
+                            <option value="北京朝阳清洁项目">北京朝阳清洁项目</option>
+                            <option value="上海浦东环卫项目">上海浦东环卫项目</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">上报人</span>
+                    <div class="form-input"><input type="text" id="formReporter" placeholder="请输入上报人"></div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">充电时间</span>
+                    <div class="form-input"><input type="datetime-local" id="formTime"></div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">充电度数（度）</span>
+                    <div class="form-input"><input type="number" id="formQuantity" placeholder="请输入充电度数" step="0.01"></div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">充电金额（元）</span>
+                    <div class="form-input">
+                        <input type="number" id="formAmount" placeholder="请输入充电金额" step="0.01">
+                        <div class="hint">支持手动调整</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">支付方式</span>
+                    <div class="form-input">
+                        <select id="formPaymentMethod">
+                            <option value="充电卡">充电卡</option>
+                            <option value="现金">现金</option>
+                            <option value="线上支付">线上支付</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">当前里程数（km）</span>
+                    <div class="form-input"><input type="number" id="formMileage" placeholder="请输入当前里程数"></div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">仪表盘里程照片</span>
+                    <div class="form-input">
+                        <div class="upload-area" onclick="document.getElementById('mileagePhoto').click()">
+                            <div class="upload-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </div>
+                            <div class="upload-text">点击上传仪表盘里程照片</div>
+                            <div class="upload-hint">支持 JPG、PNG 格式，上限3张</div>
+                        </div>
+                        <input type="file" id="mileagePhoto" style="display:none;" accept="image/*" multiple onchange="handleFileUpload(this, 'mileagePreview')">
+                        <div class="upload-preview" id="mileagePreview"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label">充电明细截图</span>
+                    <div class="form-input">
+                        <div class="upload-area" onclick="document.getElementById('chargeDetailPhoto').click()">
+                            <div class="upload-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </div>
+                            <div class="upload-text">点击上传充电明细截图</div>
+                            <div class="upload-hint">支持 JPG、PNG 格式，上限3张</div>
+                        </div>
+                        <input type="file" id="chargeDetailPhoto" style="display:none;" accept="image/*" multiple onchange="handleFileUpload(this, 'chargeDetailPreview')">
+                        <div class="upload-preview" id="chargeDetailPreview"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label">支付照片</span>
+                    <div class="form-input">
+                        <div class="upload-area" onclick="document.getElementById('voucherPhoto').click()">
+                            <div class="upload-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </div>
+                            <div class="upload-text">点击上传支付照片</div>
+                            <div class="upload-hint">支持 JPG、PNG 格式，上限3张</div>
+                        </div>
+                        <input type="file" id="voucherPhoto" style="display:none;" accept="image/*" multiple onchange="handleFileUpload(this, 'voucherPreview')">
+                        <div class="upload-preview" id="voucherPreview"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeModal('formModal')">取消</button>
+                <button class="btn btn-primary" onclick="submitForm()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <span class="modal-title">确认删除</span>
+                <span class="modal-close" onclick="closeModal('deleteModal')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:32px 24px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#faad14" stroke-width="2" style="margin-bottom:16px;">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <div style="font-size:16px;color:#000000d9;margin-bottom:8px;">确定删除该信息吗？</div>
+                <div style="font-size:14px;color:#00000073;">删除后数据不可恢复。</div>
+            </div>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="btn btn-default" onclick="closeModal('deleteModal')">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 变更记录弹窗 -->
+    <div class="modal-overlay" id="changeModal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <span class="modal-title">变更记录</span>
+                <span class="modal-close" onclick="closeModal('changeModal')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>
+            </div>
+            <div class="modal-body">
+                <div class="table-wrapper">
+                    <table class="change-table">
+                        <thead>
+                            <tr>
+                                <th>字段名称</th>
+                                <th>变更前</th>
+                                <th>变更后</th>
+                                <th>变更时间</th>
+                                <th>变更人</th>
+                            </tr>
+                        </thead>
+                        <tbody id="changeTableBody">
+                            <!-- JS填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeModal('changeModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入弹窗 -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">导入充电记录</span>
+                <span class="modal-close" onclick="closeModal('importModal')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>
+            </div>
+            <div class="modal-body">
+                <div class="import-template">
+                    <span class="import-template-text">请先下载<span>导入模板</span>，按模板格式填写后上传</span>
+                    <button class="btn btn-default btn-sm" onclick="showToast('模板下载成功', 'success')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        下载模板
+                    </button>
+                </div>
+                <div class="upload-area" onclick="document.getElementById('importFile').click()">
+                    <div class="upload-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="upload-text">点击上传或拖拽文件到此处</div>
+                    <div class="upload-hint">支持 .xlsx、.xls 格式，文件大小不超过 10MB</div>
+                </div>
+                <input type="file" id="importFile" style="display:none;" accept=".xlsx,.xls" onchange="handleImport()">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeModal('importModal')">取消</button>
+                <button class="btn btn-primary" onclick="submitImport()">确定导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出确认弹窗 -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <span class="modal-title">确认导出</span>
+                <span class="modal-close" onclick="closeModal('exportModal')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:32px 24px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2" style="margin-bottom:16px;">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <div style="font-size:16px;color:#000000d9;margin-bottom:8px;">是否导出所有数据？</div>
+                <div style="font-size:14px;color:#00000073;">将导出当前筛选条件下的全部数据</div>
+            </div>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="btn btn-default" onclick="closeModal('exportModal')">取消</button>
+                <button class="btn btn-primary" onclick="confirmExport()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片预览弹窗 -->
+    <div class="modal-overlay img-preview-modal" id="imgPreviewModal">
+        <div class="modal" style="width:auto;max-width:90vw;">
+            <div class="modal-header">
+                <span class="modal-title">图片预览</span>
+                <span class="modal-close" onclick="closeModal('imgPreviewModal')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </span>
+            </div>
+            <div class="modal-body">
+                <img id="previewImg" src="" alt="预览">
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg id="toastIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+        <span id="toastMsg"></span>
+    </div>
+
+    <script>
+        // 示例数据
+        const sampleData = [
+            { id: 1, plate: '粤B·12345', vin: 'LSVAG2180E2100001', project: '深圳南山智慧环卫项目', reporter: '王师傅', time: '2026-06-24 08:30', quantity: 45.50, amount: 85.50, paymentMethod: '充电卡', mileage: 15234, mileagePhoto: 'https://picsum.photos/seed/cm1/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd1/100/100', voucherPhoto: 'https://picsum.photos/seed/cv1/100/100' },
+            { id: 2, plate: '粤B·67890', vin: 'LSVAG2180E2100002', project: '深圳南山智慧环卫项目', reporter: '李师傅', time: '2026-06-23 17:45', quantity: 38.20, amount: 71.80, paymentMethod: '充电卡', mileage: 28901, mileagePhoto: 'https://picsum.photos/seed/cm2/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd2/100/100', voucherPhoto: 'https://picsum.photos/seed/cv2/100/100' },
+            { id: 3, plate: '粤A·11111', vin: 'LSVAG2180E2100003', project: '广州天河环卫项目', reporter: '张师傅', time: '2026-06-22 09:15', quantity: 52.00, amount: 97.60, paymentMethod: '现金', mileage: 45678, mileagePhoto: 'https://picsum.photos/seed/cm3/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd3/100/100', voucherPhoto: 'https://picsum.photos/seed/cv3/100/100' },
+            { id: 4, plate: '粤B·22222', vin: 'LSVAG2180E2100004', project: '深圳南山智慧环卫项目', reporter: '王师傅', time: '2026-06-21 14:20', quantity: 30.00, amount: 56.40, paymentMethod: '线上支付', mileage: 15800, mileagePhoto: 'https://picsum.photos/seed/cm4/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd4/100/100', voucherPhoto: 'https://picsum.photos/seed/cv4/100/100' },
+            { id: 5, plate: '京C·33333', vin: 'LSVAG2180E2100005', project: '北京朝阳清洁项目', reporter: '赵师傅', time: '2026-06-20 07:50', quantity: 60.80, amount: 114.24, paymentMethod: '充电卡', mileage: 32100, mileagePhoto: 'https://picsum.photos/seed/cm5/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd5/100/100', voucherPhoto: 'https://picsum.photos/seed/cv5/100/100' },
+            { id: 6, plate: '沪D·44444', vin: 'LSVAG2180E2100006', project: '上海浦东环卫项目', reporter: '钱师傅', time: '2026-06-19 16:30', quantity: 42.50, amount: 79.92, paymentMethod: '线上支付', mileage: 19876, mileagePhoto: 'https://picsum.photos/seed/cm6/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd6/100/100', voucherPhoto: 'https://picsum.photos/seed/cv6/100/100' },
+            { id: 7, plate: '粤A·55555', vin: 'LSVAG2180E2100007', project: '广州天河环卫项目', reporter: '孙师傅', time: '2026-06-18 11:00', quantity: 55.30, amount: 104.04, paymentMethod: '充电卡', mileage: 51234, mileagePhoto: 'https://picsum.photos/seed/cm7/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd7/100/100', voucherPhoto: 'https://picsum.photos/seed/cv7/100/100' },
+            { id: 8, plate: '粤B·66666', vin: 'LSVAG2180E2100008', project: '深圳南山智慧环卫项目', reporter: '周师傅', time: '2026-06-17 19:10', quantity: 48.00, amount: 90.24, paymentMethod: '现金', mileage: 8765, mileagePhoto: 'https://picsum.photos/seed/cm8/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd8/100/100', voucherPhoto: 'https://picsum.photos/seed/cv8/100/100' },
+            { id: 9, plate: '京C·77777', vin: 'LSVAG2180E2100009', project: '北京朝阳清洁项目', reporter: '吴师傅', time: '2026-06-16 08:00', quantity: 35.60, amount: 66.96, paymentMethod: '充电卡', mileage: 34567, mileagePhoto: 'https://picsum.photos/seed/cm9/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd9/100/100', voucherPhoto: 'https://picsum.photos/seed/cv9/100/100' },
+            { id: 10, plate: '沪D·88888', vin: 'LSVAG2180E2100010', project: '上海浦东环卫项目', reporter: '郑师傅', time: '2026-06-15 15:45', quantity: 50.00, amount: 94.00, paymentMethod: '线上支付', mileage: 23456, mileagePhoto: 'https://picsum.photos/seed/cm10/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd10/100/100', voucherPhoto: 'https://picsum.photos/seed/cv10/100/100' },
+            { id: 11, plate: '粤B·99999', vin: 'LSVAG2180E2100011', project: '深圳南山智慧环卫项目', reporter: '王师傅', time: '2026-06-14 10:20', quantity: 28.00, amount: 52.64, paymentMethod: '充电卡', mileage: 16200, mileagePhoto: 'https://picsum.photos/seed/cm11/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd11/100/100', voucherPhoto: 'https://picsum.photos/seed/cv11/100/100' },
+            { id: 12, plate: '粤A·00000', vin: 'LSVAG2180E2100012', project: '广州天河环卫项目', reporter: '陈师傅', time: '2026-06-13 13:30', quantity: 65.00, amount: 122.20, paymentMethod: '线上支付', mileage: 47890, mileagePhoto: 'https://picsum.photos/seed/cm12/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd12/100/100', voucherPhoto: 'https://picsum.photos/seed/cv12/100/100' },
+        ];
+
+        let currentData = [...sampleData];
+        let filteredData = [...sampleData];
+        let currentPage = 1;
+        let pageSize = 10;
+        let selectedIds = new Set();
+        let editingId = null;
+        let deletingId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTable();
+            updatePagination();
+        });
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredData.slice(start, end);
+
+            tbody.innerHTML = pageData.map(item => `
+                <tr>
+                    <td class="text-center"><input type="checkbox" class="checkbox" value="${item.id}" ${selectedIds.has(item.id) ? 'checked' : ''} onchange="toggleSelect(${item.id})"></td>
+                    <td class="text-left">${item.plate}</td>
+                    <td class="text-left">${item.vin}</td>
+                    <td class="text-left">${item.project}</td>
+                    <td class="text-left">${item.reporter}</td>
+                    <td class="text-center">${item.paymentMethod || '-'}</td>
+                    <td class="text-center">${item.time}</td>
+                    <td class="text-right num-font">${item.quantity.toFixed(2)}</td>
+                    <td class="text-right num-font">${item.amount.toFixed(2)}</td>
+                    <td class="text-right num-font">${item.mileage.toLocaleString()}</td>
+                    <td class="text-center"><img src="${item.mileagePhoto}" class="thumb-img" onclick="previewImage('${item.mileagePhoto}')" alt="里程照片"></td>
+                    <td class="text-center"><img src="${item.chargeDetailPhoto}" class="thumb-img" onclick="previewImage('${item.chargeDetailPhoto}')" alt="充电明细截图"></td>
+                    <td class="text-center"><img src="${item.voucherPhoto}" class="thumb-img" onclick="previewImage('${item.voucherPhoto}')" alt="支付照片"></td>
+                    <td class="text-center">
+                        <button class="btn btn-link btn-sm" onclick="openEditModal(${item.id})">编辑</button>
+                        <button class="btn btn-text-danger btn-sm" onclick="openDeleteModal(${item.id})">删除</button>
+                        <button class="btn btn-link btn-sm" onclick="openChangeModal(${item.id})">变更记录</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            const allChecked = pageData.length > 0 && pageData.every(item => selectedIds.has(item.id));
+            document.getElementById('selectAll').checked = allChecked;
+        }
+
+        function updatePagination() {
+            const total = filteredData.length;
+            const totalPages = Math.ceil(total / pageSize) || 1;
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('pageNum').textContent = currentPage;
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        }
+
+        function prevPage() {
+            if (currentPage > 1) { currentPage--; renderTable(); updatePagination(); }
+        }
+        function nextPage() {
+            const totalPages = Math.ceil(filteredData.length / pageSize);
+            if (currentPage < totalPages) { currentPage++; renderTable(); updatePagination(); }
+        }
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value);
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+        }
+
+        function toggleSelect(id) {
+            if (selectedIds.has(id)) { selectedIds.delete(id); } else { selectedIds.add(id); }
+            renderTable();
+        }
+        function toggleSelectAll() {
+            const checked = document.getElementById('selectAll').checked;
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredData.slice(start, end);
+            if (checked) { pageData.forEach(item => selectedIds.add(item.id)); }
+            else { pageData.forEach(item => selectedIds.delete(item.id)); }
+            renderTable();
+        }
+
+        function handleSearch() {
+            const plate = document.getElementById('plateFilter').value.trim();
+            const vin = document.getElementById('vinFilter').value.trim();
+            const reporter = document.getElementById('reporterFilter').value.trim();
+            const project = document.getElementById('projectFilter').value;
+            filteredData = sampleData.filter(item => {
+                if (plate && !item.plate.includes(plate)) return false;
+                if (vin && !item.vin.includes(vin)) return false;
+                if (reporter && !item.reporter.includes(reporter)) return false;
+                if (project && item.project !== project) return false;
+                return true;
+            });
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+            showToast('查询成功', 'success');
+        }
+        function handleReset() {
+            document.getElementById('plateFilter').value = '';
+            document.getElementById('vinFilter').value = '';
+            document.getElementById('reporterFilter').value = '';
+            document.getElementById('projectFilter').value = '';
+            filteredData = [...sampleData];
+            currentPage = 1;
+            selectedIds.clear();
+            renderTable();
+            updatePagination();
+            showToast('已重置', 'success');
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('formModalTitle').textContent = '新增充电记录';
+            document.getElementById('formPlate').value = '';
+            document.getElementById('formPlate').disabled = false;
+            document.getElementById('formVin').value = '';
+            document.getElementById('formVin').disabled = false;
+            document.getElementById('formProject').value = '';
+            document.getElementById('formProject').disabled = false;
+            document.getElementById('formReporter').value = '';
+            document.getElementById('formTime').value = '';
+            document.getElementById('formQuantity').value = '';
+            document.getElementById('formAmount').value = '';
+            document.getElementById('formPaymentMethod').value = '充电卡';
+            document.getElementById('formMileage').value = '';
+            document.getElementById('mileagePreview').innerHTML = '';
+            document.getElementById('chargeDetailPreview').innerHTML = '';
+            document.getElementById('voucherPreview').innerHTML = '';
+            openModal('formModal');
+        }
+
+        function openEditModal(id) {
+            const item = sampleData.find(d => d.id === id);
+            if (!item) return;
+            editingId = id;
+            document.getElementById('formModalTitle').textContent = '编辑充电记录';
+            document.getElementById('formPlate').value = item.plate;
+            document.getElementById('formPlate').disabled = true;
+            document.getElementById('formVin').value = item.vin;
+            document.getElementById('formVin').disabled = true;
+            document.getElementById('formProject').value = item.project;
+            document.getElementById('formProject').disabled = true;
+            document.getElementById('formReporter').value = item.reporter;
+            document.getElementById('formTime').value = item.time.replace(' ', 'T');
+            document.getElementById('formQuantity').value = item.quantity;
+            document.getElementById('formAmount').value = item.amount;
+            document.getElementById('formPaymentMethod').value = item.paymentMethod || '充电卡';
+            document.getElementById('formMileage').value = item.mileage;
+            document.getElementById('mileagePreview').innerHTML = `<img src="${item.mileagePhoto}" class="upload-preview-item">`;
+            document.getElementById('chargeDetailPreview').innerHTML = item.chargeDetailPhoto ? `<img src="${item.chargeDetailPhoto}" class="upload-preview-item">` : '';
+            document.getElementById('voucherPreview').innerHTML = `<img src="${item.voucherPhoto}" class="upload-preview-item">`;
+            openModal('formModal');
+        }
+
+        function submitForm() {
+            closeModal('formModal');
+            if (editingId) { showToast('编辑成功', 'success'); }
+            else { showToast('新增成功', 'success'); }
+        }
+
+        function openDeleteModal(id) { deletingId = id; openModal('deleteModal'); }
+        function confirmDelete() {
+            closeModal('deleteModal');
+            if (deletingId) {
+                filteredData = filteredData.filter(d => d.id !== deletingId);
+                sampleData.splice(sampleData.findIndex(d => d.id === deletingId), 1);
+                renderTable();
+                updatePagination();
+                showToast('删除成功', 'success');
+                deletingId = null;
+            }
+        }
+
+        function openChangeModal(id) {
+            const tbody = document.getElementById('changeTableBody');
+            tbody.innerHTML = `
+                <tr><td>充电度数（度）</td><td>42.00</td><td>45.50</td><td>2026-06-24 10:30</td><td>张经理</td></tr>
+                <tr><td>充电金额（元）</td><td>78.96</td><td>85.50</td><td>2026-06-24 10:30</td><td>张经理</td></tr>
+                <tr><td>当前里程数（km）</td><td>15000</td><td>15234</td><td>2026-06-20 14:15</td><td>李经理</td></tr>
+            `;
+            openModal('changeModal');
+        }
+
+        function openImportModal() { openModal('importModal'); }
+        function handleImport() { showToast('文件已选择，请点击确定导入', 'success'); }
+        function submitImport() { closeModal('importModal'); showToast('导入成功', 'success'); }
+
+        function handleExport() {
+            if (selectedIds.size > 0) { showToast('已导出选中数据', 'success'); }
+            else { openModal('exportModal'); }
+        }
+        function confirmExport() { closeModal('exportModal'); showToast('导出成功', 'success'); }
+
+        function previewImage(src) { document.getElementById('previewImg').src = src; openModal('imgPreviewModal'); }
+
+        function handleFileUpload(input, previewId) {
+            const files = input.files;
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = '';
+            for (let i = 0; i < Math.min(files.length, 3); i++) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML += `<div style="position:relative;display:inline-block;"><img src="${e.target.result}" class="upload-preview-item"><span class="remove" onclick="this.parentElement.remove()">×</span></div>`;
+                };
+                reader.readAsDataURL(files[i]);
+            }
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+            toast.className = 'toast show ' + type;
+            toastMsg.textContent = msg;
+            if (type === 'success') {
+                toastIcon.innerHTML = '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>';
+                toastIcon.setAttribute('stroke', '#52c41a');
+            } else {
+                toastIcon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+                toastIcon.setAttribute('stroke', '#ff4d4f');
+            }
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function toggleUserDropdown() { document.getElementById('userDropdown').classList.toggle('show'); }
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.user-info')) { document.getElementById('userDropdown').classList.remove('show'); }
+        });
+    </script>
+</body>
+</html>

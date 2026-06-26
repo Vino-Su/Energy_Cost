@@ -5,22 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>加水上报 - 酷哇APP</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="components/app-common.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            margin: 0 auto;
+            max-width: 430px;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f5f5;
             width: 100%;
-            max-width: 430px;
-            margin: 0 auto;
+            margin: 0;
             min-height: 100vh;
             padding-bottom: 80px;
         }
         .top-nav {
             position: fixed;
             top: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            margin: 0 auto;
             width: 100%;
             max-width: 430px;
             height: 44px;
@@ -54,6 +61,7 @@
             display: flex;
             align-items: center;
             gap: 2px;
+            cursor: pointer;
         }
         .content-area {
             padding-top: 44px;
@@ -99,12 +107,24 @@
             border-color: #1677ff;
             box-shadow: 0 0 0 2px #e6f4ff;
         }
+        .form-input.error {
+            border-color: #ff4d4f;
+        }
         .form-input:read-only {
             background: #f5f5f5;
             color: #00000073;
         }
         .form-input::placeholder {
             color: #00000040;
+        }
+        .error-text {
+            font-size: 12px;
+            color: #ff4d4f;
+            margin-top: 4px;
+            display: none;
+        }
+        .error-text.show {
+            display: block;
         }
         .select-trigger {
             width: 100%;
@@ -128,6 +148,44 @@
         .select-trigger .placeholder {
             color: #00000040;
         }
+        .form-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .form-label-row .form-label {
+            margin-bottom: 0;
+        }
+        .vehicle-toggle {
+            display: inline-flex;
+            gap: 8px;
+        }
+        .vehicle-toggle-btn {
+            height: 28px;
+            padding: 0 14px;
+            background: #ffffff;
+            border: 1px solid #e8e8e8;
+            border-radius: 14px;
+            font-size: 13px;
+            color: #00000073;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .vehicle-toggle-btn.active {
+            background: #e6f4ff;
+            color: #1677ff;
+            border-color: #1677ff;
+            font-weight: 500;
+        }
+        .vehicle-hint {
+            font-size: 12px;
+            color: #00000073;
+            margin-top: 4px;
+        }
+        .vehicle-hint.error-hint {
+            color: #ff4d4f;
+        }
         .upload-area {
             width: 96px;
             height: 96px;
@@ -140,6 +198,7 @@
             cursor: pointer;
             background: #fafafa;
             transition: border-color 0.2s;
+            flex-shrink: 0;
         }
         .upload-area:active {
             border-color: #1677ff;
@@ -161,7 +220,7 @@
             border-radius: 8px;
             overflow: hidden;
             position: relative;
-            display: none;
+            flex-shrink: 0;
         }
         .upload-preview img {
             width: 100%;
@@ -183,11 +242,17 @@
             font-size: 12px;
             cursor: pointer;
         }
+        .upload-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
         .bottom-submit {
             position: fixed;
             bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            margin: 0 auto;
             width: 100%;
             max-width: 430px;
             padding: 12px 16px 16px;
@@ -276,12 +341,106 @@
             color: #1677ff;
             background: #e6f4ff;
         }
+        .picker-warning {
+            padding: 10px 16px;
+            background: #fffbe6;
+            color: #faad14;
+            font-size: 12px;
+            border-bottom: 1px solid #f5f5f5;
+        }
         .input-row {
             display: flex;
             gap: 12px;
         }
         .input-row .form-group {
             flex: 1;
+        }
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #000000d9;
+        }
+        .radio-circle {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .radio-item.active .radio-circle {
+            border-color: #1677ff;
+            background: #1677ff;
+        }
+        .radio-item.active .radio-circle::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+        }
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+            max-width: 430px;
+            margin: 0 auto;
+            align-items: center;
+            justify-content: center;
+        }
+        .confirm-box {
+            width: 280px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        .confirm-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+            margin-bottom: 8px;
+        }
+        .confirm-text {
+            font-size: 14px;
+            color: #00000073;
+            margin-bottom: 20px;
+        }
+        .confirm-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .confirm-btn {
+            flex: 1;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+        .confirm-btn.cancel {
+            background: #f5f5f5;
+            color: #000000d9;
+        }
+        .confirm-btn.confirm {
+            background: #1677ff;
+            color: #ffffff;
         }
     </style>
 </head>
@@ -293,32 +452,68 @@
             <span>返回</span>
         </a>
         <div class="top-nav-title">加水上报</div>
-        <div class="top-nav-right" onclick="showProjectPicker()">
-            <span>项目切换</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        <div class="project-switcher" role="button" aria-label="切换项目" onclick="CityStewardCommon.openProjectPicker()">
+            <span class="project-switcher-text">选择项目</span>
+            <svg class="project-switcher-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </div>
     </div>
 
     <div class="content-area">
-        <!-- 项目信息 -->
-        <div class="form-card">
-            <div style="font-size:13px;color:#00000073;margin-bottom:4px;">当前项目</div>
-            <div style="font-size:15px;color:#000000d9;font-weight:500;" id="currentProject">深圳南山智慧环卫项目</div>
-        </div>
-
         <!-- 表单 -->
         <div class="form-card">
+            <!-- 车辆信息 -->
             <div class="form-group">
-                <label class="form-label"><span class="required">*</span>车牌号</label>
-                <div class="select-trigger" onclick="showPlatePicker()">
-                    <span id="plateText">粤B·12345</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                <div class="form-label-row">
+                    <label class="form-label"><span class="required">*</span><span id="vehicleLabelText">车牌号</span></label>
+                    <div class="vehicle-toggle">
+                        <button class="vehicle-toggle-btn active" id="btnPlate" onclick="switchVehicleMode('plate')">车牌号</button>
+                        <button class="vehicle-toggle-btn" id="btnVin" onclick="switchVehicleMode('vin')">车架号</button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label class="form-label"><span class="required">*</span>VIN码</label>
-                <input type="text" class="form-input" id="vinCode" value="LSVAG2180E2100001" readonly>
+                <div id="plateInputWrap">
+                    <div class="scan-input-wrap">
+                        <input type="text" class="form-input scan-input" id="plateInput" placeholder="请输入车牌号" value="" onfocus="showPlateHistory()" oninput="showPlateHistory()" onblur="hidePlateHistoryDelay()">
+                        <div class="scan-btn" role="button" aria-label="扫码识别车牌号" onclick="CityStewardCommon.openScan('plate', function(result){ document.getElementById('plateInput').value = result; checkPlate(); })">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                                <rect x="7" y="7" width="3" height="3"/>
+                                <rect x="14" y="7" width="3" height="3"/>
+                                <rect x="7" y="14" width="3" height="3"/>
+                                <rect x="14" y="14" width="10" height="3"/>
+                                <rect x="14" y="18" width="10" height="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="history-list" id="plateHistoryList" style="display:none;"></div>
+                    <div class="vehicle-hint" id="plateHint"></div>
+                    <div class="error-text" id="plateError"></div>
+                </div>
+
+                <div id="vinInputWrap" style="display:none;">
+                    <div class="scan-input-wrap">
+                        <input type="text" class="form-input scan-input" id="vinInput" placeholder="请输入车架号" value="" onfocus="showVinHistory()" oninput="showVinHistory()" onblur="hideVinHistoryDelay()">
+                        <div class="scan-btn" role="button" aria-label="扫码识别车架号" onclick="CityStewardCommon.openScan('vin', function(result){ document.getElementById('vinInput').value = result; checkVin(); })">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                                <rect x="7" y="7" width="3" height="3"/>
+                                <rect x="14" y="7" width="3" height="3"/>
+                                <rect x="7" y="14" width="3" height="3"/>
+                                <rect x="14" y="14" width="10" height="3"/>
+                                <rect x="14" y="18" width="10" height="3"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="history-list" id="vinHistoryList" style="display:none;"></div>
+                    <div class="vehicle-hint" id="vinHint"></div>
+                    <div class="error-text" id="vinError"></div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -329,58 +524,67 @@
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>加水时间</label>
                 <div class="select-trigger" onclick="showTimePicker()">
-                    <span id="waterTime">2026-06-22 10:30</span>
+                    <span id="waterTime" class="placeholder">请选择时间</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
             </div>
 
-            <div class="input-row">
-                <div class="form-group">
-                    <label class="form-label"><span class="required">*</span>加水单价（元/吨）</label>
-                    <input type="number" class="form-input" id="unitPrice" placeholder="请输入单价" value="7.00" step="0.01" oninput="calcAmount()">
-                </div>
-                <div class="form-group">
-                    <label class="form-label"><span class="required">*</span>加水量（吨）</label>
-                    <input type="number" class="form-input" id="quantity" placeholder="请输入加水量" value="5" step="0.01" oninput="calcAmount()">
-                </div>
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>加水量（吨）</label>
+                <input type="number" class="form-input" id="quantity" placeholder="请输入加水量" value="" step="0.01" onblur="validateNumber(this, '加水量')">
+                <div class="error-text" id="quantityError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>加水金额（元）</label>
-                <input type="number" class="form-input" id="totalAmount" placeholder="自动计算" value="35.00" step="0.01">
+                <input type="number" class="form-input" id="totalAmount" placeholder="请输入加水金额" value="" step="0.01" onblur="validateNumber(this, '金额')">
+                <div class="error-text" id="totalAmountError"></div>
             </div>
 
             <div class="form-group">
-                <label class="form-label"><span class="required">*</span>当前里程数（km）</label>
-                <input type="number" class="form-input" placeholder="请输入当前里程数" value="12580">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label"><span class="required">*</span>仪表盘里程照片</label>
-                <div style="display:flex;gap:12px;">
-                    <div class="upload-area" id="odometerUpload" onclick="simulateUpload('odometer')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        <span>拍照上传</span>
-                    </div>
-                    <div class="upload-preview" id="odometerPreview">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e6f4ff' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%231677ff' font-size='12'%3E里程照片%3C/text%3E%3C/svg%3E" alt="里程照片">
-                        <div class="delete-btn" onclick="deleteUpload('odometer')">×</div>
-                    </div>
+                <label class="form-label"><span class="required">*</span>支付方式</label>
+                <div class="radio-group" id="paymentMethod">
+                    <label class="radio-item active" data-value="monthly" onclick="selectPayment('monthly')">
+                        <span class="radio-circle"></span>
+                        <span>月付</span>
+                    </label>
+                    <label class="radio-item" data-value="cash" onclick="selectPayment('cash')">
+                        <span class="radio-circle"></span>
+                        <span>现金</span>
+                    </label>
+                    <label class="radio-item" data-value="online" onclick="selectPayment('online')">
+                        <span class="radio-circle"></span>
+                        <span>线上支付</span>
+                    </label>
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label"><span class="required">*</span>交易凭证</label>
-                <div style="display:flex;gap:12px;">
-                    <div class="upload-area" id="receiptUpload" onclick="simulateUpload('receipt')">
+                <label class="form-label">当前里程数（km）</label>
+                <input type="number" class="form-input" id="mileage" placeholder="请输入当前里程数" value="" onblur="checkMileage()">
+                <div class="error-text" id="mileageError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">仪表盘里程照片</label>
+                <div class="upload-row" id="odometerRow">
+                    <div class="upload-area" id="odometerUpload" onclick="simulateCameraUpload('odometer')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                         <span>拍照上传</span>
                     </div>
-                    <div class="upload-preview" id="receiptPreview">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%23e6f4ff' width='96' height='96'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%231677ff' font-size='12'%3E交易凭证%3C/text%3E%3C/svg%3E" alt="交易凭证">
-                        <div class="delete-btn" onclick="deleteUpload('receipt')">×</div>
+                </div>
+                <div class="error-text" id="odometerError"></div>
+            </div>
+
+            <div class="form-group" id="paymentPhotoGroup" style="display:none;">
+                <label class="form-label"><span class="required">*</span>支付照片</label>
+                <div class="upload-row" id="paymentRow">
+                    <div class="upload-area" id="paymentUpload" onclick="showUploadOptions('payment')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        <span>上传</span>
                     </div>
                 </div>
+                <div class="error-text" id="paymentError"></div>
             </div>
         </div>
     </div>
@@ -391,109 +595,406 @@
     </div>
 
     <!-- Toast -->
-    <div class="toast" id="toast">提交成功</div>
+    <div class="toast" id="toast"></div>
 
-    <!-- 车牌选择器 -->
-    <div class="picker-overlay" id="platePicker" onclick="closePicker(event, 'platePicker')">
+    <!-- 上传方式选择 -->
+    <div class="picker-overlay" id="uploadPicker" onclick="closePicker(event, 'uploadPicker')">
         <div class="picker-panel" onclick="event.stopPropagation()">
             <div class="picker-header">
-                <span class="picker-title">选择车牌号</span>
-                <span class="picker-close" onclick="closePickerDirect('platePicker')">关闭</span>
+                <span class="picker-title">选择上传方式</span>
+                <span class="picker-close" onclick="closePickerDirect('uploadPicker')">关闭</span>
             </div>
-            <div class="picker-option selected" onclick="selectPlate('粤B·12345', 'LSVAG2180E2100001')">
-                <span>粤B·12345</span>
-                <span style="color:#1677ff;font-size:12px;">✓</span>
+            <div class="picker-option" onclick="selectUploadType('camera')">
+                <span>拍照上传</span>
             </div>
-            <div class="picker-option" onclick="selectPlate('粤B·67890', 'LSVAG2180E2100002')">
-                <span>粤B·67890</span>
-                <span></span>
-            </div>
-            <div class="picker-option" onclick="selectPlate('粤B·54321', 'LSVAG2180E2100003')">
-                <span>粤B·54321</span>
-                <span></span>
-            </div>
-            <div class="picker-option" onclick="selectPlate('粤B·11111', 'LSVAG2180E2100004')">
-                <span>粤B·11111</span>
-                <span></span>
+            <div class="picker-option" onclick="selectUploadType('local')">
+                <span>本地上传</span>
             </div>
             <div style="height:20px;background:#fff;"></div>
         </div>
     </div>
 
-    <!-- 项目选择器 -->
-    <div class="picker-overlay" id="projectPicker" onclick="closePicker(event, 'projectPicker')">
+    <!-- 时间选择器 -->
+    <div class="picker-overlay" id="timePicker" onclick="closePicker(event, 'timePicker')">
         <div class="picker-panel" onclick="event.stopPropagation()">
             <div class="picker-header">
-                <span class="picker-title">选择项目</span>
-                <span class="picker-close" onclick="closePickerDirect('projectPicker')">关闭</span>
+                <span class="picker-title">选择加水时间</span>
+                <span class="picker-close" onclick="closePickerDirect('timePicker')">关闭</span>
             </div>
-            <div class="picker-option selected" onclick="selectProject('深圳南山智慧环卫项目')">
-                <span>深圳南山智慧环卫项目</span>
-                <span style="color:#1677ff;font-size:12px;">✓</span>
+            <div style="padding:16px;background:#fff;">
+                <input type="datetime-local" class="form-input" id="waterTimeInput" style="width:100%;">
             </div>
-            <div class="picker-option" onclick="selectProject('广州天河环卫项目')">
-                <span>广州天河环卫项目</span>
-                <span></span>
+            <div style="padding: 12px 16px 20px; display:flex; gap:12px; background:#fff;">
+                <button class="confirm-btn cancel" style="flex:1;" onclick="closePickerDirect('timePicker')">取消</button>
+                <button class="confirm-btn confirm" style="flex:1;" onclick="confirmTimePicker()">确定</button>
             </div>
-            <div class="picker-option" onclick="selectProject('北京朝阳清洁项目')">
-                <span>北京朝阳清洁项目</span>
-                <span></span>
-            </div>
-            <div class="picker-option" onclick="selectProject('上海浦东环卫项目')">
-                <span>上海浦东环卫项目</span>
-                <span></span>
-            </div>
-            <div style="height:20px;background:#fff;"></div>
         </div>
     </div>
 
     <script>
-        function calcAmount() {
-            const price = parseFloat(document.getElementById('unitPrice').value) || 0;
-            const qty = parseFloat(document.getElementById('quantity').value) || 0;
-            const amount = (price * qty).toFixed(2);
-            document.getElementById('totalAmount').value = amount;
+        // 模拟 basis 车辆数据
+        const vehicleData = {
+            '粤B·12345': 'LSVAG2180E2100001',
+            '粤B·67890': 'LSVAG2180E2100002',
+            '粤B·54321': 'LSVAG2180E2100003',
+            '粤B·11111': 'LSVAG2180E2100004'
+        };
+        const vinToPlate = {};
+        for (const [plate, vin] of Object.entries(vehicleData)) {
+            vinToPlate[vin] = plate;
         }
-        function showPlatePicker() {
-            document.getElementById('platePicker').style.display = 'block';
+        // 模拟上次里程数
+        const lastMileage = {
+            '粤B·12345': 12000,
+            '粤B·67890': 8500,
+            '粤B·54321': 15000,
+            '粤B·11111': 9000
+        };
+
+        // 用户历史填报记录
+        const plateHistory = ['粤B·12345', '粤B·67890', '粤B·54321', '粤B·11111', '沪A·88888'];
+        const vinHistory = ['LSVAG2180E2100001', 'LSVAG2180E2100002', 'LSVAG2180E2100003', 'LSVAG2180E2100004', 'LSVHJ2180E2200001'];
+
+        let currentVehicleMode = 'plate';
+        let currentUploadType = null;
+        let currentPayment = 'monthly';
+        let odometerPhotos = [];
+        let paymentPhotos = [];
+
+        function switchVehicleMode(mode) {
+            currentVehicleMode = mode;
+            document.getElementById('btnPlate').classList.toggle('active', mode === 'plate');
+            document.getElementById('btnVin').classList.toggle('active', mode === 'vin');
+            document.getElementById('plateInputWrap').style.display = mode === 'plate' ? 'block' : 'none';
+            document.getElementById('vinInputWrap').style.display = mode === 'vin' ? 'block' : 'none';
+            document.getElementById('vehicleLabelText').textContent = mode === 'plate' ? '车牌号' : '车架号';
+            clearError('plate');
+            clearError('vin');
+            document.getElementById('plateHistoryList').style.display = 'none';
+            document.getElementById('vinHistoryList').style.display = 'none';
         }
-        function showProjectPicker() {
-            document.getElementById('projectPicker').style.display = 'block';
+
+        function showPlateHistory() {
+            const input = document.getElementById('plateInput');
+            const list = document.getElementById('plateHistoryList');
+            const keyword = input.value.trim();
+            const filtered = keyword ? plateHistory.filter(p => p.includes(keyword)) : plateHistory;
+            if (filtered.length === 0) {
+                list.style.display = 'none';
+                return;
+            }
+            list.innerHTML = filtered.map(plate => {
+                const vin = vehicleData[plate];
+                const hint = vin ? '对应车架号：' + vin : '此车牌暂无对应车架号';
+                return '<div class="history-item" onclick="selectPlateHistory(\'' + plate + '\')">' +
+                    '<span class="history-text">' + plate + '</span>' +
+                    '<span class="history-hint">' + hint + '</span>' +
+                    '</div>';
+            }).join('');
+            list.style.display = 'block';
         }
+
+        function selectPlateHistory(plate) {
+            document.getElementById('plateInput').value = plate;
+            document.getElementById('plateHistoryList').style.display = 'none';
+            checkPlate();
+        }
+
+        function hidePlateHistoryDelay() {
+            setTimeout(() => {
+                document.getElementById('plateHistoryList').style.display = 'none';
+                checkPlate();
+            }, 200);
+        }
+
+        function showVinHistory() {
+            const input = document.getElementById('vinInput');
+            const list = document.getElementById('vinHistoryList');
+            const keyword = input.value.trim();
+            const filtered = keyword ? vinHistory.filter(v => v.includes(keyword)) : vinHistory;
+            if (filtered.length === 0) {
+                list.style.display = 'none';
+                return;
+            }
+            list.innerHTML = filtered.map(vin => {
+                const plate = vinToPlate[vin];
+                const hint = plate ? '对应车牌号：' + plate : '此车架暂无对应车牌号';
+                return '<div class="history-item" onclick="selectVinHistory(\'' + vin + '\')">' +
+                    '<span class="history-text">' + vin + '</span>' +
+                    '<span class="history-hint">' + hint + '</span>' +
+                    '</div>';
+            }).join('');
+            list.style.display = 'block';
+        }
+
+        function selectVinHistory(vin) {
+            document.getElementById('vinInput').value = vin;
+            document.getElementById('vinHistoryList').style.display = 'none';
+            checkVin();
+        }
+
+        function hideVinHistoryDelay() {
+            setTimeout(() => {
+                document.getElementById('vinHistoryList').style.display = 'none';
+                checkVin();
+            }, 200);
+        }
+
+        function checkPlate() {
+            const plate = document.getElementById('plateInput').value.trim();
+            const hint = document.getElementById('plateHint');
+            const error = document.getElementById('plateError');
+            if (!plate) {
+                hint.textContent = '';
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+                return;
+            }
+            if (vehicleData[plate]) {
+                hint.textContent = '对应车架号：' + vehicleData[plate];
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+            } else {
+                hint.textContent = '此车牌暂无对应车架号';
+                hint.className = 'vehicle-hint error-hint';
+                error.textContent = '车牌号不存在或不属于当前项目';
+                error.classList.add('show');
+            }
+        }
+
+        function checkVin() {
+            const vin = document.getElementById('vinInput').value.trim();
+            const hint = document.getElementById('vinHint');
+            const error = document.getElementById('vinError');
+            if (!vin) {
+                hint.textContent = '';
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+                return;
+            }
+            if (vinToPlate[vin]) {
+                hint.textContent = '对应车牌号：' + vinToPlate[vin];
+                hint.className = 'vehicle-hint';
+                error.textContent = '';
+                error.classList.remove('show');
+            } else {
+                hint.textContent = '此车架暂无对应车牌号';
+                hint.className = 'vehicle-hint error-hint';
+                error.textContent = '车架号不存在或不属于当前项目';
+                error.classList.add('show');
+            }
+        }
+
+        function selectPayment(method) {
+            currentPayment = method;
+            document.querySelectorAll('#paymentMethod .radio-item').forEach(el => {
+                el.classList.toggle('active', el.getAttribute('data-value') === method);
+            });
+            // 月付和现金时不展示支付照片，线上支付时展示
+            const showPaymentPhoto = method === 'online';
+            document.getElementById('paymentPhotoGroup').style.display = showPaymentPhoto ? 'block' : 'none';
+            if (!showPaymentPhoto) {
+                document.getElementById('paymentError').textContent = '';
+                document.getElementById('paymentError').classList.remove('show');
+            }
+        }
+
+        function validateNumber(input, label) {
+            const value = parseFloat(input.value);
+            const id = input.id + 'Error';
+            const el = document.getElementById(id);
+            if (input.value && (isNaN(value) || value < 0)) {
+                el.textContent = label + '必须为非负数';
+                el.classList.add('show');
+                input.classList.add('error');
+            } else {
+                el.textContent = '';
+                el.classList.remove('show');
+                input.classList.remove('error');
+            }
+        }
+
+        function checkMileage() {
+            const input = document.getElementById('mileage');
+            const value = parseFloat(input.value) || 0;
+            const error = document.getElementById('mileageError');
+            const plate = document.getElementById('plateInput').value.trim();
+            const last = lastMileage[plate] || 0;
+            if (value > 0 && last > 0 && value < last) {
+                error.textContent = '里程不能低于该车辆上次已填报的里程数（' + last + ' km）';
+                error.classList.add('show');
+                input.classList.add('error');
+            } else {
+                error.textContent = '';
+                error.classList.remove('show');
+                input.classList.remove('error');
+            }
+        }
+
+        function clearError(type) {
+            if (type === 'plate') {
+                document.getElementById('plateError').textContent = '';
+                document.getElementById('plateError').classList.remove('show');
+                document.getElementById('plateInput').classList.remove('error');
+            } else {
+                document.getElementById('vinError').textContent = '';
+                document.getElementById('vinError').classList.remove('show');
+                document.getElementById('vinInput').classList.remove('error');
+            }
+        }
+
+        // 项目切换后重置表单（由 app-common.js 的 projectChanged 事件调用）
+        function resetReportForm() {
+            document.getElementById('plateInput').value = '';
+            document.getElementById('vinInput').value = '';
+            document.getElementById('plateHint').textContent = '';
+            document.getElementById('vinHint').textContent = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('totalAmount').value = '';
+            document.getElementById('mileage').value = '';
+            selectPayment('monthly');
+            clearAllPhotos();
+            clearAllErrors();
+        }
+        function clearAllPhotos() {
+            odometerPhotos = [];
+            paymentPhotos = [];
+            renderPhotos('odometer');
+            renderPhotos('payment');
+        }
+        function clearAllErrors() {
+            document.querySelectorAll('.error-text').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
+            document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+        }
+
+        function showTimePicker() {
+            const timeEl = document.getElementById('waterTime');
+            const input = document.getElementById('waterTimeInput');
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const defaultValue = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            input.value = timeEl.textContent && timeEl.textContent !== '请选择时间' ? timeEl.getAttribute('data-value') || defaultValue : defaultValue;
+            document.getElementById('timePicker').style.display = 'block';
+        }
+
+        function confirmTimePicker() {
+            const input = document.getElementById('waterTimeInput');
+            const value = input.value;
+            if (!value) {
+                showToast('请选择时间');
+                return;
+            }
+            const timeEl = document.getElementById('waterTime');
+            timeEl.setAttribute('data-value', value);
+            timeEl.textContent = value.replace('T', ' ');
+            timeEl.classList.remove('placeholder');
+            closePickerDirect('timePicker');
+        }
+
         function closePicker(e, id) {
             document.getElementById(id).style.display = 'none';
         }
         function closePickerDirect(id) {
             document.getElementById(id).style.display = 'none';
         }
-        function selectPlate(plate, vin) {
-            document.getElementById('plateText').textContent = plate;
-            document.getElementById('vinCode').value = vin;
-            closePickerDirect('platePicker');
+
+        function showUploadOptions(type) {
+            currentUploadType = type;
+            document.getElementById('uploadPicker').style.display = 'block';
         }
-        function selectProject(project) {
-            document.getElementById('currentProject').textContent = project;
-            closePickerDirect('projectPicker');
+        function selectUploadType(source) {
+            document.getElementById('uploadPicker').style.display = 'none';
+            if (source === 'camera') {
+                simulateCameraUpload(currentUploadType);
+            } else {
+                simulateLocalUpload(currentUploadType);
+            }
         }
-        function showTimePicker() {
-            alert('时间选择器：支持选择日期和时间');
+
+        function simulateCameraUpload(type) {
+            addPhoto(type, 'camera');
         }
-        function simulateUpload(type) {
-            document.getElementById(type + 'Upload').style.display = 'none';
-            document.getElementById(type + 'Preview').style.display = 'block';
+        function simulateLocalUpload(type) {
+            addPhoto(type, 'local');
         }
-        function deleteUpload(type) {
-            document.getElementById(type + 'Upload').style.display = 'flex';
-            document.getElementById(type + 'Preview').style.display = 'none';
+        function addPhoto(type, source) {
+            const arr = type === 'odometer' ? odometerPhotos : paymentPhotos;
+            if (arr.length >= 3) {
+                showToast('最多上传3张照片');
+                return;
+            }
+            arr.push({ id: Date.now(), source: source });
+            renderPhotos(type);
         }
-        function submitForm() {
+        function renderPhotos(type) {
+            const arr = type === 'odometer' ? odometerPhotos : paymentPhotos;
+            const row = document.getElementById(type + 'Row');
+            let html = '';
+            arr.forEach(photo => {
+                html += '<div class="upload-preview" id="' + type + '_preview_' + photo.id + '">' +
+                    '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E照片%3C/text%3E%3C/svg%3E" alt="照片">' +
+                    '<div class="delete-btn" onclick="deletePhoto(\'' + type + '\', ' + photo.id + ')">×</div>' +
+                    '</div>';
+            });
+            if (arr.length < 3) {
+                if (type === 'odometer') {
+                    html += '<div class="upload-area" id="odometerUpload" onclick="simulateCameraUpload(\'odometer\')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+                        '<span>拍照上传</span></div>';
+                } else {
+                    html += '<div class="upload-area" id="paymentUpload" onclick="showUploadOptions(\'payment\')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+                        '<span>上传</span></div>';
+                }
+            }
+            row.innerHTML = html;
+        }
+        function deletePhoto(type, id) {
+            const arr = type === 'odometer' ? odometerPhotos : paymentPhotos;
+            const idx = arr.findIndex(p => p.id === id);
+            if (idx > -1) arr.splice(idx, 1);
+            renderPhotos(type);
+        }
+
+        function showToast(msg) {
             const toast = document.getElementById('toast');
+            toast.textContent = msg;
             toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        function submitForm() {
+            let hasError = false;
+            const plate = document.getElementById('plateInput').value.trim();
+            const vin = document.getElementById('vinInput').value.trim();
+            if (!plate && !vin) {
+                showToast('车牌号与车架号至少填写一个');
+                hasError = true;
+            }
+            if (!document.getElementById('quantity').value) { hasError = true; }
+            if (!document.getElementById('totalAmount').value) { hasError = true; }
+            if (currentPayment === 'online' && paymentPhotos.length === 0) {
+                document.getElementById('paymentError').textContent = '请上传支付照片';
+                document.getElementById('paymentError').classList.add('show');
+                hasError = true;
+            }
+            if (hasError) {
+                showToast('请完善表单信息');
+                return;
+            }
+            showToast('提交成功');
             setTimeout(() => {
-                toast.style.display = 'none';
                 window.location.href = 'records.html';
             }, 1500);
         }
+
+        // 初始化
+        selectPayment('monthly');
+        // checkPlate();
     </script>
+    <script src="components/app-common.js"></script>
 </body>
 </html>

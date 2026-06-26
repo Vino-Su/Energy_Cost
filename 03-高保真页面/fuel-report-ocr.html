@@ -53,16 +53,6 @@
             font-weight: 600;
             color: #000000d9;
         }
-        .top-nav-right {
-            position: absolute;
-            right: 16px;
-            color: #1677ff;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            cursor: pointer;
-        }
         .content-area {
             padding-top: 44px;
             padding-bottom: 80px;
@@ -186,6 +176,49 @@
         .vehicle-hint.error-hint {
             color: #ff4d4f;
         }
+
+        /* 拍照区置顶样式 */
+        .photo-card {
+            background: #ffffff;
+            border-radius: 12px;
+            margin: 12px 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .photo-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .photo-section-title svg {
+            width: 18px;
+            height: 18px;
+            color: #1677ff;
+        }
+        .photo-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .photo-item {
+            flex: 1;
+            min-width: 96px;
+            max-width: calc(50% - 6px);
+        }
+        .photo-label {
+            font-size: 13px;
+            color: #000000d9;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .photo-label .required {
+            color: #ff4d4f;
+            margin-right: 2px;
+        }
         .upload-area {
             width: 96px;
             height: 96px;
@@ -242,11 +275,49 @@
             font-size: 12px;
             cursor: pointer;
         }
-        .upload-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+        .upload-hint {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #00000073;
+            line-height: 16px;
         }
+        .ocr-status {
+            margin-top: 6px;
+            font-size: 11px;
+            line-height: 16px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+        .ocr-status.show {
+            display: flex;
+        }
+        .ocr-status.loading {
+            color: #1677ff;
+        }
+        .ocr-status.success {
+            color: #52c41a;
+        }
+        .ocr-status.error {
+            color: #ff4d4f;
+        }
+        .ocr-status .ocr-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: ocrPulse 1.2s infinite;
+        }
+        @keyframes ocrPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .ocr-status svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+        }
+
         .bottom-submit {
             position: fixed;
             bottom: 0;
@@ -277,6 +348,7 @@
         }
         .submit-btn:disabled {
             background: #85a5cc;
+            cursor: not-allowed;
         }
         .toast {
             position: fixed;
@@ -337,57 +409,12 @@
             justify-content: space-between;
             align-items: center;
         }
-        .picker-option.selected {
-            color: #1677ff;
-            background: #e6f4ff;
-        }
-        .picker-warning {
-            padding: 10px 16px;
-            background: #fffbe6;
-            color: #faad14;
-            font-size: 12px;
-            border-bottom: 1px solid #f5f5f5;
-        }
         .input-row {
             display: flex;
             gap: 12px;
         }
         .input-row .form-group {
             flex: 1;
-        }
-        .radio-group {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .radio-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #000000d9;
-        }
-        .radio-circle {
-            width: 16px;
-            height: 16px;
-            border: 1px solid #d9d9d9;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .radio-item.active .radio-circle {
-            border-color: #1677ff;
-            background: #1677ff;
-        }
-        .radio-item.active .radio-circle::after {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: #fff;
-            border-radius: 50%;
         }
         .confirm-modal {
             display: none;
@@ -442,6 +469,14 @@
             background: #1677ff;
             color: #ffffff;
         }
+        .recognized-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #52c41a;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
@@ -459,7 +494,66 @@
     </div>
 
     <div class="content-area">
-        <!-- 表单 -->
+        <!-- 拍照区 -->
+        <div class="photo-card">
+            <div class="photo-section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                <span>拍照区</span>
+            </div>
+            <div class="photo-row">
+                <!-- 交易凭证 -->
+                <div class="photo-item">
+                    <label class="photo-label"><span class="required">*</span>交易凭证</label>
+                    <div class="upload-row" id="receiptRow">
+                        <div class="upload-area" id="receiptUpload" onclick="showUploadOptions('receipt')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            <span>上传</span>
+                        </div>
+                    </div>
+                    <div class="upload-hint" id="receiptUploadHint">支持 OCR 识别</div>
+                    <div class="ocr-status loading" id="receiptOcrLoading">
+                        <span class="ocr-dot"></span>
+                        <span>正在识别中</span>
+                    </div>
+                    <div class="ocr-status success" id="receiptOcrSuccess">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        <span>识别成功</span>
+                    </div>
+                    <div class="ocr-status error" id="receiptOcrError">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span>识别失败</span>
+                    </div>
+                    <div class="error-text" id="receiptError"></div>
+                </div>
+
+                <!-- 里程照片 -->
+                <div class="photo-item">
+                    <label class="photo-label"><span class="required">*</span>里程照片</label>
+                    <div class="upload-row" id="odometerRow">
+                        <div class="upload-area" id="odometerUpload" onclick="showUploadOptions('odometer')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            <span>上传</span>
+                        </div>
+                    </div>
+                    <div class="upload-hint" id="odometerUploadHint">支持 OCR 识别</div>
+                    <div class="ocr-status loading" id="odometerOcrLoading">
+                        <span class="ocr-dot"></span>
+                        <span>正在识别中</span>
+                    </div>
+                    <div class="ocr-status success" id="odometerOcrSuccess">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                        <span>识别成功</span>
+                    </div>
+                    <div class="ocr-status error" id="odometerOcrError">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span>识别失败</span>
+                    </div>
+                    <div class="error-text" id="odometerError"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 信息区 -->
         <div class="form-card">
             <!-- 车辆信息 -->
             <div class="form-group">
@@ -517,14 +611,13 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">上报人</label>
+                <label class="form-label"><span class="required">*</span>上报人</label>
                 <input type="text" class="form-input" value="张三" readonly>
             </div>
 
             <div class="form-group" id="oilCardGroup">
                 <label class="form-label"><span class="required">*</span>关联油卡</label>
                 <input type="text" class="form-input" id="oilCard" placeholder="请输入油卡号" value="" onblur="checkOilCard()">
-                <div class="vehicle-hint" id="oilCardHint"></div>
                 <div class="error-text" id="oilCardError"></div>
             </div>
 
@@ -534,60 +627,39 @@
                     <span id="fuelTime" class="placeholder">请选择时间</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
+                <div class="error-text" id="fuelTimeError"></div>
             </div>
 
             <div class="input-row">
                 <div class="form-group">
-                    <label class="form-label"><span class="required">*</span>加油单价（元）</label>
-                    <input type="number" class="form-input" id="unitPrice" placeholder="请输入单价" value="" step="0.01" oninput="calcAmount()" onblur="validateNumber(this, '单价')">
+                    <label class="form-label"><span class="required">*</span>加油单价（元/L）</label>
+                    <input type="number" class="form-input" id="unitPrice" placeholder="请输入单价" value="" step="0.01" onblur="validateNumber(this, '单价')">
                     <div class="error-text" id="unitPriceError"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label"><span class="required">*</span>加油量（L）</label>
-                    <input type="number" class="form-input" id="quantity" placeholder="请输入加油量" value="" step="0.01" oninput="calcAmount()" onblur="validateNumber(this, '加油量')">
+                    <input type="number" class="form-input" id="quantity" placeholder="请输入加油量" value="" step="0.01" onblur="validateNumber(this, '加油量')">
                     <div class="error-text" id="quantityError"></div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>加油金额（元）</label>
-                <input type="number" class="form-input" id="totalAmount" placeholder="自动计算" value="" step="0.01" onblur="validateNumber(this, '金额')">
+                <input type="number" class="form-input" id="totalAmount" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '金额')">
                 <div class="error-text" id="totalAmountError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>当前里程数（km）</label>
-                <input type="number" class="form-input" id="mileage" placeholder="请输入当前里程数" value="" onblur="checkMileage()">
+                <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
                 <div class="error-text" id="mileageError"></div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label"><span class="required">*</span>仪表盘里程照片</label>
-                <div class="upload-row" id="odometerRow">
-                    <div class="upload-area" id="odometerUpload" onclick="simulateCameraUpload('odometer')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        <span>拍照上传</span>
-                    </div>
-                </div>
-                <div class="error-text" id="odometerError"></div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label"><span class="required">*</span>交易凭证</label>
-                <div class="upload-row" id="receiptRow">
-                    <div class="upload-area" id="receiptUpload" onclick="showUploadOptions('receipt')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        <span>上传</span>
-                    </div>
-                </div>
-                <div class="error-text" id="receiptError"></div>
             </div>
         </div>
     </div>
 
     <!-- 底部提交 -->
     <div class="bottom-submit">
-        <button class="submit-btn" onclick="submitForm()">提交</button>
+        <button class="submit-btn" id="submitBtn" onclick="submitForm()">提交</button>
     </div>
 
     <!-- Toast -->
@@ -628,12 +700,18 @@
     </div>
 
     <script>
-        // 模拟 basis 车辆数据
+        // 模拟车辆数据
         const vehicleData = {
             '粤B·12345': 'LSVAG2180E2100001',
             '粤B·67890': 'LSVAG2180E2100002',
             '粤B·54321': 'LSVAG2180E2100003',
             '粤B·11111': 'LSVAG2180E2100004'
+        };
+        const vehicleTypes = {
+            '粤B·12345': 'normal',
+            '粤B·67890': 'normal',
+            '粤B·54321': 'normal',
+            '粤B·11111': 'unicorn'
         };
         const vinToPlate = {};
         for (const [plate, vin] of Object.entries(vehicleData)) {
@@ -651,11 +729,22 @@
         const plateHistory = ['粤B·12345', '粤B·67890', '粤B·54321', '粤B·11111', '沪A·88888'];
         const vinHistory = ['LSVAG2180E2100001', 'LSVAG2180E2100002', 'LSVAG2180E2100003', 'LSVAG2180E2100004', 'LSVHJ2180E2200001'];
 
+        // 模拟 OCR 识别结果池
+        const mockReceiptOcrResults = [
+            { oilCard: 'CARD001', time: '2026-06-25 09:30', unitPrice: 7.85, quantity: 45.12, amount: 354.19 },
+            { oilCard: 'CARD002', time: '2026-06-24 18:15', unitPrice: 7.92, quantity: 38.50, amount: 304.92 },
+            { oilCard: 'CARD003', time: '2026-06-23 12:00', unitPrice: 7.80, quantity: 50.00, amount: 390.00 }
+        ];
+        const mockOdometerOcrResults = [12560, 13200, 11800, 14500];
+
         let currentVehicleMode = 'plate';
         let currentUploadType = null;
-        let odometerPhotos = [];
-        let receiptPhotos = [];
+        let receiptPhoto = null;
+        let odometerPhoto = null;
+        let isReceiptOcrRunning = false;
+        let isOdometerOcrRunning = false;
 
+        // 车辆信息切换
         function switchVehicleMode(mode) {
             currentVehicleMode = mode;
             document.getElementById('btnPlate').classList.toggle('active', mode === 'plate');
@@ -663,10 +752,8 @@
             document.getElementById('plateInputWrap').style.display = mode === 'plate' ? 'block' : 'none';
             document.getElementById('vinInputWrap').style.display = mode === 'vin' ? 'block' : 'none';
             document.getElementById('vehicleLabelText').textContent = mode === 'plate' ? '车牌号' : '车架号';
-            // 清除错误提示
             clearError('plate');
             clearError('vin');
-            // 切换模式时隐藏对方历史列表
             document.getElementById('plateHistoryList').style.display = 'none';
             document.getElementById('vinHistoryList').style.display = 'none';
         }
@@ -737,6 +824,19 @@
             }, 200);
         }
 
+        function getTargetPlate() {
+            const plate = document.getElementById('plateInput').value.trim();
+            const vin = document.getElementById('vinInput').value.trim();
+            if (plate) return plate;
+            if (vin && vinToPlate[vin]) return vinToPlate[vin];
+            return '';
+        }
+
+        function isUnicornVehicle() {
+            const plate = getTargetPlate();
+            return plate && vehicleTypes[plate] === 'unicorn';
+        }
+
         function checkPlate() {
             const plate = document.getElementById('plateInput').value.trim();
             const hint = document.getElementById('plateHint');
@@ -746,6 +846,7 @@
                 hint.className = 'vehicle-hint';
                 error.textContent = '';
                 error.classList.remove('show');
+                document.getElementById('plateInput').classList.remove('error');
                 return;
             }
             if (vehicleData[plate]) {
@@ -753,11 +854,13 @@
                 hint.className = 'vehicle-hint';
                 error.textContent = '';
                 error.classList.remove('show');
+                document.getElementById('plateInput').classList.remove('error');
             } else {
                 hint.textContent = '此车牌暂无对应车架号';
                 hint.className = 'vehicle-hint error-hint';
                 error.textContent = '车牌号不存在或不属于当前项目';
                 error.classList.add('show');
+                document.getElementById('plateInput').classList.add('error');
             }
         }
 
@@ -770,6 +873,7 @@
                 hint.className = 'vehicle-hint';
                 error.textContent = '';
                 error.classList.remove('show');
+                document.getElementById('vinInput').classList.remove('error');
                 return;
             }
             if (vinToPlate[vin]) {
@@ -777,11 +881,13 @@
                 hint.className = 'vehicle-hint';
                 error.textContent = '';
                 error.classList.remove('show');
+                document.getElementById('vinInput').classList.remove('error');
             } else {
                 hint.textContent = '此车架暂无对应车牌号';
                 hint.className = 'vehicle-hint error-hint';
                 error.textContent = '车架号不存在或不属于当前项目';
                 error.classList.add('show');
+                document.getElementById('vinInput').classList.add('error');
             }
         }
 
@@ -789,28 +895,24 @@
             const input = document.getElementById('oilCard');
             const value = input.value.trim();
             const error = document.getElementById('oilCardError');
-            const hint = document.getElementById('oilCardHint');
             if (!value) {
                 error.textContent = '';
                 error.classList.remove('show');
                 input.classList.remove('error');
-                hint.textContent = '';
-                return;
+                return false;
             }
-            // 模拟油卡存在性校验
+            // 模拟油卡有效性校验
             const validCards = ['CARD001', 'CARD002', 'CARD003', 'CARD888'];
             if (validCards.includes(value)) {
                 error.textContent = '';
                 error.classList.remove('show');
                 input.classList.remove('error');
-                hint.textContent = '';
+                return true;
             } else {
-                hint.textContent = '支持无油卡情况填写';
-                hint.className = 'vehicle-hint';
-                // 需求未明确无油卡是否报错，仅做提示
-                error.textContent = '';
-                error.classList.remove('show');
-                input.classList.remove('error');
+                error.textContent = '油卡号不存在';
+                error.classList.add('show');
+                input.classList.add('error');
+                return false;
             }
         }
 
@@ -822,10 +924,12 @@
                 el.textContent = label + '必须为非负数';
                 el.classList.add('show');
                 input.classList.add('error');
+                return false;
             } else {
                 el.textContent = '';
                 el.classList.remove('show');
                 input.classList.remove('error');
+                return true;
             }
         }
 
@@ -833,16 +937,25 @@
             const input = document.getElementById('mileage');
             const value = parseFloat(input.value) || 0;
             const error = document.getElementById('mileageError');
-            const plate = document.getElementById('plateInput').value.trim();
-            const last = lastMileage[plate] || 0;
+            const targetPlate = getTargetPlate();
+            const last = lastMileage[targetPlate] || 0;
+
+            if (value < 0) {
+                error.textContent = '里程数必须为非负数';
+                error.classList.add('show');
+                input.classList.add('error');
+                return false;
+            }
             if (value > 0 && last > 0 && value < last) {
                 error.textContent = '里程不能低于该车辆上次已填报的里程数（' + last + ' km）';
                 error.classList.add('show');
                 input.classList.add('error');
+                return false;
             } else {
                 error.textContent = '';
                 error.classList.remove('show');
                 input.classList.remove('error');
+                return true;
             }
         }
 
@@ -858,39 +971,192 @@
             }
         }
 
-        function calcAmount() {
-            const price = parseFloat(document.getElementById('unitPrice').value) || 0;
-            const qty = parseFloat(document.getElementById('quantity').value) || 0;
-            const amount = (price * qty).toFixed(2);
-            document.getElementById('totalAmount').value = amount;
+        // 上传方式选择
+        function showUploadOptions(type) {
+            currentUploadType = type;
+            document.getElementById('uploadPicker').style.display = 'block';
+        }
+        function selectUploadType(source) {
+            document.getElementById('uploadPicker').style.display = 'none';
+            if (source === 'camera') {
+                simulateUpload(currentUploadType, 'camera');
+            } else {
+                simulateUpload(currentUploadType, 'local');
+            }
         }
 
-        // 项目切换后重置表单（由 app-common.js 的 projectChanged 事件调用）
-        function resetReportForm() {
-            document.getElementById('plateInput').value = '';
-            document.getElementById('vinInput').value = '';
-            document.getElementById('plateHint').textContent = '';
-            document.getElementById('vinHint').textContent = '';
+        // 模拟上传 + OCR
+        function simulateUpload(type, source) {
+            if (type === 'receipt') {
+                receiptPhoto = { id: Date.now(), source: source };
+                renderReceiptPhoto();
+                runReceiptOcr();
+            } else if (type === 'odometer') {
+                odometerPhoto = { id: Date.now(), source: source };
+                renderOdometerPhoto();
+                runOdometerOcr();
+            }
+        }
+
+        function renderReceiptPhoto() {
+            const row = document.getElementById('receiptRow');
+            const hint = document.getElementById('receiptUploadHint');
+            if (!receiptPhoto) {
+                row.innerHTML = '<div class="upload-area" id="receiptUpload" onclick="showUploadOptions(\'receipt\')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+                    '<span>上传</span></div>';
+                hint.style.display = 'block';
+                return;
+            }
+            row.innerHTML = '<div class="upload-preview" id="receipt_preview_' + receiptPhoto.id + '">' +
+                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E凭证%3C/text%3E%3C/svg%3E" alt="交易凭证">' +
+                '<div class="delete-btn" onclick="deleteReceiptPhoto()">×</div></div>';
+            hint.style.display = 'none';
+        }
+
+        function renderOdometerPhoto() {
+            const row = document.getElementById('odometerRow');
+            const hint = document.getElementById('odometerUploadHint');
+            if (!odometerPhoto) {
+                row.innerHTML = '<div class="upload-area" id="odometerUpload" onclick="showUploadOptions(\'odometer\')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+                    '<span>上传</span></div>';
+                hint.style.display = 'block';
+                return;
+            }
+            row.innerHTML = '<div class="upload-preview" id="odometer_preview_' + odometerPhoto.id + '">' +
+                '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E里程%3C/text%3E%3C/svg%3E" alt="里程照片">' +
+                '<div class="delete-btn" onclick="deleteOdometerPhoto()">×</div></div>';
+            hint.style.display = 'none';
+        }
+
+        function deleteReceiptPhoto() {
+            receiptPhoto = null;
+            renderReceiptPhoto();
+            clearReceiptOcrStatus();
             document.getElementById('oilCard').value = '';
-            document.getElementById('oilCardHint').textContent = '';
+            const timeEl = document.getElementById('fuelTime');
+            timeEl.textContent = '请选择时间';
+            timeEl.classList.add('placeholder');
+            timeEl.removeAttribute('data-value');
             document.getElementById('unitPrice').value = '';
             document.getElementById('quantity').value = '';
             document.getElementById('totalAmount').value = '';
-            document.getElementById('mileage').value = '';
-            clearAllPhotos();
-            clearAllErrors();
-        }
-        function clearAllPhotos() {
-            odometerPhotos = [];
-            receiptPhotos = [];
-            renderPhotos('odometer');
-            renderPhotos('receipt');
-        }
-        function clearAllErrors() {
-            document.querySelectorAll('.error-text').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
-            document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+            clearOilCardError();
+            clearNumberErrors();
         }
 
+        function deleteOdometerPhoto() {
+            odometerPhoto = null;
+            renderOdometerPhoto();
+            clearOdometerOcrStatus();
+            document.getElementById('mileage').value = '';
+            document.getElementById('mileageError').textContent = '';
+            document.getElementById('mileageError').classList.remove('show');
+            document.getElementById('mileage').classList.remove('error');
+        }
+
+        // OCR 状态控制
+        function clearReceiptOcrStatus() {
+            document.getElementById('receiptOcrLoading').classList.remove('show');
+            document.getElementById('receiptOcrSuccess').classList.remove('show');
+            document.getElementById('receiptOcrError').classList.remove('show');
+            document.getElementById('receiptError').textContent = '';
+            document.getElementById('receiptError').classList.remove('show');
+        }
+
+        function clearOdometerOcrStatus() {
+            document.getElementById('odometerOcrLoading').classList.remove('show');
+            document.getElementById('odometerOcrSuccess').classList.remove('show');
+            document.getElementById('odometerOcrError').classList.remove('show');
+            document.getElementById('odometerError').textContent = '';
+            document.getElementById('odometerError').classList.remove('show');
+        }
+
+        function setOcrStatus(type, status) {
+            if (type === 'receipt') {
+                document.getElementById('receiptOcrLoading').classList.remove('show');
+                document.getElementById('receiptOcrSuccess').classList.remove('show');
+                document.getElementById('receiptOcrError').classList.remove('show');
+                document.getElementById('receiptOcrLoading').classList.toggle('show', status === 'loading');
+                document.getElementById('receiptOcrSuccess').classList.toggle('show', status === 'success');
+                document.getElementById('receiptOcrError').classList.toggle('show', status === 'error');
+            } else {
+                document.getElementById('odometerOcrLoading').classList.remove('show');
+                document.getElementById('odometerOcrSuccess').classList.remove('show');
+                document.getElementById('odometerOcrError').classList.remove('show');
+                document.getElementById('odometerOcrLoading').classList.toggle('show', status === 'loading');
+                document.getElementById('odometerOcrSuccess').classList.toggle('show', status === 'success');
+                document.getElementById('odometerOcrError').classList.toggle('show', status === 'error');
+            }
+        }
+
+        // 模拟交易凭证 OCR
+        function runReceiptOcr() {
+            isReceiptOcrRunning = true;
+            updateSubmitButton();
+            setOcrStatus('receipt', 'loading');
+
+            setTimeout(function() {
+                const success = Math.random() > 0.2;
+                if (success) {
+                    const result = mockReceiptOcrResults[Math.floor(Math.random() * mockReceiptOcrResults.length)];
+                    fillReceiptOcrResult(result);
+                    setOcrStatus('receipt', 'success');
+                } else {
+                    setOcrStatus('receipt', 'error');
+                }
+                isReceiptOcrRunning = false;
+                updateSubmitButton();
+            }, 1500);
+        }
+
+        function fillReceiptOcrResult(result) {
+            const oilCardInput = document.getElementById('oilCard');
+            if (!oilCardInput.value) oilCardInput.value = result.oilCard;
+            const timeEl = document.getElementById('fuelTime');
+            if (!timeEl.getAttribute('data-value')) {
+                timeEl.textContent = result.time;
+                timeEl.classList.remove('placeholder');
+                timeEl.setAttribute('data-value', result.time);
+            }
+            const unitPriceInput = document.getElementById('unitPrice');
+            if (!unitPriceInput.value) unitPriceInput.value = result.unitPrice.toFixed(2);
+            const quantityInput = document.getElementById('quantity');
+            if (!quantityInput.value) quantityInput.value = result.quantity.toFixed(2);
+            const totalAmountInput = document.getElementById('totalAmount');
+            if (!totalAmountInput.value) totalAmountInput.value = result.amount.toFixed(2);
+            checkOilCard();
+        }
+
+        // 模拟里程照片 OCR
+        function runOdometerOcr() {
+            isOdometerOcrRunning = true;
+            updateSubmitButton();
+            setOcrStatus('odometer', 'loading');
+
+            setTimeout(function() {
+                const success = Math.random() > 0.2;
+                if (success) {
+                    const mileage = mockOdometerOcrResults[Math.floor(Math.random() * mockOdometerOcrResults.length)];
+                    const mileageInput = document.getElementById('mileage');
+                    if (!mileageInput.value) mileageInput.value = mileage;
+                    setOcrStatus('odometer', 'success');
+                    checkMileage();
+                } else {
+                    setOcrStatus('odometer', 'error');
+                }
+                isOdometerOcrRunning = false;
+                updateSubmitButton();
+            }, 1500);
+        }
+
+        function updateSubmitButton() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = isReceiptOcrRunning || isOdometerOcrRunning;
+        }
+
+        // 时间选择器
         function showTimePicker() {
             const timeEl = document.getElementById('fuelTime');
             const input = document.getElementById('fuelTimeInput');
@@ -909,8 +1175,9 @@
                 return;
             }
             const timeEl = document.getElementById('fuelTime');
+            const displayValue = value.replace('T', ' ');
             timeEl.setAttribute('data-value', value);
-            timeEl.textContent = value.replace('T', ' ');
+            timeEl.textContent = displayValue;
             timeEl.classList.remove('placeholder');
             closePickerDirect('timePicker');
         }
@@ -922,64 +1189,6 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        function showUploadOptions(type) {
-            currentUploadType = type;
-            document.getElementById('uploadPicker').style.display = 'block';
-        }
-        function selectUploadType(source) {
-            document.getElementById('uploadPicker').style.display = 'none';
-            if (source === 'camera') {
-                simulateCameraUpload(currentUploadType);
-            } else {
-                simulateLocalUpload(currentUploadType);
-            }
-        }
-
-        function simulateCameraUpload(type) {
-            addPhoto(type, 'camera');
-        }
-        function simulateLocalUpload(type) {
-            addPhoto(type, 'local');
-        }
-        function addPhoto(type, source) {
-            const arr = type === 'odometer' ? odometerPhotos : receiptPhotos;
-            if (arr.length >= 3) {
-                showToast('最多上传3张照片');
-                return;
-            }
-            arr.push({ id: Date.now(), source: source });
-            renderPhotos(type);
-        }
-        function renderPhotos(type) {
-            const arr = type === 'odometer' ? odometerPhotos : receiptPhotos;
-            const row = document.getElementById(type + 'Row');
-            let html = '';
-            arr.forEach(photo => {
-                html += '<div class="upload-preview" id="' + type + '_preview_' + photo.id + '">' +
-                    '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E照片%3C/text%3E%3C/svg%3E" alt="照片">' +
-                    '<div class="delete-btn" onclick="deletePhoto(\'' + type + '\', ' + photo.id + ')">×</div>' +
-                    '</div>';
-            });
-            if (arr.length < 3) {
-                if (type === 'odometer') {
-                    html += '<div class="upload-area" id="odometerUpload" onclick="simulateCameraUpload(\'odometer\')">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
-                        '<span>拍照上传</span></div>';
-                } else {
-                    html += '<div class="upload-area" id="receiptUpload" onclick="showUploadOptions(\'receipt\')">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
-                        '<span>上传</span></div>';
-                }
-            }
-            row.innerHTML = html;
-        }
-        function deletePhoto(type, id) {
-            const arr = type === 'odometer' ? odometerPhotos : receiptPhotos;
-            const idx = arr.findIndex(p => p.id === id);
-            if (idx > -1) arr.splice(idx, 1);
-            renderPhotos(type);
-        }
-
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
@@ -987,47 +1196,182 @@
             setTimeout(() => { toast.style.display = 'none'; }, 2000);
         }
 
+        function clearOilCardError() {
+            const input = document.getElementById('oilCard');
+            document.getElementById('oilCardError').textContent = '';
+            document.getElementById('oilCardError').classList.remove('show');
+            input.classList.remove('error');
+        }
+
+        function clearNumberErrors() {
+            ['unitPrice', 'quantity', 'totalAmount'].forEach(id => {
+                document.getElementById(id + 'Error').textContent = '';
+                document.getElementById(id + 'Error').classList.remove('show');
+                document.getElementById(id).classList.remove('error');
+            });
+        }
+
+        function clearAllErrors() {
+            document.querySelectorAll('.error-text').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
+            document.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
+        }
+
+        // 项目切换后重置表单（由 app-common.js 调用）
+        function resetReportForm() {
+            document.getElementById('plateInput').value = '';
+            document.getElementById('vinInput').value = '';
+            document.getElementById('plateHint').textContent = '';
+            document.getElementById('vinHint').textContent = '';
+            document.getElementById('oilCard').value = '';
+            const timeEl = document.getElementById('fuelTime');
+            timeEl.textContent = '请选择时间';
+            timeEl.classList.add('placeholder');
+            timeEl.removeAttribute('data-value');
+            document.getElementById('unitPrice').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('totalAmount').value = '';
+            document.getElementById('mileage').value = '';
+            receiptPhoto = null;
+            odometerPhoto = null;
+            renderReceiptPhoto();
+            renderOdometerPhoto();
+            clearReceiptOcrStatus();
+            clearOdometerOcrStatus();
+            clearAllErrors();
+        }
+
+        function scrollToFirstError() {
+            const firstError = document.querySelector('.form-input.error, .error-text.show');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
         function submitForm() {
-            // 基础校验
+            if (isReceiptOcrRunning || isOdometerOcrRunning) {
+                showToast('正在识别中，请稍候');
+                return;
+            }
+
             let hasError = false;
-            const plate = document.getElementById('plateInput').value.trim();
-            const vin = document.getElementById('vinInput').value.trim();
-            if (!plate && !vin) {
-                showToast('车牌号与车架号至少填写一个');
-                hasError = true;
-            }
-            if (!document.getElementById('oilCard').value.trim()) {
-                document.getElementById('oilCardError').textContent = '请输入关联油卡';
-                document.getElementById('oilCardError').classList.add('show');
-                document.getElementById('oilCard').classList.add('error');
-                hasError = true;
-            }
-            if (!document.getElementById('unitPrice').value) { hasError = true; }
-            if (!document.getElementById('quantity').value) { hasError = true; }
-            if (!document.getElementById('totalAmount').value) { hasError = true; }
-            if (!document.getElementById('mileage').value) { hasError = true; }
-            if (odometerPhotos.length === 0) {
-                document.getElementById('odometerError').textContent = '请上传仪表盘里程照片';
-                document.getElementById('odometerError').classList.add('show');
-                hasError = true;
-            }
-            if (receiptPhotos.length === 0) {
+            clearAllErrors();
+
+            // 交易凭证校验
+            if (!receiptPhoto) {
                 document.getElementById('receiptError').textContent = '请上传交易凭证';
                 document.getElementById('receiptError').classList.add('show');
                 hasError = true;
             }
+
+            // 里程照片校验
+            if (!odometerPhoto) {
+                document.getElementById('odometerError').textContent = '请上传里程照片';
+                document.getElementById('odometerError').classList.add('show');
+                hasError = true;
+            }
+
+            // 车牌号/车架号校验
+            const plate = document.getElementById('plateInput').value.trim();
+            const vin = document.getElementById('vinInput').value.trim();
+            if (!plate && !vin) {
+                const errorEl = currentVehicleMode === 'plate' ? document.getElementById('plateError') : document.getElementById('vinError');
+                const inputEl = currentVehicleMode === 'plate' ? document.getElementById('plateInput') : document.getElementById('vinInput');
+                errorEl.textContent = '车牌号与车架号至少填写一个';
+                errorEl.classList.add('show');
+                inputEl.classList.add('error');
+                hasError = true;
+            } else if (plate && !vehicleData[plate]) {
+                document.getElementById('plateError').textContent = '车牌号不存在或不属于当前项目';
+                document.getElementById('plateError').classList.add('show');
+                document.getElementById('plateInput').classList.add('error');
+                hasError = true;
+            } else if (vin && !vinToPlate[vin]) {
+                document.getElementById('vinError').textContent = '车架号不存在或不属于当前项目';
+                document.getElementById('vinError').classList.add('show');
+                document.getElementById('vinInput').classList.add('error');
+                hasError = true;
+            }
+
+            // 关联油卡校验
+            const oilCard = document.getElementById('oilCard').value.trim();
+            if (!oilCard) {
+                document.getElementById('oilCardError').textContent = '请输入关联油卡';
+                document.getElementById('oilCardError').classList.add('show');
+                document.getElementById('oilCard').classList.add('error');
+                hasError = true;
+            } else if (!checkOilCard()) {
+                hasError = true;
+            }
+
+            // 加油时间校验
+            const fuelTime = document.getElementById('fuelTime').getAttribute('data-value');
+            if (!fuelTime) {
+                document.getElementById('fuelTimeError').textContent = '请选择加油时间';
+                document.getElementById('fuelTimeError').classList.add('show');
+                hasError = true;
+            }
+
+            // 单价、加油量、金额校验
+            const unitPrice = document.getElementById('unitPrice');
+            const quantity = document.getElementById('quantity');
+            const totalAmount = document.getElementById('totalAmount');
+            if (!unitPrice.value) {
+                document.getElementById('unitPriceError').textContent = '请输入加油单价';
+                document.getElementById('unitPriceError').classList.add('show');
+                unitPrice.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(unitPrice, '单价')) {
+                hasError = true;
+            }
+            if (!quantity.value) {
+                document.getElementById('quantityError').textContent = '请输入加油量';
+                document.getElementById('quantityError').classList.add('show');
+                quantity.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(quantity, '加油量')) {
+                hasError = true;
+            }
+            if (!totalAmount.value) {
+                document.getElementById('totalAmountError').textContent = '请输入加油金额';
+                document.getElementById('totalAmountError').classList.add('show');
+                totalAmount.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(totalAmount, '金额')) {
+                hasError = true;
+            }
+
+            // 当前里程数校验
+            const mileage = document.getElementById('mileage');
+            if (!mileage.value) {
+                document.getElementById('mileageError').textContent = '请输入当前里程数';
+                document.getElementById('mileageError').classList.add('show');
+                mileage.classList.add('error');
+                hasError = true;
+            } else if (!checkMileage()) {
+                hasError = true;
+            }
+
             if (hasError) {
                 showToast('请完善表单信息');
+                setTimeout(scrollToFirstError, 100);
                 return;
             }
-            showToast('提交成功');
-            setTimeout(() => {
-                window.location.href = 'records.html';
-            }, 1500);
+
+            // 提交按钮 Loading
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中…';
+
+            setTimeout(function() {
+                showToast('提交成功');
+                setTimeout(() => {
+                    window.location.href = 'records.html';
+                }, 1500);
+            }, 800);
         }
 
         // 初始化
-        // checkPlate();
+        switchVehicleMode('plate');
     </script>
     <script src="components/app-common.js"></script>
 </body>
