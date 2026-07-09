@@ -412,11 +412,6 @@
                 <div class="detail-value-input"><input type="number" class="form-input" id="amountEdit" value="420.00" step="0.01" style="width:120px;text-align:right;"></div>
             </div>
             <div class="detail-row">
-                <span class="detail-label">上报人</span>
-                <span class="detail-value">张三</span>
-                <div class="detail-value-input"><input type="text" class="form-input" value="张三" readonly style="width:100px;text-align:right;"></div>
-            </div>
-            <div class="detail-row">
                 <span class="detail-label">上报时间</span>
                 <span class="detail-value" id="timeDisplay">2026-06-22 09:30</span>
                 <div class="detail-value-input"><div class="select-trigger" id="timeEdit" style="width:160px;" onclick="showTimePicker()">2026-06-22 09:30<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
@@ -445,6 +440,21 @@
                 <span class="detail-label">充电度数</span>
                 <span class="detail-value" id="degreeDisplay">45.50 度</span>
                 <div class="detail-value-input"><input type="number" class="form-input" id="degreeEdit" value="45.50" step="0.1" style="width:100px;text-align:right;"></div>
+            </div>
+            <div class="detail-row" id="startTimeRow" style="display:none;">
+                <span class="detail-label">充电开始时间</span>
+                <span class="detail-value" id="startTimeDisplay">2026-06-25 08:00</span>
+                <div class="detail-value-input"><div class="select-trigger" id="startTimeEdit" style="width:160px;" onclick="showTimePicker('start')">2026-06-25 08:00<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            </div>
+            <div class="detail-row" id="endTimeRow" style="display:none;">
+                <span class="detail-label">充电结束时间</span>
+                <span class="detail-value" id="endTimeDisplay">2026-06-25 10:30</span>
+                <div class="detail-value-input"><div class="select-trigger" id="endTimeEdit" style="width:160px;" onclick="showTimePicker('end')">2026-06-25 10:30<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            </div>
+            <div class="detail-row" id="remarkRow">
+                <span class="detail-label">备注</span>
+                <span class="detail-value" id="remarkDisplay">-</span>
+                <div class="detail-value-input"><input type="text" class="form-input" id="remarkEdit" value="" placeholder="请输入备注" style="width:180px;text-align:right;"></div>
             </div>
             <div class="detail-row" id="paymentRow">
                 <span class="detail-label">支付方式</span>
@@ -528,9 +538,18 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // 根据入口来源设置返回地址
+        const pageParams = new URLSearchParams(window.location.search);
+        const fromParam = pageParams.get('from') || '';
+        (function() {
+            const backLink = document.querySelector('.top-nav-back');
+            if (backLink) {
+                backLink.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
+            }
+        })();
+
         // 根据URL参数模拟不同记录类型
-        const params = new URLSearchParams(window.location.search);
-        const type = params.get('type') || 'fuel';
+        const type = pageParams.get('type') || 'fuel';
         let isEditMode = false;
 
         function initDetail() {
@@ -539,6 +558,9 @@
             const priceRow = document.getElementById('priceRow');
             const qtyRow = document.getElementById('qtyRow');
             const degreeRow = document.getElementById('degreeRow');
+            const startTimeRow = document.getElementById('startTimeRow');
+            const endTimeRow = document.getElementById('endTimeRow');
+            const remarkRow = document.getElementById('remarkRow');
             const paymentRow = document.getElementById('paymentRow');
             const oilCardRow = document.getElementById('oilCardRow');
             const chargeDetailSection = document.getElementById('chargeDetailPhotoSection');
@@ -547,6 +569,9 @@
             const priceDisplay = document.getElementById('priceDisplay');
             const qtyDisplay = document.getElementById('qtyDisplay');
             const degreeDisplay = document.getElementById('degreeDisplay');
+            const startTimeDisplay = document.getElementById('startTimeDisplay');
+            const endTimeDisplay = document.getElementById('endTimeDisplay');
+            const remarkDisplay = document.getElementById('remarkDisplay');
             const paymentDisplay = document.getElementById('paymentDisplay');
             const amountDisplay = document.getElementById('amountDisplay');
             const plateDisplay = document.getElementById('plateDisplay');
@@ -576,10 +601,14 @@
                     <label class="radio-item" data-value="cash" onclick="selectPayment('cash')"><span class="radio-circle"></span><span>现金</span></label>
                     <label class="radio-item" data-value="online" onclick="selectPayment('online')"><span class="radio-circle"></span><span>线上支付</span></label>`;
                 degreeRow.style.display = 'none';
+                startTimeRow.style.display = 'none';
+                endTimeRow.style.display = 'none';
                 priceRow.style.display = 'flex';
                 qtyRow.style.display = 'flex';
                 paymentRow.style.display = 'none';
                 oilCardRow.style.display = 'flex';
+                remarkRow.style.display = 'flex';
+                remarkDisplay.textContent = '加油备注示例';
                 receiptTitle.textContent = '交易凭证';
                 receiptSection.style.display = 'block';
                 chargeDetailSection.style.display = 'none';
@@ -601,10 +630,14 @@
                     <label class="radio-item" data-value="cash" onclick="selectPayment('cash')"><span class="radio-circle"></span><span>现金</span></label>
                     <label class="radio-item" data-value="online" onclick="selectPayment('online')"><span class="radio-circle"></span><span>线上支付</span></label>`;
                 degreeRow.style.display = 'none';
+                startTimeRow.style.display = 'none';
+                endTimeRow.style.display = 'none';
                 priceRow.style.display = 'none';
                 qtyRow.style.display = 'flex';
                 paymentRow.style.display = 'flex';
                 oilCardRow.style.display = 'none';
+                remarkRow.style.display = 'flex';
+                remarkDisplay.textContent = '加水备注示例';
                 receiptTitle.textContent = '支付照片';
                 receiptSection.style.display = 'block';
                 chargeDetailSection.style.display = 'none';
@@ -623,11 +656,18 @@
                     <label class="radio-item active" data-value="charge_card" onclick="selectPayment('charge_card')"><span class="radio-circle"></span><span>充电卡</span></label>
                     <label class="radio-item" data-value="cash" onclick="selectPayment('cash')"><span class="radio-circle"></span><span>现金</span></label>
                     <label class="radio-item" data-value="online" onclick="selectPayment('online')"><span class="radio-circle"></span><span>线上支付</span></label>`;
+                degreeDisplay.textContent = '45.50 度';
+                startTimeDisplay.textContent = '2026-06-25 08:00';
+                endTimeDisplay.textContent = '2026-06-25 10:30';
+                remarkDisplay.textContent = '充电备注示例';
                 degreeRow.style.display = 'flex';
+                startTimeRow.style.display = 'flex';
+                endTimeRow.style.display = 'flex';
                 priceRow.style.display = 'none';
                 qtyRow.style.display = 'none';
                 paymentRow.style.display = 'flex';
                 oilCardRow.style.display = 'none';
+                remarkRow.style.display = 'flex';
                 receiptSection.style.display = 'none';
                 chargeDetailSection.style.display = 'block';
                 paymentSection.style.display = 'block';
@@ -655,6 +695,9 @@
             document.getElementById('editActions').style.display = 'none';
             document.querySelector('.top-nav-right').style.display = 'block';
             showToast('保存成功');
+            setTimeout(() => {
+                window.location.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
+            }, 1200);
         }
 
         function cancelEdit() {
@@ -677,7 +720,7 @@
             hideDeleteConfirm();
             showToast('删除成功');
             setTimeout(() => {
-                window.location.href = 'records.html';
+                window.location.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
             }, 1500);
         }
 

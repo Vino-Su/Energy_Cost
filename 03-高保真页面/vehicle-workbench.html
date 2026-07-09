@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>今日用车工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="components/app-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            margin: 0 auto;
+            max-width: 430px;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
+        body {
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #000000d9;
+            position: relative;
+        }
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            max-width: 430px;
+            height: 44px;
+            margin: 0 auto;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #e8e8e8;
+            z-index: 1000;
+        }
+        .top-nav-back {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000000d9;
+            text-decoration: none;
+            border-radius: 16px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .top-nav-back:active {
+            background: #f5f5f5;
+        }
+        .top-nav-back svg {
+            width: 22px;
+            height: 22px;
+        }
+        .top-nav-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #000000d9;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .page {
+            min-height: 100vh;
+            padding: 56px 12px 24px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .vehicle-card {
+            padding: 16px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+        }
+        .vehicle-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .vehicle-no {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 30px;
+            color: #000000d9;
+            letter-spacing: 0;
+        }
+        .vehicle-meta {
+            margin-top: 4px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+        }
+        .state-pill {
+            min-width: 56px;
+            height: 26px;
+            padding: 0 10px;
+            border-radius: 13px;
+            background: #e6f4ff;
+            color: #1677ff;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        .metric-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .metric {
+            min-height: 56px;
+            padding: 8px 4px;
+            border-radius: 8px;
+            background: #f7f8fa;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 22px;
+            color: #000000d9;
+        }
+        .metric-label {
+            margin-top: 2px;
+            font-size: 11px;
+            line-height: 16px;
+            color: #00000073;
+        }
+        .status-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 24px;
+            white-space: nowrap;
+        }
+        .tag-success { background: #f6ffed; color: #52c41a; }
+        .tag-warning { background: #fff7e6; color: #fa8c16; }
+        .tag-danger { background: #fff1f0; color: #ff4d4f; }
+        .tag-info { background: #e6f4ff; color: #1677ff; }
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .btn {
+            height: 44px;
+            border-radius: 8px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .btn-primary {
+            background: #1677ff;
+            color: #ffffff;
+        }
+        .btn-secondary {
+            background: #f0f5ff;
+            color: #1677ff;
+        }
+        .btn-light {
+            background: #ffffff;
+            color: #1677ff;
+            border: 1px solid #1677ff;
+        }
+        .section-card {
+            padding: 14px 16px;
+        }
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 22px;
+            color: #000000d9;
+        }
+        .section-extra {
+            font-size: 12px;
+            color: #00000073;
+            white-space: nowrap;
+        }
+        .current-step-lite {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #fff7e6;
+            border: 1px solid #ffe7ba;
+        }
+        .current-step-main {
+            min-width: 0;
+            flex: 1;
+        }
+        .current-step-label {
+            font-size: 12px;
+            line-height: 18px;
+            color: #fa8c16;
+        }
+        .current-step-title {
+            font-size: 15px;
+            line-height: 22px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .current-step-desc {
+            margin-top: 1px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .next-step {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 92px;
+            padding: 12px;
+            border-radius: 10px;
+            background: #fff7e6;
+            border: 1px solid #ffe7ba;
+        }
+        .next-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: #ffffff;
+            color: #fa8c16;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .next-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+        .next-main {
+            min-width: 0;
+            flex: 1;
+        }
+        .next-kicker {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 3px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #fa8c16;
+        }
+        .next-kicker span {
+            display: inline-flex;
+            align-items: center;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 4px;
+            background: #ffffff;
+            white-space: nowrap;
+        }
+        .next-title {
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 22px;
+            color: #000000d9;
+        }
+        .next-desc {
+            margin-top: 2px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+        }
+        .mini-btn {
+            height: 34px;
+            min-width: 70px;
+            padding: 0 12px;
+            border-radius: 7px;
+            border: none;
+            background: #1677ff;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 28px 1fr auto;
+            gap: 8px;
+            min-height: 54px;
+            position: relative;
+        }
+        .timeline-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 28px;
+            bottom: 0;
+            width: 1px;
+            background: #e8e8e8;
+        }
+        .step-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 11px;
+            margin-top: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            background: #f5f5f5;
+            color: #00000040;
+        }
+        .step-dot svg {
+            width: 14px;
+            height: 14px;
+        }
+        .step-dot.done { background: #f6ffed; color: #52c41a; }
+        .step-dot.current { background: #fff7e6; color: #fa8c16; }
+        .step-dot.waiting { background: #f5f5f5; color: #bfbfbf; }
+        .step-main {
+            padding-bottom: 12px;
+            min-width: 0;
+        }
+        .step-title {
+            font-size: 14px;
+            line-height: 22px;
+            font-weight: 500;
+            color: #000000d9;
+        }
+        .step-desc {
+            margin-top: 1px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+        }
+        .step-right {
+            padding-top: 1px;
+        }
+        .link-button {
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: #1677ff;
+            font-size: 12px;
+            font-family: inherit;
+            font-weight: 500;
+            padding: 0;
+            white-space: nowrap;
+        }
+        .flow-track {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            padding-top: 2px;
+        }
+        .flow-track::before {
+            content: '';
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            top: 14px;
+            height: 2px;
+            background: #e8e8e8;
+        }
+        .flow-step {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            padding: 0;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .flow-step:active {
+            transform: scale(0.96);
+        }
+        .flow-dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            color: #bfbfbf;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 0 1px #e8e8e8;
+        }
+        .flow-dot svg {
+            width: 14px;
+            height: 14px;
+        }
+        .flow-label {
+            max-width: 52px;
+            font-size: 11px;
+            line-height: 16px;
+            color: #00000073;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .flow-step.done .flow-dot {
+            background: #f6ffed;
+            color: #52c41a;
+            box-shadow: 0 0 0 1px #b7eb8f;
+        }
+        .flow-step.done .flow-label {
+            color: #52c41a;
+        }
+        .flow-step.active .flow-dot {
+            background: #1677ff;
+            color: #ffffff;
+            box-shadow: 0 0 0 3px #e6f4ff;
+        }
+        .flow-step.active .flow-label {
+            color: #1677ff;
+            font-weight: 600;
+        }
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .task-item {
+            padding: 12px;
+            border-radius: 10px;
+            background: #f7f8fa;
+        }
+        .task-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .task-name {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 21px;
+            color: #000000d9;
+        }
+        .task-meta {
+            margin-top: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+        }
+        .task-route {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e8e8e8;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+        }
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .alert-item {
+            min-height: 48px;
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: #f7f8fa;
+        }
+        .alert-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .alert-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+        .alert-icon.warning { background: #fff7e6; color: #fa8c16; }
+        .alert-icon.info { background: #e6f4ff; color: #1677ff; }
+        .alert-title {
+            font-size: 14px;
+            line-height: 21px;
+            font-weight: 500;
+            color: #000000d9;
+        }
+        .alert-desc {
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+        }
+        .link-text {
+            color: #1677ff;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .quick-item {
+            min-width: 0;
+            text-decoration: none;
+            color: #000000d9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .quick-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+        .quick-icon.green { background: #f6ffed; color: #52c41a; }
+        .quick-icon.orange { background: #fff7e6; color: #fa8c16; }
+        .quick-icon.red { background: #fff1f0; color: #ff4d4f; }
+        .quick-icon svg {
+            width: 21px;
+            height: 21px;
+        }
+        .quick-label {
+            max-width: 100%;
+            font-size: 12px;
+            line-height: 17px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            max-width: 430px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+        .overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .dialog {
+            position: absolute;
+            left: 24px;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%) scale(0.96);
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 18px 16px 16px;
+            transition: transform 0.2s;
+        }
+        .overlay.show .dialog {
+            transform: translateY(-50%) scale(1);
+        }
+        .dialog-title {
+            font-size: 17px;
+            font-weight: 600;
+            line-height: 24px;
+            text-align: center;
+            color: #000000d9;
+        }
+        .qr-box {
+            width: 188px;
+            height: 188px;
+            margin: 18px auto 12px;
+            padding: 12px;
+            background: #ffffff;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+        }
+        .qr-pattern {
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(90deg, #111 10px, transparent 10px) 0 0 / 20px 20px,
+                linear-gradient(#111 10px, transparent 10px) 0 0 / 20px 20px,
+                linear-gradient(90deg, transparent 5px, #111 5px 11px, transparent 11px) 0 0 / 28px 28px,
+                linear-gradient(transparent 7px, #111 7px 13px, transparent 13px) 0 0 / 24px 24px,
+                #fff;
+            position: relative;
+        }
+        .qr-pattern::before,
+        .qr-pattern::after,
+        .qr-corner {
+            content: '';
+            position: absolute;
+            width: 42px;
+            height: 42px;
+            background: #ffffff;
+            border: 9px solid #111111;
+        }
+        .qr-pattern::before { left: 6px; top: 6px; }
+        .qr-pattern::after { right: 6px; top: 6px; }
+        .qr-corner { left: 6px; bottom: 6px; }
+        .dialog-desc {
+            font-size: 13px;
+            line-height: 20px;
+            text-align: center;
+            color: #00000073;
+        }
+        .dialog-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .sheet {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f5f5;
+            border-radius: 16px 16px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.24s ease-out;
+            overflow: hidden;
+        }
+        .overlay.show .sheet {
+            transform: translateY(0);
+        }
+        .sheet-head {
+            height: 52px;
+            padding: 0 16px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .sheet-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .sheet-close {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00000073;
+        }
+        .sheet-close svg {
+            width: 20px;
+            height: 20px;
+        }
+        .sheet-body {
+            padding: 12px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .check-block {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .check-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .check-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .check-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            min-height: 34px;
+            padding: 7px 8px;
+            border-radius: 8px;
+            background: #f7f8fa;
+            font-size: 13px;
+            line-height: 20px;
+            color: #000000d9;
+        }
+        .sheet-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 0 12px 12px;
+        }
+        .sheet-actions.single {
+            grid-template-columns: 1fr;
+        }
+        @media (max-width: 360px) {
+            .vehicle-no { font-size: 22px; }
+            .quick-grid { gap: 8px; }
+            .quick-icon { width: 38px; height: 38px; }
+            .action-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="home.html" class="top-nav-back" aria-label="返回工作台">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+        <div class="top-nav-title">今日用车</div>
+    </div>
+
+    <main class="page">
+        <section class="card vehicle-card">
+            <div class="vehicle-head">
+                <div>
+                    <div class="vehicle-no">粤B·12345</div>
+                    <div class="vehicle-meta">洗扫车 · 深圳南山智慧环卫项目</div>
+                </div>
+                <div class="state-pill">使用中</div>
+            </div>
+            <div class="metric-row">
+                <div class="metric">
+                    <div class="metric-value">07:42</div>
+                    <div class="metric-label">接车</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">1项</div>
+                    <div class="metric-label">待接受任务</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">1条</div>
+                    <div class="metric-label">异常待确认</div>
+                </div>
+            </div>
+            <div class="status-strip">
+                <span class="tag tag-success">车辆可用</span>
+                <span class="tag tag-warning">日检待完成</span>
+                <span class="tag tag-info">已绑定驾驶员</span>
+            </div>
+            <div class="action-row">
+                <button class="btn btn-primary" type="button" onclick="openQr()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18h3M14 21h3"/></svg>
+                    展示个人码
+                </button>
+                <button class="btn btn-secondary" type="button" onclick="openHandover()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    交车检查
+                </button>
+            </div>
+        </section>
+
+        <section class="card section-card">
+            <div class="section-head">
+                <div class="section-title">今日流程</div>
+                <button class="link-button" type="button" onclick="openFlow()">查看全部</button>
+            </div>
+            <div class="flow-track">
+                <button class="flow-step done" type="button" data-step="0" onclick="selectFlowStep(0)" aria-label="切换到接车环节">
+                    <div class="flow-dot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    </div>
+                    <div class="flow-label">接车</div>
+                </button>
+                <button class="flow-step active" type="button" data-step="1" onclick="selectFlowStep(1)" aria-label="切换到日检环节">
+                    <div class="flow-dot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+                    </div>
+                    <div class="flow-label">日检</div>
+                </button>
+                <button class="flow-step" type="button" data-step="2" onclick="selectFlowStep(2)" aria-label="切换到任务环节">
+                    <div class="flow-dot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M8 16h5M8 8h8"/></svg>
+                    </div>
+                    <div class="flow-label">任务</div>
+                </button>
+                <button class="flow-step" type="button" data-step="3" onclick="selectFlowStep(3)" aria-label="切换到动态事项环节">
+                    <div class="flow-dot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+                    </div>
+                    <div class="flow-label">动态</div>
+                </button>
+                <button class="flow-step" type="button" data-step="4" onclick="selectFlowStep(4)" aria-label="切换到交车环节">
+                    <div class="flow-dot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    </div>
+                    <div class="flow-label">交车</div>
+                </button>
+            </div>
+            <div class="current-step-lite">
+                <div class="current-step-main">
+                    <div class="current-step-label">当前环节</div>
+                    <div class="current-step-title" id="currentStepTitle">车辆日检</div>
+                    <div class="current-step-desc" id="currentStepDesc">完成后可接受任务</div>
+                </div>
+                <button class="mini-btn" type="button" id="currentStepAction" onclick="handleCurrentStepAction()">去日检</button>
+            </div>
+        </section>
+
+        <section class="card section-card">
+            <div class="section-head">
+                <div class="section-title">待办任务</div>
+                <div class="section-extra">今日排班</div>
+            </div>
+            <div class="task-list">
+                <div class="task-item">
+                    <div class="task-top">
+                        <div>
+                            <div class="task-name">科技园南区道路清扫</div>
+                            <div class="task-meta">
+                                <span>08:30-10:30</span>
+                                <span>计划任务</span>
+                            </div>
+                        </div>
+                        <span class="tag tag-warning">待接受</span>
+                    </div>
+                    <div class="task-route">路线：科苑南路至高新南九道</div>
+                </div>
+                <div class="task-item">
+                    <div class="task-top">
+                        <div>
+                            <div class="task-name">湾区广场临时积水处置</div>
+                            <div class="task-meta">
+                                <span>11:00前</span>
+                                <span>动态任务</span>
+                            </div>
+                        </div>
+                        <span class="tag tag-info">待派发</span>
+                    </div>
+                    <div class="task-route">派发后进入执行跟踪</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card section-card">
+            <div class="section-head">
+                <div class="section-title">异常与提醒</div>
+                <div class="section-extra">今日 2 条</div>
+            </div>
+            <div class="alert-list">
+                <div class="alert-item">
+                    <div class="alert-icon warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                    </div>
+                    <div>
+                        <div class="alert-title">移动异常提醒</div>
+                        <div class="alert-desc">车辆移动时驾驶员已绑定，可继续观察</div>
+                    </div>
+                    <span class="link-text" onclick="showToast('已提醒司机自纠')">提醒</span>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-icon info">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <div>
+                        <div class="alert-title">停靠超时待确认</div>
+                        <div class="alert-desc">确认后按类型留痕或转管理处理</div>
+                    </div>
+                    <span class="link-text" onclick="showToast('进入异常确认')">确认</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="card section-card">
+            <div class="section-head">
+                <div class="section-title">常用功能</div>
+                <div class="section-extra">独立可用</div>
+            </div>
+            <div class="quick-grid">
+                <a class="quick-item" href="fuel-report-ocr.html">
+                    <div class="quick-icon orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22V5a2 2 0 012-2h7a2 2 0 012 2v17"/><path d="M14 9h3l3 3v7a2 2 0 01-2 2h-1"/><path d="M6 9h5"/></svg>
+                    </div>
+                    <div class="quick-label">加油</div>
+                </a>
+                <a class="quick-item" href="water-report-ocr.html">
+                    <div class="quick-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2C20 10.48 17.33 6.55 12 2z"/></svg>
+                    </div>
+                    <div class="quick-label">加水</div>
+                </a>
+                <a class="quick-item" href="charge-report-ocr.html">
+                    <div class="quick-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+                    </div>
+                    <div class="quick-label">充电</div>
+                </a>
+                <a class="quick-item" href="records.html">
+                    <div class="quick-icon red">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>
+                    </div>
+                    <div class="quick-label">记录</div>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <div class="overlay" id="qrOverlay" onclick="closeQrByMask(event)">
+        <div class="dialog">
+            <div class="dialog-title">个人码</div>
+            <div class="qr-box">
+                <div class="qr-pattern"><div class="qr-corner"></div></div>
+            </div>
+            <div class="dialog-desc">用于车辆端识别驾驶员，按车辆当前绑定状态完成接车或交车</div>
+            <div class="dialog-actions">
+                <button class="btn btn-primary" type="button" onclick="closeQr()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="flowOverlay" onclick="closeFlowByMask(event)">
+        <div class="sheet">
+            <div class="sheet-head">
+                <div class="sheet-title">今日流程</div>
+                <div class="sheet-close" role="button" aria-label="关闭" onclick="closeFlow()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </div>
+            </div>
+            <div class="sheet-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="step-dot done">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                        </div>
+                        <div class="step-main">
+                            <div class="step-title">接车绑定</div>
+                            <div class="step-desc">车辆与驾驶员绑定成功，接车留痕</div>
+                        </div>
+                        <div class="step-right"><span class="tag tag-success">已完成</span></div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="step-dot current">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+                        </div>
+                        <div class="step-main">
+                            <div class="step-title">车辆日检</div>
+                            <div class="step-desc">未完成时不可接受任务</div>
+                        </div>
+                        <div class="step-right"><span class="tag tag-warning">待处理</span></div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="step-dot waiting">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M8 16h5M8 8h8"/></svg>
+                        </div>
+                        <div class="step-main">
+                            <div class="step-title">任务接受执行</div>
+                            <div class="step-desc">按计划任务校验实际轨迹</div>
+                        </div>
+                        <div class="step-right"><span class="tag tag-info">待开启</span></div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="step-dot waiting">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+                        </div>
+                        <div class="step-main">
+                            <div class="step-title">动态事项</div>
+                            <div class="step-desc">异常确认、补给上报、故障报修</div>
+                        </div>
+                        <div class="step-right"><span class="tag tag-info">随时可用</span></div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="step-dot waiting">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                        </div>
+                        <div class="step-main">
+                            <div class="step-title">交车</div>
+                            <div class="step-desc">检查未完成事项后关闭绑定</div>
+                        </div>
+                        <div class="step-right"><span class="tag tag-info">收车前</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="sheet-actions single">
+                <button class="btn btn-primary" type="button" onclick="closeFlow()">知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="handoverOverlay" onclick="closeHandoverByMask(event)">
+        <div class="sheet">
+            <div class="sheet-head">
+                <div class="sheet-title">交车检查</div>
+                <div class="sheet-close" role="button" aria-label="关闭" onclick="closeHandover()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </div>
+            </div>
+            <div class="sheet-body">
+                <div class="check-block">
+                    <div class="check-head">
+                        <div class="check-title">阻断项</div>
+                        <span class="tag tag-danger">需处理</span>
+                    </div>
+                    <div class="check-list">
+                        <div class="check-item">
+                            <span>科技园南区道路清扫未结束</span>
+                            <span class="link-text">去处理</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="check-block">
+                    <div class="check-head">
+                        <div class="check-title">提醒项</div>
+                        <span class="tag tag-warning">可继续</span>
+                    </div>
+                    <div class="check-list">
+                        <div class="check-item">
+                            <span>停靠超时异常待确认 1 条</span>
+                            <span class="link-text">查看</span>
+                        </div>
+                        <div class="check-item">
+                            <span>今日加水记录待补照片</span>
+                            <span class="link-text">补充</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sheet-actions">
+                <button class="btn btn-secondary" type="button" onclick="closeHandover()">稍后处理</button>
+                <button class="btn btn-primary" type="button" onclick="showToast('存在阻断项，暂不可交车')">确认交车</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="components/app-common.js"></script>
+    <script>
+        function showToast(message) {
+            var oldToast = document.querySelector('.toast');
+            if (oldToast) oldToast.remove();
+            var toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toast.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);max-width:260px;padding:8px 14px;border-radius:18px;background:rgba(0,0,0,0.72);color:#fff;font-size:13px;line-height:20px;z-index:5000;text-align:center;';
+            document.body.appendChild(toast);
+            setTimeout(function () {
+                toast.remove();
+            }, 1600);
+        }
+        function openQr() {
+            document.getElementById('qrOverlay').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeQr() {
+            document.getElementById('qrOverlay').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        function closeQrByMask(event) {
+            if (event.target.id === 'qrOverlay') closeQr();
+        }
+        function openFlow() {
+            document.getElementById('flowOverlay').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeFlow() {
+            document.getElementById('flowOverlay').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        function closeFlowByMask(event) {
+            if (event.target.id === 'flowOverlay') closeFlow();
+        }
+        function openHandover() {
+            document.getElementById('handoverOverlay').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeHandover() {
+            document.getElementById('handoverOverlay').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        function closeHandoverByMask(event) {
+            if (event.target.id === 'handoverOverlay') closeHandover();
+        }
+    </script>
+</body>
+</html>

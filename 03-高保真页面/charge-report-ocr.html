@@ -499,6 +499,53 @@
             background: #1677ff;
             color: #ffffff;
         }
+
+        .input-with-icon {
+            position: relative;
+        }
+        .input-with-icon .form-input {
+            padding-right: 34px;
+        }
+        .ocr-field-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            display: none;
+            pointer-events: none;
+        }
+        .ocr-field-icon.show {
+            display: block;
+        }
+        .ocr-field-icon.success {
+            color: #52c41a;
+        }
+        .ocr-field-icon.error {
+            color: #ff4d4f;
+        }
+        .textarea-input {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #000000d9;
+            font-family: inherit;
+            background: #ffffff;
+            outline: none;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .textarea-input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px #e6f4ff;
+        }
+        .textarea-input::placeholder {
+            color: #00000040;
+        }
     </style>
 </head>
 <body>
@@ -646,11 +693,6 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label"><span class="required">*</span>上报人</label>
-                <input type="text" class="form-input" value="张三" readonly>
-            </div>
-
-            <div class="form-group">
                 <label class="form-label"><span class="required">*</span>支付方式</label>
                 <div class="radio-group" id="paymentMethod">
                     <label class="radio-item active" data-value="charge_card" onclick="selectPayment('charge_card')">
@@ -670,39 +712,65 @@
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>充电开始时间</label>
-                <div class="select-trigger" onclick="showTimePicker('start')">
-                    <span id="startTime" class="placeholder">请选择开始时间</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                <div class="input-with-icon">
+                    <div class="select-trigger" onclick="showTimePicker('start')">
+                        <span id="startTime" class="placeholder">请选择开始时间</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <svg class="ocr-field-icon success-icon" id="startTimeOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="right:34px;"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="startTimeOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="right:34px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
                 <div class="error-text" id="startTimeError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>充电结束时间</label>
-                <div class="select-trigger" onclick="showTimePicker('end')">
-                    <span id="endTime" class="placeholder">请选择结束时间</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                <div class="input-with-icon">
+                    <div class="select-trigger" onclick="showTimePicker('end')">
+                        <span id="endTime" class="placeholder">请选择结束时间</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <svg class="ocr-field-icon success-icon" id="endTimeOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="right:34px;"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="endTimeOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="right:34px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
                 <div class="error-text" id="endTimeError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>充电度数（度）</label>
-                <input type="number" class="form-input" id="chargeDegree" placeholder="OCR识别自动填充" value="" step="0.1" onblur="validateNumber(this, '充电度数')">
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="chargeDegree" placeholder="OCR识别自动填充" value="" step="0.1" onblur="validateNumber(this, '充电度数')">
+                    <svg class="ocr-field-icon success-icon" id="chargeDegreeOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="chargeDegreeOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="error-text" id="chargeDegreeError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>充电金额（元）</label>
-                <input type="number" class="form-input" id="chargeAmount" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '金额')">
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="chargeAmount" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '金额')">
+                    <svg class="ocr-field-icon success-icon" id="chargeAmountOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="chargeAmountOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="error-text" id="chargeAmountError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span id="mileageRequired" class="required">*</span>当前里程数（km）</label>
-                <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
+                    <svg class="ocr-field-icon success-icon" id="mileageOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="mileageOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="vehicle-hint" id="mileageHint"></div>
                 <div class="error-text" id="mileageError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">备注</label>
+                <textarea class="textarea-input" id="remark" placeholder="请输入备注（最多200字）" maxlength="200"></textarea>
+                <div class="error-text" id="remarkError"></div>
             </div>
         </div>
     </div>
@@ -796,6 +864,44 @@
         let paymentPhoto = null;
         let isDetailOcrRunning = false;
         let isOdometerOcrRunning = false;
+
+        // OCR 字段状态：success | error | null
+        const ocrFieldStatus = {
+            startTime: null,
+            endTime: null,
+            chargeDegree: null,
+            chargeAmount: null,
+            mileage: null
+        };
+
+        function setOcrFieldIcon(field, status) {
+            ocrFieldStatus[field] = status;
+            const successEl = document.getElementById(field + 'OcrSuccessIcon');
+            const errorEl = document.getElementById(field + 'OcrErrorIcon');
+            if (!successEl || !errorEl) return;
+            successEl.classList.remove('show');
+            errorEl.classList.remove('show');
+            if (status === 'success') {
+                successEl.classList.add('show');
+            } else if (status === 'error') {
+                errorEl.classList.add('show');
+            }
+        }
+
+        function clearOcrFieldIcon(field) {
+            setOcrFieldIcon(field, null);
+        }
+
+        function bindOcrFieldInputListeners() {
+            ['chargeDegree', 'chargeAmount', 'mileage'].forEach(function(field) {
+                const el = document.getElementById(field);
+                if (el) {
+                    el.addEventListener('input', function() {
+                        clearOcrFieldIcon(field);
+                    });
+                }
+            });
+        }
 
         function switchVehicleMode(mode) {
             currentVehicleMode = mode;
@@ -1124,6 +1230,9 @@
             endEl.removeAttribute('data-value');
             document.getElementById('chargeDegree').value = '';
             document.getElementById('chargeAmount').value = '';
+            ['startTime', 'endTime', 'chargeDegree', 'chargeAmount'].forEach(function(key) {
+                setOcrFieldIcon(key, null);
+            });
             clearNumberErrors();
         }
 
@@ -1132,6 +1241,7 @@
             renderOdometerPhoto();
             clearOdometerOcrStatus();
             document.getElementById('mileage').value = '';
+            setOcrFieldIcon('mileage', null);
             document.getElementById('mileageError').textContent = '';
             document.getElementById('mileageError').classList.remove('show');
             document.getElementById('mileage').classList.remove('error');
@@ -1193,6 +1303,9 @@
                     setOcrStatus('detail', 'success');
                 } else {
                     setOcrStatus('detail', 'error');
+                    ['startTime', 'endTime', 'chargeDegree', 'chargeAmount'].forEach(function(key) {
+                        setOcrFieldIcon(key, 'error');
+                    });
                 }
                 isDetailOcrRunning = false;
                 updateSubmitButton();
@@ -1205,17 +1318,25 @@
                 startEl.textContent = result.startTime;
                 startEl.classList.remove('placeholder');
                 startEl.setAttribute('data-value', result.startTime.replace(' ', 'T'));
+                setOcrFieldIcon('startTime', 'success');
             }
             const endEl = document.getElementById('endTime');
             if (!endEl.getAttribute('data-value')) {
                 endEl.textContent = result.endTime;
                 endEl.classList.remove('placeholder');
                 endEl.setAttribute('data-value', result.endTime.replace(' ', 'T'));
+                setOcrFieldIcon('endTime', 'success');
             }
             const degreeInput = document.getElementById('chargeDegree');
-            if (!degreeInput.value) degreeInput.value = result.degree.toFixed(1);
+            if (!degreeInput.value) {
+                degreeInput.value = result.degree.toFixed(1);
+                setOcrFieldIcon('chargeDegree', 'success');
+            }
             const amountInput = document.getElementById('chargeAmount');
-            if (!amountInput.value) amountInput.value = result.amount.toFixed(2);
+            if (!amountInput.value) {
+                amountInput.value = result.amount.toFixed(2);
+                setOcrFieldIcon('chargeAmount', 'success');
+            }
         }
 
         // 模拟里程照片 OCR
@@ -1229,11 +1350,15 @@
                 if (success) {
                     const mileage = mockOdometerOcrResults[Math.floor(Math.random() * mockOdometerOcrResults.length)];
                     const mileageInput = document.getElementById('mileage');
-                    if (!mileageInput.value) mileageInput.value = mileage;
+                    if (!mileageInput.value) {
+                        mileageInput.value = mileage;
+                        setOcrFieldIcon('mileage', 'success');
+                    }
                     setOcrStatus('odometer', 'success');
                     checkMileage();
                 } else {
                     setOcrStatus('odometer', 'error');
+                    setOcrFieldIcon('mileage', 'error');
                 }
                 isOdometerOcrRunning = false;
                 updateSubmitButton();
@@ -1270,6 +1395,7 @@
             timeEl.setAttribute('data-value', value);
             timeEl.textContent = value.replace('T', ' ');
             timeEl.classList.remove('placeholder');
+            clearOcrFieldIcon(currentTimeTarget + 'Time');
             closePickerDirect('timePicker');
         }
 
@@ -1318,6 +1444,7 @@
             document.getElementById('chargeDegree').value = '';
             document.getElementById('chargeAmount').value = '';
             document.getElementById('mileage').value = '';
+            document.getElementById('remark').value = '';
             detailPhoto = null;
             odometerPhoto = null;
             paymentPhoto = null;
@@ -1327,6 +1454,9 @@
             clearDetailOcrStatus();
             clearOdometerOcrStatus();
             clearAllErrors();
+            Object.keys(ocrFieldStatus).forEach(function(key) {
+                setOcrFieldIcon(key, null);
+            });
             updateUnicornState();
         }
 
@@ -1442,6 +1572,14 @@
                 hasError = true;
             }
 
+            // 备注长度校验（非必填）
+            const remark = document.getElementById('remark');
+            if (remark.value.length > 200) {
+                document.getElementById('remarkError').textContent = '备注最多200字';
+                document.getElementById('remarkError').classList.add('show');
+                hasError = true;
+            }
+
             if (hasError) {
                 showToast('请完善表单信息');
                 setTimeout(scrollToFirstError, 100);
@@ -1463,6 +1601,17 @@
         // 初始化
         selectPayment('charge_card');
         updateUnicornState();
+        bindOcrFieldInputListeners();
+
+        // 根据入口来源设置返回地址
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const from = params.get('from');
+            const backLink = document.querySelector('.top-nav-back');
+            if (backLink) {
+                backLink.href = from === 'ocr' ? 'home-ocr.html' : 'home.html';
+            }
+        })();
     </script>
     <script src="components/app-common.js"></script>
 </body>

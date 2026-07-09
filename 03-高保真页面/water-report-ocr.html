@@ -107,6 +107,49 @@
         .form-input::placeholder {
             color: #00000040;
         }
+        .input-with-icon {
+            position: relative;
+        }
+        .ocr-field-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            display: none;
+            pointer-events: none;
+        }
+        .ocr-field-icon.show {
+            display: block;
+        }
+        .ocr-field-icon.success {
+            color: #52c41a;
+        }
+        .ocr-field-icon.error {
+            color: #ff4d4f;
+        }
+        .textarea-input {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #000000d9;
+            font-family: inherit;
+            background: #ffffff;
+            outline: none;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .textarea-input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px #e6f4ff;
+        }
+        .textarea-input::placeholder {
+            color: #00000040;
+        }
         .error-text {
             font-size: 12px;
             color: #ff4d4f;
@@ -618,11 +661,6 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label"><span class="required">*</span>上报人</label>
-                <input type="text" class="form-input" value="张三" readonly>
-            </div>
-
-            <div class="form-group">
                 <label class="form-label"><span class="required">*</span>加水时间</label>
                 <div class="select-trigger" onclick="showTimePicker()">
                     <span id="waterTime" class="placeholder">请选择时间</span>
@@ -663,8 +701,18 @@
 
             <div class="form-group">
                 <label class="form-label">当前里程数（km）</label>
-                <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
+                    <svg class="ocr-field-icon success-icon" id="mileageOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="mileageOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="error-text" id="mileageError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">备注</label>
+                <textarea class="textarea-input" id="remark" placeholder="请输入备注（最多200字）" maxlength="200"></textarea>
+                <div class="error-text" id="remarkError"></div>
             </div>
         </div>
     </div>
@@ -744,6 +792,38 @@
         let odometerPhoto = null;
         let paymentPhoto = null;
         let isOdometerOcrRunning = false;
+
+        // OCR 字段状态：success | error | null
+        const ocrFieldStatus = {
+            mileage: null
+        };
+
+        function setOcrFieldIcon(field, status) {
+            ocrFieldStatus[field] = status;
+            const successEl = document.getElementById(field + 'OcrSuccessIcon');
+            const errorEl = document.getElementById(field + 'OcrErrorIcon');
+            if (!successEl || !errorEl) return;
+            successEl.classList.remove('show');
+            errorEl.classList.remove('show');
+            if (status === 'success') {
+                successEl.classList.add('show');
+            } else if (status === 'error') {
+                errorEl.classList.add('show');
+            }
+        }
+
+        function clearOcrFieldIcon(field) {
+            setOcrFieldIcon(field, null);
+        }
+
+        function bindOcrFieldInputListeners() {
+            const el = document.getElementById('mileage');
+            if (el) {
+                el.addEventListener('input', function() {
+                    clearOcrFieldIcon('mileage');
+                });
+            }
+        }
 
         function switchVehicleMode(mode) {
             currentVehicleMode = mode;
@@ -1017,6 +1097,7 @@
             renderOdometerPhoto();
             clearOdometerOcrStatus();
             document.getElementById('mileage').value = '';
+            setOcrFieldIcon('mileage', null);
             document.getElementById('mileageError').textContent = '';
             document.getElementById('mileageError').classList.remove('show');
             document.getElementById('mileage').classList.remove('error');
@@ -1058,11 +1139,15 @@
                 if (success) {
                     const mileage = mockOdometerOcrResults[Math.floor(Math.random() * mockOdometerOcrResults.length)];
                     const mileageInput = document.getElementById('mileage');
-                    if (!mileageInput.value) mileageInput.value = mileage;
+                    if (!mileageInput.value) {
+                        mileageInput.value = mileage;
+                        setOcrFieldIcon('mileage', 'success');
+                    }
                     setOcrStatus('success');
                     checkMileage();
                 } else {
                     setOcrStatus('error');
+                    setOcrFieldIcon('mileage', 'error');
                 }
                 isOdometerOcrRunning = false;
                 updateSubmitButton();
@@ -1127,6 +1212,7 @@
             document.getElementById('quantity').value = '';
             document.getElementById('totalAmount').value = '';
             document.getElementById('mileage').value = '';
+            document.getElementById('remark').value = '';
             selectPayment('monthly');
             odometerPhoto = null;
             paymentPhoto = null;
@@ -1134,6 +1220,7 @@
             renderPaymentPhoto();
             clearOdometerOcrStatus();
             clearAllErrors();
+            setOcrFieldIcon('mileage', null);
         }
 
         function scrollToFirstError() {
@@ -1217,6 +1304,14 @@
                 hasError = true;
             }
 
+            // 备注长度校验（非必填）
+            const remark = document.getElementById('remark');
+            if (remark.value.length > 200) {
+                document.getElementById('remarkError').textContent = '备注最多200字';
+                document.getElementById('remarkError').classList.add('show');
+                hasError = true;
+            }
+
             if (hasError) {
                 showToast('请完善表单信息');
                 setTimeout(scrollToFirstError, 100);
@@ -1237,6 +1332,17 @@
 
         // 初始化
         selectPayment('monthly');
+        bindOcrFieldInputListeners();
+
+        // 根据入口来源设置返回地址
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const from = params.get('from');
+            const backLink = document.querySelector('.top-nav-back');
+            if (backLink) {
+                backLink.href = from === 'ocr' ? 'home-ocr.html' : 'home.html';
+            }
+        })();
     </script>
     <script src="components/app-common.js"></script>
 </body>

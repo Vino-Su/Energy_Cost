@@ -477,6 +477,53 @@
             color: #52c41a;
             margin-left: 6px;
         }
+
+        .input-with-icon {
+            position: relative;
+        }
+        .input-with-icon .form-input {
+            padding-right: 34px;
+        }
+        .ocr-field-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            display: none;
+            pointer-events: none;
+        }
+        .ocr-field-icon.show {
+            display: block;
+        }
+        .ocr-field-icon.success {
+            color: #52c41a;
+        }
+        .ocr-field-icon.error {
+            color: #ff4d4f;
+        }
+        .textarea-input {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #000000d9;
+            font-family: inherit;
+            background: #ffffff;
+            outline: none;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .textarea-input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px #e6f4ff;
+        }
+        .textarea-input::placeholder {
+            color: #00000040;
+        }
     </style>
 </head>
 <body>
@@ -610,22 +657,25 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label"><span class="required">*</span>上报人</label>
-                <input type="text" class="form-input" value="张三" readonly>
-            </div>
-
             <div class="form-group" id="oilCardGroup">
                 <label class="form-label"><span class="required">*</span>关联油卡</label>
-                <input type="text" class="form-input" id="oilCard" placeholder="请输入油卡号" value="" onblur="checkOilCard()">
+                <div class="input-with-icon">
+                    <input type="text" class="form-input" id="oilCard" placeholder="请输入油卡号" value="" onblur="checkOilCard()">
+                    <svg class="ocr-field-icon success-icon" id="oilCardOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="oilCardOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="error-text" id="oilCardError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>加油时间</label>
-                <div class="select-trigger" onclick="showTimePicker()">
-                    <span id="fuelTime" class="placeholder">请选择时间</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                <div class="input-with-icon">
+                    <div class="select-trigger" onclick="showTimePicker()">
+                        <span id="fuelTime" class="placeholder">请选择时间</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <svg class="ocr-field-icon success-icon" id="fuelTimeOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="right:34px;"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="fuelTimeOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="right:34px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
                 <div class="error-text" id="fuelTimeError"></div>
             </div>
@@ -633,26 +683,48 @@
             <div class="input-row">
                 <div class="form-group">
                     <label class="form-label"><span class="required">*</span>加油单价（元/L）</label>
-                    <input type="number" class="form-input" id="unitPrice" placeholder="请输入单价" value="" step="0.01" onblur="validateNumber(this, '单价')">
+                    <div class="input-with-icon">
+                        <input type="number" class="form-input" id="unitPrice" placeholder="请输入单价" value="" step="0.01" onblur="validateNumber(this, '单价')">
+                        <svg class="ocr-field-icon success-icon" id="unitPriceOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                        <svg class="ocr-field-icon error-icon" id="unitPriceOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </div>
                     <div class="error-text" id="unitPriceError"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label"><span class="required">*</span>加油量（L）</label>
-                    <input type="number" class="form-input" id="quantity" placeholder="请输入加油量" value="" step="0.01" onblur="validateNumber(this, '加油量')">
+                    <div class="input-with-icon">
+                        <input type="number" class="form-input" id="quantity" placeholder="请输入加油量" value="" step="0.01" onblur="validateNumber(this, '加油量')">
+                        <svg class="ocr-field-icon success-icon" id="quantityOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                        <svg class="ocr-field-icon error-icon" id="quantityOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </div>
                     <div class="error-text" id="quantityError"></div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>加油金额（元）</label>
-                <input type="number" class="form-input" id="totalAmount" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '金额')">
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="totalAmount" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '金额')">
+                    <svg class="ocr-field-icon success-icon" id="totalAmountOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="totalAmountOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="error-text" id="totalAmountError"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label"><span class="required">*</span>当前里程数（km）</label>
-                <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
+                    <svg class="ocr-field-icon success-icon" id="mileageOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="mileageOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
                 <div class="error-text" id="mileageError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">备注</label>
+                <textarea class="textarea-input" id="remark" placeholder="请输入备注（最多200字）" maxlength="200"></textarea>
+                <div class="error-text" id="remarkError"></div>
             </div>
         </div>
     </div>
@@ -743,6 +815,48 @@
         let odometerPhoto = null;
         let isReceiptOcrRunning = false;
         let isOdometerOcrRunning = false;
+
+        // OCR 字段状态：success | error | null
+        const ocrFieldStatus = {
+            oilCard: null,
+            fuelTime: null,
+            unitPrice: null,
+            quantity: null,
+            totalAmount: null,
+            mileage: null
+        };
+
+        // 设置字段 OCR 图标
+        function setOcrFieldIcon(field, status) {
+            ocrFieldStatus[field] = status;
+            const successEl = document.getElementById(field + 'OcrSuccessIcon');
+            const errorEl = document.getElementById(field + 'OcrErrorIcon');
+            if (!successEl || !errorEl) return;
+            successEl.classList.remove('show');
+            errorEl.classList.remove('show');
+            if (status === 'success') {
+                successEl.classList.add('show');
+            } else if (status === 'error') {
+                errorEl.classList.add('show');
+            }
+        }
+
+        // 清除字段 OCR 图标
+        function clearOcrFieldIcon(field) {
+            setOcrFieldIcon(field, null);
+        }
+
+        // 绑定 OCR 字段输入监听，用户修改后移除图标
+        function bindOcrFieldInputListeners() {
+            ['oilCard', 'unitPrice', 'quantity', 'totalAmount', 'mileage'].forEach(function(field) {
+                const el = document.getElementById(field);
+                if (el) {
+                    el.addEventListener('input', function() {
+                        clearOcrFieldIcon(field);
+                    });
+                }
+            });
+        }
 
         // 车辆信息切换
         function switchVehicleMode(mode) {
@@ -1035,6 +1149,9 @@
             renderReceiptPhoto();
             clearReceiptOcrStatus();
             document.getElementById('oilCard').value = '';
+            ['oilCard', 'fuelTime', 'unitPrice', 'quantity', 'totalAmount'].forEach(function(key) {
+                setOcrFieldIcon(key, null);
+            });
             const timeEl = document.getElementById('fuelTime');
             timeEl.textContent = '请选择时间';
             timeEl.classList.add('placeholder');
@@ -1051,6 +1168,7 @@
             renderOdometerPhoto();
             clearOdometerOcrStatus();
             document.getElementById('mileage').value = '';
+            setOcrFieldIcon('mileage', null);
             document.getElementById('mileageError').textContent = '';
             document.getElementById('mileageError').classList.remove('show');
             document.getElementById('mileage').classList.remove('error');
@@ -1105,6 +1223,9 @@
                     setOcrStatus('receipt', 'success');
                 } else {
                     setOcrStatus('receipt', 'error');
+                    ['oilCard', 'fuelTime', 'unitPrice', 'quantity', 'totalAmount'].forEach(function(key) {
+                        setOcrFieldIcon(key, 'error');
+                    });
                 }
                 isReceiptOcrRunning = false;
                 updateSubmitButton();
@@ -1113,19 +1234,32 @@
 
         function fillReceiptOcrResult(result) {
             const oilCardInput = document.getElementById('oilCard');
-            if (!oilCardInput.value) oilCardInput.value = result.oilCard;
+            if (!oilCardInput.value) {
+                oilCardInput.value = result.oilCard;
+                setOcrFieldIcon('oilCard', 'success');
+            }
             const timeEl = document.getElementById('fuelTime');
             if (!timeEl.getAttribute('data-value')) {
                 timeEl.textContent = result.time;
                 timeEl.classList.remove('placeholder');
                 timeEl.setAttribute('data-value', result.time);
+                setOcrFieldIcon('fuelTime', 'success');
             }
             const unitPriceInput = document.getElementById('unitPrice');
-            if (!unitPriceInput.value) unitPriceInput.value = result.unitPrice.toFixed(2);
+            if (!unitPriceInput.value) {
+                unitPriceInput.value = result.unitPrice.toFixed(2);
+                setOcrFieldIcon('unitPrice', 'success');
+            }
             const quantityInput = document.getElementById('quantity');
-            if (!quantityInput.value) quantityInput.value = result.quantity.toFixed(2);
+            if (!quantityInput.value) {
+                quantityInput.value = result.quantity.toFixed(2);
+                setOcrFieldIcon('quantity', 'success');
+            }
             const totalAmountInput = document.getElementById('totalAmount');
-            if (!totalAmountInput.value) totalAmountInput.value = result.amount.toFixed(2);
+            if (!totalAmountInput.value) {
+                totalAmountInput.value = result.amount.toFixed(2);
+                setOcrFieldIcon('totalAmount', 'success');
+            }
             checkOilCard();
         }
 
@@ -1140,11 +1274,15 @@
                 if (success) {
                     const mileage = mockOdometerOcrResults[Math.floor(Math.random() * mockOdometerOcrResults.length)];
                     const mileageInput = document.getElementById('mileage');
-                    if (!mileageInput.value) mileageInput.value = mileage;
+                    if (!mileageInput.value) {
+                        mileageInput.value = mileage;
+                        setOcrFieldIcon('mileage', 'success');
+                    }
                     setOcrStatus('odometer', 'success');
                     checkMileage();
                 } else {
                     setOcrStatus('odometer', 'error');
+                    setOcrFieldIcon('mileage', 'error');
                 }
                 isOdometerOcrRunning = false;
                 updateSubmitButton();
@@ -1179,6 +1317,7 @@
             timeEl.setAttribute('data-value', value);
             timeEl.textContent = displayValue;
             timeEl.classList.remove('placeholder');
+            clearOcrFieldIcon('fuelTime');
             closePickerDirect('timePicker');
         }
 
@@ -1231,6 +1370,7 @@
             document.getElementById('quantity').value = '';
             document.getElementById('totalAmount').value = '';
             document.getElementById('mileage').value = '';
+            document.getElementById('remark').value = '';
             receiptPhoto = null;
             odometerPhoto = null;
             renderReceiptPhoto();
@@ -1238,6 +1378,9 @@
             clearReceiptOcrStatus();
             clearOdometerOcrStatus();
             clearAllErrors();
+            Object.keys(ocrFieldStatus).forEach(function(key) {
+                setOcrFieldIcon(key, null);
+            });
         }
 
         function scrollToFirstError() {
@@ -1351,6 +1494,14 @@
                 hasError = true;
             }
 
+            // 备注长度校验（非必填）
+            const remark = document.getElementById('remark');
+            if (remark.value.length > 200) {
+                document.getElementById('remarkError').textContent = '备注最多200字';
+                document.getElementById('remarkError').classList.add('show');
+                hasError = true;
+            }
+
             if (hasError) {
                 showToast('请完善表单信息');
                 setTimeout(scrollToFirstError, 100);
@@ -1372,6 +1523,17 @@
 
         // 初始化
         switchVehicleMode('plate');
+        bindOcrFieldInputListeners();
+
+        // 根据入口来源设置返回地址
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const from = params.get('from');
+            const backLink = document.querySelector('.top-nav-back');
+            if (backLink) {
+                backLink.href = from === 'ocr' ? 'home-ocr.html' : 'home.html';
+            }
+        })();
     </script>
     <script src="components/app-common.js"></script>
 </body>

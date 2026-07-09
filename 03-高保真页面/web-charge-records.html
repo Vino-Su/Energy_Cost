@@ -700,18 +700,21 @@
                         <thead>
                             <tr>
                                 <th class="th-center" style="width:48px;"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                <th style="width:120px;">所属项目</th>
                                 <th style="width:90px;">车牌号</th>
                                 <th style="width:140px;">车架号</th>
-                                <th style="width:120px;">所属项目</th>
-                                <th style="width:70px;">上报人</th>
                                 <th class="th-center" style="width:80px;">支付方式</th>
-                                <th class="th-center" style="width:100px;">充电时间</th>
+                                <th class="th-center" style="width:100px;">充电开始时间</th>
+                                <th class="th-center" style="width:100px;">充电结束时间</th>
                                 <th class="th-right" style="width:90px;">充电度数（度）</th>
                                 <th class="th-right" style="width:90px;">充电金额（元）</th>
                                 <th class="th-right" style="width:100px;">当前里程数（km）</th>
-                                <th class="th-center" style="width:80px;">仪表盘里程照片</th>
+                                <th class="th-center" style="width:80px;">里程照片</th>
                                 <th class="th-center" style="width:80px;">充电截图明细</th>
                                 <th class="th-center" style="width:80px;">支付照片</th>
+                                <th class="th-center" style="width:70px;">上报人</th>
+                                <th class="th-center" style="width:100px;">上报时间</th>
+                                <th style="width:120px;">备注</th>
                                 <th class="th-center" style="width:160px;">操作</th>
                             </tr>
                         </thead>
@@ -773,8 +776,22 @@
                     <div class="form-input"><input type="text" id="formReporter" placeholder="请输入上报人"></div>
                 </div>
                 <div class="form-row">
-                    <span class="form-label required">充电时间</span>
-                    <div class="form-input"><input type="datetime-local" id="formTime"></div>
+                    <span class="form-label required">支付方式</span>
+                    <div class="form-input">
+                        <select id="formPaymentMethod">
+                            <option value="充电卡">充电卡</option>
+                            <option value="现金">现金</option>
+                            <option value="线上支付">线上支付</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">充电开始时间</span>
+                    <div class="form-input"><input type="datetime-local" id="formStartTime"></div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">充电结束时间</span>
+                    <div class="form-input"><input type="datetime-local" id="formEndTime"></div>
                 </div>
                 <div class="form-row">
                     <span class="form-label required">充电度数（度）</span>
@@ -788,27 +805,23 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <span class="form-label required">支付方式</span>
-                    <div class="form-input">
-                        <select id="formPaymentMethod">
-                            <option value="充电卡">充电卡</option>
-                            <option value="现金">现金</option>
-                            <option value="线上支付">线上支付</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
                     <span class="form-label required">当前里程数（km）</span>
                     <div class="form-input"><input type="number" id="formMileage" placeholder="请输入当前里程数"></div>
                 </div>
                 <div class="form-row">
-                    <span class="form-label required">仪表盘里程照片</span>
+                    <span class="form-label">备注</span>
+                    <div class="form-input">
+                        <input type="text" id="formRemark" placeholder="请输入备注，最多200字" maxlength="200">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">里程照片</span>
                     <div class="form-input">
                         <div class="upload-area" onclick="document.getElementById('mileagePhoto').click()">
                             <div class="upload-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             </div>
-                            <div class="upload-text">点击上传仪表盘里程照片</div>
+                            <div class="upload-text">点击上传里程照片</div>
                             <div class="upload-hint">支持 JPG、PNG 格式，上限3张</div>
                         </div>
                         <input type="file" id="mileagePhoto" style="display:none;" accept="image/*" multiple onchange="handleFileUpload(this, 'mileagePreview')">
@@ -987,18 +1000,18 @@
     <script>
         // 示例数据
         const sampleData = [
-            { id: 1, plate: '粤B·12345', vin: 'LSVAG2180E2100001', project: '深圳南山智慧环卫项目', reporter: '王师傅', time: '2026-06-24 08:30', quantity: 45.50, amount: 85.50, paymentMethod: '充电卡', mileage: 15234, mileagePhoto: 'https://picsum.photos/seed/cm1/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd1/100/100', voucherPhoto: 'https://picsum.photos/seed/cv1/100/100' },
-            { id: 2, plate: '粤B·67890', vin: 'LSVAG2180E2100002', project: '深圳南山智慧环卫项目', reporter: '李师傅', time: '2026-06-23 17:45', quantity: 38.20, amount: 71.80, paymentMethod: '充电卡', mileage: 28901, mileagePhoto: 'https://picsum.photos/seed/cm2/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd2/100/100', voucherPhoto: 'https://picsum.photos/seed/cv2/100/100' },
-            { id: 3, plate: '粤A·11111', vin: 'LSVAG2180E2100003', project: '广州天河环卫项目', reporter: '张师傅', time: '2026-06-22 09:15', quantity: 52.00, amount: 97.60, paymentMethod: '现金', mileage: 45678, mileagePhoto: 'https://picsum.photos/seed/cm3/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd3/100/100', voucherPhoto: 'https://picsum.photos/seed/cv3/100/100' },
-            { id: 4, plate: '粤B·22222', vin: 'LSVAG2180E2100004', project: '深圳南山智慧环卫项目', reporter: '王师傅', time: '2026-06-21 14:20', quantity: 30.00, amount: 56.40, paymentMethod: '线上支付', mileage: 15800, mileagePhoto: 'https://picsum.photos/seed/cm4/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd4/100/100', voucherPhoto: 'https://picsum.photos/seed/cv4/100/100' },
-            { id: 5, plate: '京C·33333', vin: 'LSVAG2180E2100005', project: '北京朝阳清洁项目', reporter: '赵师傅', time: '2026-06-20 07:50', quantity: 60.80, amount: 114.24, paymentMethod: '充电卡', mileage: 32100, mileagePhoto: 'https://picsum.photos/seed/cm5/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd5/100/100', voucherPhoto: 'https://picsum.photos/seed/cv5/100/100' },
-            { id: 6, plate: '沪D·44444', vin: 'LSVAG2180E2100006', project: '上海浦东环卫项目', reporter: '钱师傅', time: '2026-06-19 16:30', quantity: 42.50, amount: 79.92, paymentMethod: '线上支付', mileage: 19876, mileagePhoto: 'https://picsum.photos/seed/cm6/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd6/100/100', voucherPhoto: 'https://picsum.photos/seed/cv6/100/100' },
-            { id: 7, plate: '粤A·55555', vin: 'LSVAG2180E2100007', project: '广州天河环卫项目', reporter: '孙师傅', time: '2026-06-18 11:00', quantity: 55.30, amount: 104.04, paymentMethod: '充电卡', mileage: 51234, mileagePhoto: 'https://picsum.photos/seed/cm7/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd7/100/100', voucherPhoto: 'https://picsum.photos/seed/cv7/100/100' },
-            { id: 8, plate: '粤B·66666', vin: 'LSVAG2180E2100008', project: '深圳南山智慧环卫项目', reporter: '周师傅', time: '2026-06-17 19:10', quantity: 48.00, amount: 90.24, paymentMethod: '现金', mileage: 8765, mileagePhoto: 'https://picsum.photos/seed/cm8/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd8/100/100', voucherPhoto: 'https://picsum.photos/seed/cv8/100/100' },
-            { id: 9, plate: '京C·77777', vin: 'LSVAG2180E2100009', project: '北京朝阳清洁项目', reporter: '吴师傅', time: '2026-06-16 08:00', quantity: 35.60, amount: 66.96, paymentMethod: '充电卡', mileage: 34567, mileagePhoto: 'https://picsum.photos/seed/cm9/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd9/100/100', voucherPhoto: 'https://picsum.photos/seed/cv9/100/100' },
-            { id: 10, plate: '沪D·88888', vin: 'LSVAG2180E2100010', project: '上海浦东环卫项目', reporter: '郑师傅', time: '2026-06-15 15:45', quantity: 50.00, amount: 94.00, paymentMethod: '线上支付', mileage: 23456, mileagePhoto: 'https://picsum.photos/seed/cm10/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd10/100/100', voucherPhoto: 'https://picsum.photos/seed/cv10/100/100' },
-            { id: 11, plate: '粤B·99999', vin: 'LSVAG2180E2100011', project: '深圳南山智慧环卫项目', reporter: '王师傅', time: '2026-06-14 10:20', quantity: 28.00, amount: 52.64, paymentMethod: '充电卡', mileage: 16200, mileagePhoto: 'https://picsum.photos/seed/cm11/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd11/100/100', voucherPhoto: 'https://picsum.photos/seed/cv11/100/100' },
-            { id: 12, plate: '粤A·00000', vin: 'LSVAG2180E2100012', project: '广州天河环卫项目', reporter: '陈师傅', time: '2026-06-13 13:30', quantity: 65.00, amount: 122.20, paymentMethod: '线上支付', mileage: 47890, mileagePhoto: 'https://picsum.photos/seed/cm12/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd12/100/100', voucherPhoto: 'https://picsum.photos/seed/cv12/100/100' },
+            { id: 1, plate: '粤B·12345', vin: 'LSVAG2180E2100001', project: '深圳南山智慧环卫项目', reporter: '王师傅', startTime: '2026-06-24 08:00', endTime: '2026-06-24 08:30', reportTime: '2026-06-24 09:00', quantity: 45.50, amount: 85.50, paymentMethod: '充电卡', mileage: 15234, mileagePhoto: 'https://picsum.photos/seed/cm1/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd1/100/100', voucherPhoto: 'https://picsum.photos/seed/cv1/100/100', remark: '早班前快充' },
+            { id: 2, plate: '粤B·67890', vin: 'LSVAG2180E2100002', project: '深圳南山智慧环卫项目', reporter: '李师傅', startTime: '2026-06-23 17:00', endTime: '2026-06-23 17:45', reportTime: '2026-06-23 18:00', quantity: 38.20, amount: 71.80, paymentMethod: '充电卡', mileage: 28901, mileagePhoto: 'https://picsum.photos/seed/cm2/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd2/100/100', voucherPhoto: 'https://picsum.photos/seed/cv2/100/100', remark: '' },
+            { id: 3, plate: '粤A·11111', vin: 'LSVAG2180E2100003', project: '广州天河环卫项目', reporter: '张师傅', startTime: '2026-06-22 08:30', endTime: '2026-06-22 09:15', reportTime: '2026-06-22 09:30', quantity: 52.00, amount: 97.60, paymentMethod: '现金', mileage: 45678, mileagePhoto: 'https://picsum.photos/seed/cm3/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd3/100/100', voucherPhoto: 'https://picsum.photos/seed/cv3/100/100', remark: '现金结算' },
+            { id: 4, plate: '粤B·22222', vin: 'LSVAG2180E2100004', project: '深圳南山智慧环卫项目', reporter: '王师傅', startTime: '2026-06-21 13:40', endTime: '2026-06-21 14:20', reportTime: '2026-06-21 14:35', quantity: 30.00, amount: 56.40, paymentMethod: '线上支付', mileage: 15800, mileagePhoto: 'https://picsum.photos/seed/cm4/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd4/100/100', voucherPhoto: 'https://picsum.photos/seed/cv4/100/100', remark: '' },
+            { id: 5, plate: '京C·33333', vin: 'LSVAG2180E2100005', project: '北京朝阳清洁项目', reporter: '赵师傅', startTime: '2026-06-20 07:00', endTime: '2026-06-20 07:50', reportTime: '2026-06-20 08:05', quantity: 60.80, amount: 114.24, paymentMethod: '充电卡', mileage: 32100, mileagePhoto: 'https://picsum.photos/seed/cm5/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd5/100/100', voucherPhoto: 'https://picsum.photos/seed/cv5/100/100', remark: '满电出发' },
+            { id: 6, plate: '沪D·44444', vin: 'LSVAG2180E2100006', project: '上海浦东环卫项目', reporter: '钱师傅', startTime: '2026-06-19 15:45', endTime: '2026-06-19 16:30', reportTime: '2026-06-19 16:45', quantity: 42.50, amount: 79.92, paymentMethod: '线上支付', mileage: 19876, mileagePhoto: 'https://picsum.photos/seed/cm6/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd6/100/100', voucherPhoto: 'https://picsum.photos/seed/cv6/100/100', remark: '' },
+            { id: 7, plate: '粤A·55555', vin: 'LSVAG2180E2100007', project: '广州天河环卫项目', reporter: '孙师傅', startTime: '2026-06-18 10:10', endTime: '2026-06-18 11:00', reportTime: '2026-06-18 11:15', quantity: 55.30, amount: 104.04, paymentMethod: '充电卡', mileage: 51234, mileagePhoto: 'https://picsum.photos/seed/cm7/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd7/100/100', voucherPhoto: 'https://picsum.photos/seed/cv7/100/100', remark: '中途补电' },
+            { id: 8, plate: '粤B·66666', vin: 'LSVAG2180E2100008', project: '深圳南山智慧环卫项目', reporter: '周师傅', startTime: '2026-06-17 18:20', endTime: '2026-06-17 19:10', reportTime: '2026-06-17 19:25', quantity: 48.00, amount: 90.24, paymentMethod: '现金', mileage: 8765, mileagePhoto: 'https://picsum.photos/seed/cm8/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd8/100/100', voucherPhoto: 'https://picsum.photos/seed/cv8/100/100', remark: '' },
+            { id: 9, plate: '京C·77777', vin: 'LSVAG2180E2100009', project: '北京朝阳清洁项目', reporter: '吴师傅', startTime: '2026-06-16 07:10', endTime: '2026-06-16 08:00', reportTime: '2026-06-16 08:10', quantity: 35.60, amount: 66.96, paymentMethod: '充电卡', mileage: 34567, mileagePhoto: 'https://picsum.photos/seed/cm9/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd9/100/100', voucherPhoto: 'https://picsum.photos/seed/cv9/100/100', remark: '' },
+            { id: 10, plate: '沪D·88888', vin: 'LSVAG2180E2100010', project: '上海浦东环卫项目', reporter: '郑师傅', startTime: '2026-06-15 14:50', endTime: '2026-06-15 15:45', reportTime: '2026-06-15 16:00', quantity: 50.00, amount: 94.00, paymentMethod: '线上支付', mileage: 23456, mileagePhoto: 'https://picsum.photos/seed/cm10/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd10/100/100', voucherPhoto: 'https://picsum.photos/seed/cv10/100/100', remark: '微信支付' },
+            { id: 11, plate: '粤B·99999', vin: 'LSVAG2180E2100011', project: '深圳南山智慧环卫项目', reporter: '王师傅', startTime: '2026-06-14 09:30', endTime: '2026-06-14 10:20', reportTime: '2026-06-14 10:30', quantity: 28.00, amount: 52.64, paymentMethod: '充电卡', mileage: 16200, mileagePhoto: 'https://picsum.photos/seed/cm11/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd11/100/100', voucherPhoto: 'https://picsum.photos/seed/cv11/100/100', remark: '' },
+            { id: 12, plate: '粤A·00000', vin: 'LSVAG2180E2100012', project: '广州天河环卫项目', reporter: '陈师傅', startTime: '2026-06-13 12:40', endTime: '2026-06-13 13:30', reportTime: '2026-06-13 13:45', quantity: 65.00, amount: 122.20, paymentMethod: '线上支付', mileage: 47890, mileagePhoto: 'https://picsum.photos/seed/cm12/100/100', chargeDetailPhoto: 'https://picsum.photos/seed/cd12/100/100', voucherPhoto: 'https://picsum.photos/seed/cv12/100/100', remark: '周末作业补电' },
         ];
 
         let currentData = [...sampleData];
@@ -1023,18 +1036,21 @@
             tbody.innerHTML = pageData.map(item => `
                 <tr>
                     <td class="text-center"><input type="checkbox" class="checkbox" value="${item.id}" ${selectedIds.has(item.id) ? 'checked' : ''} onchange="toggleSelect(${item.id})"></td>
+                    <td class="text-left">${item.project}</td>
                     <td class="text-left">${item.plate}</td>
                     <td class="text-left">${item.vin}</td>
-                    <td class="text-left">${item.project}</td>
-                    <td class="text-left">${item.reporter}</td>
                     <td class="text-center">${item.paymentMethod || '-'}</td>
-                    <td class="text-center">${item.time}</td>
+                    <td class="text-center">${item.startTime}</td>
+                    <td class="text-center">${item.endTime}</td>
                     <td class="text-right num-font">${item.quantity.toFixed(2)}</td>
                     <td class="text-right num-font">${item.amount.toFixed(2)}</td>
                     <td class="text-right num-font">${item.mileage.toLocaleString()}</td>
                     <td class="text-center"><img src="${item.mileagePhoto}" class="thumb-img" onclick="previewImage('${item.mileagePhoto}')" alt="里程照片"></td>
                     <td class="text-center"><img src="${item.chargeDetailPhoto}" class="thumb-img" onclick="previewImage('${item.chargeDetailPhoto}')" alt="充电明细截图"></td>
                     <td class="text-center"><img src="${item.voucherPhoto}" class="thumb-img" onclick="previewImage('${item.voucherPhoto}')" alt="支付照片"></td>
+                    <td class="text-center">${item.reporter}</td>
+                    <td class="text-center">${item.reportTime}</td>
+                    <td class="text-left" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.remark || ''}">${item.remark || '-'}</td>
                     <td class="text-center">
                         <button class="btn btn-link btn-sm" onclick="openEditModal(${item.id})">编辑</button>
                         <button class="btn btn-text-danger btn-sm" onclick="openDeleteModal(${item.id})">删除</button>
@@ -1129,11 +1145,13 @@
             document.getElementById('formProject').value = '';
             document.getElementById('formProject').disabled = false;
             document.getElementById('formReporter').value = '';
-            document.getElementById('formTime').value = '';
+            document.getElementById('formPaymentMethod').value = '充电卡';
+            document.getElementById('formStartTime').value = '';
+            document.getElementById('formEndTime').value = '';
             document.getElementById('formQuantity').value = '';
             document.getElementById('formAmount').value = '';
-            document.getElementById('formPaymentMethod').value = '充电卡';
             document.getElementById('formMileage').value = '';
+            document.getElementById('formRemark').value = '';
             document.getElementById('mileagePreview').innerHTML = '';
             document.getElementById('chargeDetailPreview').innerHTML = '';
             document.getElementById('voucherPreview').innerHTML = '';
@@ -1152,11 +1170,13 @@
             document.getElementById('formProject').value = item.project;
             document.getElementById('formProject').disabled = true;
             document.getElementById('formReporter').value = item.reporter;
-            document.getElementById('formTime').value = item.time.replace(' ', 'T');
+            document.getElementById('formPaymentMethod').value = item.paymentMethod || '充电卡';
+            document.getElementById('formStartTime').value = item.startTime.replace(' ', 'T');
+            document.getElementById('formEndTime').value = item.endTime.replace(' ', 'T');
             document.getElementById('formQuantity').value = item.quantity;
             document.getElementById('formAmount').value = item.amount;
-            document.getElementById('formPaymentMethod').value = item.paymentMethod || '充电卡';
             document.getElementById('formMileage').value = item.mileage;
+            document.getElementById('formRemark').value = item.remark || '';
             document.getElementById('mileagePreview').innerHTML = `<img src="${item.mileagePhoto}" class="upload-preview-item">`;
             document.getElementById('chargeDetailPreview').innerHTML = item.chargeDetailPhoto ? `<img src="${item.chargeDetailPhoto}" class="upload-preview-item">` : '';
             document.getElementById('voucherPreview').innerHTML = `<img src="${item.voucherPhoto}" class="upload-preview-item">`;

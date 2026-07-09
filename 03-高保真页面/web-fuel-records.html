@@ -842,18 +842,20 @@
                         <thead>
                             <tr>
                                 <th class="th-center" style="width:48px;"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                <th style="width:120px;">所属项目</th>
                                 <th style="width:90px;">车牌号</th>
                                 <th style="width:140px;">车架号</th>
-                                <th style="width:120px;">所属项目</th>
-                                <th style="width:70px;">上报人</th>
                                 <th style="width:100px;">油卡号</th>
                                 <th class="th-center" style="width:100px;">加油时间</th>
-                                <th class="th-right" style="width:90px;">加油单价（元）</th>
+                                <th class="th-right" style="width:90px;">加油单价（元/L）</th>
                                 <th class="th-right" style="width:80px;">加油量（L）</th>
                                 <th class="th-right" style="width:90px;">加油金额（元）</th>
                                 <th class="th-right" style="width:100px;">当前里程数（km）</th>
-                                <th class="th-center" style="width:80px;">仪表盘里程照片</th>
+                                <th class="th-center" style="width:80px;">里程照片</th>
                                 <th class="th-center" style="width:80px;">交易凭证</th>
+                                <th class="th-center" style="width:70px;">上报人</th>
+                                <th class="th-center" style="width:100px;">上报时间</th>
+                                <th style="width:120px;">备注</th>
                                 <th class="th-center" style="width:160px;">操作</th>
                             </tr>
                         </thead>
@@ -958,13 +960,19 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <span class="form-label required">仪表盘里程照片</span>
+                    <span class="form-label">备注</span>
+                    <div class="form-input">
+                        <input type="text" id="formRemark" placeholder="请输入备注，最多200字" maxlength="200">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <span class="form-label required">里程照片</span>
                     <div class="form-input">
                         <div class="upload-area" onclick="document.getElementById('mileagePhoto').click()">
                             <div class="upload-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             </div>
-                            <div class="upload-text">点击上传仪表盘里程照片</div>
+                            <div class="upload-text">点击上传里程照片</div>
                             <div class="upload-hint">支持 JPG、PNG 格式，上限3张</div>
                         </div>
                         <input type="file" id="mileagePhoto" style="display:none;" accept="image/*" multiple onchange="handleFileUpload(this, 'mileagePreview')">
@@ -1135,18 +1143,18 @@
     <script>
         // 示例数据
         const sampleData = [
-            { id: 1, plate: '粤B·12345', vin: 'LSVAG2180E2100001', project: '深圳南山智慧环卫项目', reporter: '王师傅', oilCard: 'CARD001', time: '2026-06-24 08:30', unitPrice: 8.52, quantity: 50.00, amount: 426.00, paymentMethod: '油卡', mileage: 15234, mileagePhoto: 'https://picsum.photos/seed/m1/100/100', voucherPhoto: 'https://picsum.photos/seed/v1/100/100', paymentPhoto: 'https://picsum.photos/seed/p1/100/100' },
-            { id: 2, plate: '粤B·67890', vin: 'LSVAG2180E2100002', project: '深圳南山智慧环卫项目', reporter: '李师傅', oilCard: 'CARD002', time: '2026-06-23 17:45', unitPrice: 8.48, quantity: 45.50, amount: 385.84, paymentMethod: '油卡', mileage: 28901, mileagePhoto: 'https://picsum.photos/seed/m2/100/100', voucherPhoto: 'https://picsum.photos/seed/v2/100/100', paymentPhoto: 'https://picsum.photos/seed/p2/100/100' },
-            { id: 3, plate: '粤A·11111', vin: 'LSVAG2180E2100003', project: '广州天河环卫项目', reporter: '张师傅', oilCard: 'CARD003', time: '2026-06-22 09:15', unitPrice: 8.55, quantity: 38.20, amount: 326.61, paymentMethod: '现金', mileage: 45678, mileagePhoto: 'https://picsum.photos/seed/m3/100/100', voucherPhoto: 'https://picsum.photos/seed/v3/100/100', paymentPhoto: 'https://picsum.photos/seed/p3/100/100' },
-            { id: 4, plate: '粤B·22222', vin: 'LSVAG2180E2100004', project: '深圳南山智慧环卫项目', reporter: '王师傅', oilCard: 'CARD001', time: '2026-06-21 14:20', unitPrice: 8.50, quantity: 42.00, amount: 357.00, paymentMethod: '线上支付', mileage: 15800, mileagePhoto: 'https://picsum.photos/seed/m4/100/100', voucherPhoto: 'https://picsum.photos/seed/v4/100/100', paymentPhoto: 'https://picsum.photos/seed/p4/100/100' },
-            { id: 5, plate: '京C·33333', vin: 'LSVAG2180E2100005', project: '北京朝阳清洁项目', reporter: '赵师傅', oilCard: 'CARD004', time: '2026-06-20 07:50', unitPrice: 8.60, quantity: 55.30, amount: 475.58, paymentMethod: '油卡', mileage: 32100, mileagePhoto: 'https://picsum.photos/seed/m5/100/100', voucherPhoto: 'https://picsum.photos/seed/v5/100/100', paymentPhoto: 'https://picsum.photos/seed/p5/100/100' },
-            { id: 6, plate: '沪D·44444', vin: 'LSVAG2180E2100006', project: '上海浦东环卫项目', reporter: '钱师傅', oilCard: 'CARD005', time: '2026-06-19 16:30', unitPrice: 8.45, quantity: 48.80, amount: 412.36, paymentMethod: '线上支付', mileage: 19876, mileagePhoto: 'https://picsum.photos/seed/m6/100/100', voucherPhoto: 'https://picsum.photos/seed/v6/100/100', paymentPhoto: 'https://picsum.photos/seed/p6/100/100' },
-            { id: 7, plate: '粤A·55555', vin: 'LSVAG2180E2100007', project: '广州天河环卫项目', reporter: '孙师傅', oilCard: 'CARD006', time: '2026-06-18 11:00', unitPrice: 8.53, quantity: 35.60, amount: 303.67, paymentMethod: '现金', mileage: 51234, mileagePhoto: 'https://picsum.photos/seed/m7/100/100', voucherPhoto: 'https://picsum.photos/seed/v7/100/100', paymentPhoto: 'https://picsum.photos/seed/p7/100/100' },
-            { id: 8, plate: '粤B·66666', vin: 'LSVAG2180E2100008', project: '深圳南山智慧环卫项目', reporter: '周师傅', oilCard: 'CARD007', time: '2026-06-17 19:10', unitPrice: 8.49, quantity: 60.00, amount: 509.40, paymentMethod: '油卡', mileage: 8765, mileagePhoto: 'https://picsum.photos/seed/m8/100/100', voucherPhoto: 'https://picsum.photos/seed/v8/100/100', paymentPhoto: 'https://picsum.photos/seed/p8/100/100' },
-            { id: 9, plate: '京C·77777', vin: 'LSVAG2180E2100009', project: '北京朝阳清洁项目', reporter: '吴师傅', oilCard: 'CARD008', time: '2026-06-16 08:00', unitPrice: 8.58, quantity: 40.50, amount: 347.49, paymentMethod: '线上支付', mileage: 34567, mileagePhoto: 'https://picsum.photos/seed/m9/100/100', voucherPhoto: 'https://picsum.photos/seed/v9/100/100', paymentPhoto: 'https://picsum.photos/seed/p9/100/100' },
-            { id: 10, plate: '沪D·88888', vin: 'LSVAG2180E2100010', project: '上海浦东环卫项目', reporter: '郑师傅', oilCard: 'CARD009', time: '2026-06-15 15:45', unitPrice: 8.47, quantity: 52.30, amount: 442.98, paymentMethod: '油卡', mileage: 23456, mileagePhoto: 'https://picsum.photos/seed/m10/100/100', voucherPhoto: 'https://picsum.photos/seed/v10/100/100', paymentPhoto: 'https://picsum.photos/seed/p10/100/100' },
-            { id: 11, plate: '粤B·99999', vin: 'LSVAG2180E2100011', project: '深圳南山智慧环卫项目', reporter: '王师傅', oilCard: 'CARD001', time: '2026-06-14 10:20', unitPrice: 8.51, quantity: 33.80, amount: 287.64, paymentMethod: '现金', mileage: 16200, mileagePhoto: 'https://picsum.photos/seed/m11/100/100', voucherPhoto: 'https://picsum.photos/seed/v11/100/100', paymentPhoto: 'https://picsum.photos/seed/p11/100/100' },
-            { id: 12, plate: '粤A·00000', vin: 'LSVAG2180E2100012', project: '广州天河环卫项目', reporter: '陈师傅', oilCard: 'CARD010', time: '2026-06-13 13:30', unitPrice: 8.56, quantity: 47.00, amount: 402.32, paymentMethod: '线上支付', mileage: 47890, mileagePhoto: 'https://picsum.photos/seed/m12/100/100', voucherPhoto: 'https://picsum.photos/seed/v12/100/100', paymentPhoto: 'https://picsum.photos/seed/p12/100/100' },
+            { id: 1, plate: '粤B·12345', vin: 'LSVAG2180E2100001', project: '深圳南山智慧环卫项目', reporter: '王师傅', oilCard: 'CARD001', time: '2026-06-24 08:30', reportTime: '2026-06-24 09:00', unitPrice: 8.52, quantity: 50.00, amount: 426.00, paymentMethod: '油卡', mileage: 15234, mileagePhoto: 'https://picsum.photos/seed/m1/100/100', voucherPhoto: 'https://picsum.photos/seed/v1/100/100', remark: '早班出车前加油' },
+            { id: 2, plate: '粤B·67890', vin: 'LSVAG2180E2100002', project: '深圳南山智慧环卫项目', reporter: '李师傅', oilCard: 'CARD002', time: '2026-06-23 17:45', reportTime: '2026-06-23 18:00', unitPrice: 8.48, quantity: 45.50, amount: 385.84, paymentMethod: '油卡', mileage: 28901, mileagePhoto: 'https://picsum.photos/seed/m2/100/100', voucherPhoto: 'https://picsum.photos/seed/v2/100/100', remark: '' },
+            { id: 3, plate: '粤A·11111', vin: 'LSVAG2180E2100003', project: '广州天河环卫项目', reporter: '张师傅', oilCard: 'CARD003', time: '2026-06-22 09:15', reportTime: '2026-06-22 09:30', unitPrice: 8.55, quantity: 38.20, amount: 326.61, paymentMethod: '现金', mileage: 45678, mileagePhoto: 'https://picsum.photos/seed/m3/100/100', voucherPhoto: 'https://picsum.photos/seed/v3/100/100', remark: '现金支付，已开发票' },
+            { id: 4, plate: '粤B·22222', vin: 'LSVAG2180E2100004', project: '深圳南山智慧环卫项目', reporter: '王师傅', oilCard: 'CARD001', time: '2026-06-21 14:20', reportTime: '2026-06-21 14:35', unitPrice: 8.50, quantity: 42.00, amount: 357.00, paymentMethod: '线上支付', mileage: 15800, mileagePhoto: 'https://picsum.photos/seed/m4/100/100', voucherPhoto: 'https://picsum.photos/seed/v4/100/100', remark: '' },
+            { id: 5, plate: '京C·33333', vin: 'LSVAG2180E2100005', project: '北京朝阳清洁项目', reporter: '赵师傅', oilCard: 'CARD004', time: '2026-06-20 07:50', reportTime: '2026-06-20 08:05', unitPrice: 8.60, quantity: 55.30, amount: 475.58, paymentMethod: '油卡', mileage: 32100, mileagePhoto: 'https://picsum.photos/seed/m5/100/100', voucherPhoto: 'https://picsum.photos/seed/v5/100/100', remark: '满油出发' },
+            { id: 6, plate: '沪D·44444', vin: 'LSVAG2180E2100006', project: '上海浦东环卫项目', reporter: '钱师傅', oilCard: 'CARD005', time: '2026-06-19 16:30', reportTime: '2026-06-19 16:45', unitPrice: 8.45, quantity: 48.80, amount: 412.36, paymentMethod: '线上支付', mileage: 19876, mileagePhoto: 'https://picsum.photos/seed/m6/100/100', voucherPhoto: 'https://picsum.photos/seed/v6/100/100', remark: '' },
+            { id: 7, plate: '粤A·55555', vin: 'LSVAG2180E2100007', project: '广州天河环卫项目', reporter: '孙师傅', oilCard: 'CARD006', time: '2026-06-18 11:00', reportTime: '2026-06-18 11:15', unitPrice: 8.53, quantity: 35.60, amount: 303.67, paymentMethod: '现金', mileage: 51234, mileagePhoto: 'https://picsum.photos/seed/m7/100/100', voucherPhoto: 'https://picsum.photos/seed/v7/100/100', remark: '备用车辆加油' },
+            { id: 8, plate: '粤B·66666', vin: 'LSVAG2180E2100008', project: '深圳南山智慧环卫项目', reporter: '周师傅', oilCard: 'CARD007', time: '2026-06-17 19:10', reportTime: '2026-06-17 19:25', unitPrice: 8.49, quantity: 60.00, amount: 509.40, paymentMethod: '油卡', mileage: 8765, mileagePhoto: 'https://picsum.photos/seed/m8/100/100', voucherPhoto: 'https://picsum.photos/seed/v8/100/100', remark: '' },
+            { id: 9, plate: '京C·77777', vin: 'LSVAG2180E2100009', project: '北京朝阳清洁项目', reporter: '吴师傅', oilCard: 'CARD008', time: '2026-06-16 08:00', reportTime: '2026-06-16 08:10', unitPrice: 8.58, quantity: 40.50, amount: 347.49, paymentMethod: '线上支付', mileage: 34567, mileagePhoto: 'https://picsum.photos/seed/m9/100/100', voucherPhoto: 'https://picsum.photos/seed/v9/100/100', remark: '支付宝支付' },
+            { id: 10, plate: '沪D·88888', vin: 'LSVAG2180E2100010', project: '上海浦东环卫项目', reporter: '郑师傅', oilCard: 'CARD009', time: '2026-06-15 15:45', reportTime: '2026-06-15 16:00', unitPrice: 8.47, quantity: 52.30, amount: 442.98, paymentMethod: '油卡', mileage: 23456, mileagePhoto: 'https://picsum.photos/seed/m10/100/100', voucherPhoto: 'https://picsum.photos/seed/v10/100/100', remark: '' },
+            { id: 11, plate: '粤B·99999', vin: 'LSVAG2180E2100011', project: '深圳南山智慧环卫项目', reporter: '王师傅', oilCard: 'CARD001', time: '2026-06-14 10:20', reportTime: '2026-06-14 10:30', unitPrice: 8.51, quantity: 33.80, amount: 287.64, paymentMethod: '现金', mileage: 16200, mileagePhoto: 'https://picsum.photos/seed/m11/100/100', voucherPhoto: 'https://picsum.photos/seed/v11/100/100', remark: '' },
+            { id: 12, plate: '粤A·00000', vin: 'LSVAG2180E2100012', project: '广州天河环卫项目', reporter: '陈师傅', oilCard: 'CARD010', time: '2026-06-13 13:30', reportTime: '2026-06-13 13:45', unitPrice: 8.56, quantity: 47.00, amount: 402.32, paymentMethod: '线上支付', mileage: 47890, mileagePhoto: 'https://picsum.photos/seed/m12/100/100', voucherPhoto: 'https://picsum.photos/seed/v12/100/100', remark: '周末加班用油' },
         ];
 
         let currentData = [...sampleData];
@@ -1173,10 +1181,9 @@
             tbody.innerHTML = pageData.map(item => `
                 <tr>
                     <td class="text-center"><input type="checkbox" class="checkbox" value="${item.id}" ${selectedIds.has(item.id) ? 'checked' : ''} onchange="toggleSelect(${item.id})"></td>
+                    <td class="text-left">${item.project}</td>
                     <td class="text-left">${item.plate}</td>
                     <td class="text-left">${item.vin}</td>
-                    <td class="text-left">${item.project}</td>
-                    <td class="text-left">${item.reporter}</td>
                     <td class="text-left">${item.oilCard || '-'}</td>
                     <td class="text-center">${item.time}</td>
                     <td class="text-right num-font">${item.unitPrice.toFixed(2)}</td>
@@ -1189,6 +1196,9 @@
                     <td class="text-center">
                         <img src="${item.voucherPhoto}" class="thumb-img" onclick="previewImage('${item.voucherPhoto}')" alt="交易凭证">
                     </td>
+                    <td class="text-center">${item.reporter}</td>
+                    <td class="text-center">${item.reportTime}</td>
+                    <td class="text-left" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.remark || ''}">${item.remark || '-'}</td>
                     <td class="text-center">
                         <button class="btn btn-link btn-sm" onclick="openEditModal(${item.id})">编辑</button>
                         <button class="btn btn-text-danger btn-sm" onclick="openDeleteModal(${item.id})">删除</button>
@@ -1316,6 +1326,7 @@
             document.getElementById('formAmount').value = '';
             document.getElementById('formOilCard').value = '';
             document.getElementById('formMileage').value = '';
+            document.getElementById('formRemark').value = '';
             document.getElementById('mileagePreview').innerHTML = '';
             document.getElementById('voucherPreview').innerHTML = '';
             openModal('formModal');
@@ -1340,6 +1351,7 @@
             document.getElementById('formAmount').value = item.amount;
             document.getElementById('formOilCard').value = item.oilCard || '';
             document.getElementById('formMileage').value = item.mileage;
+            document.getElementById('formRemark').value = item.remark || '';
             document.getElementById('mileagePreview').innerHTML = `<img src="${item.mileagePhoto}" class="upload-preview-item">`;
             document.getElementById('voucherPreview').innerHTML = `<img src="${item.voucherPhoto}" class="upload-preview-item">`;
             openModal('formModal');

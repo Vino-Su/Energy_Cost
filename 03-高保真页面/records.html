@@ -411,6 +411,16 @@
     </div>
 
     <script>
+        // 根据入口来源设置返回地址
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const from = params.get('from');
+            const backLink = document.querySelector('.top-nav-back');
+            if (backLink) {
+                backLink.href = from === 'ocr' ? 'home-ocr.html' : 'home.html';
+            }
+        })();
+
         const recordsData = [
             { id: 1, type: 'fuel', plate: '粤B·12345', amount: 420.00, time: '2026-06-22 09:30', reporter: '张三', project: '深圳南山智慧环卫项目' },
             { id: 2, type: 'charge', plate: '粤B·67890', amount: 85.50, time: '2026-06-21 18:15', reporter: '张三', project: '深圳南山智慧环卫项目' },
@@ -426,6 +436,11 @@
 
         const typeLabels = { fuel: '加油', water: '加水', charge: '充电' };
         const typeClasses = { fuel: 'tag-fuel', water: 'tag-water', charge: 'tag-charge' };
+
+        function getFromParam() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('from') || '';
+        }
 
         function formatDate(date) {
             const y = date.getFullYear();
@@ -472,7 +487,7 @@
             }
 
             container.innerHTML = filtered.map(r => `
-                <a href="record-detail.html?type=${r.type}&id=${r.id}" class="record-card" data-type="${r.type}">
+                <a href="record-detail.html?type=${r.type}&id=${r.id}&from=${getFromParam()}" class="record-card" data-type="${r.type}">
                     <div class="card-header">
                         <span class="tag ${typeClasses[r.type]}">${typeLabels[r.type]}</span>
                         <div class="card-amount">¥${r.amount.toFixed(2)}</div>
