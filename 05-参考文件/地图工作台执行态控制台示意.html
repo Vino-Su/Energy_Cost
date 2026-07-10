@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地图工作台执行态控制台示意</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #e9eef3;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #000000d9;
+        }
+        .phone {
+            position: relative;
+            width: 390px;
+            height: 844px;
+            overflow: hidden;
+            background: #eef2f5;
+            box-shadow: 0 24px 70px rgba(20, 40, 70, 0.22);
+        }
+        .map {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(115deg, transparent 0 32%, rgba(255,255,255,0.52) 32% 34%, transparent 34%),
+                linear-gradient(24deg, transparent 0 45%, rgba(255,255,255,0.45) 45% 47%, transparent 47%),
+                linear-gradient(155deg, transparent 0 54%, rgba(255,255,255,0.45) 54% 56%, transparent 56%),
+                #dfe6ea;
+        }
+        .map-grid {
+            position: absolute;
+            inset: 0;
+            opacity: 0.7;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.46) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.46) 1px, transparent 1px);
+            background-size: 56px 56px;
+        }
+        .top-card {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            top: 14px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 18px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.1);
+            z-index: 5;
+        }
+        .back {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            display: grid;
+            place-items: center;
+            color: #000000d9;
+        }
+        .vehicle-main { flex: 1; min-width: 0; }
+        .plate-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 22px;
+        }
+        .status-pill {
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: #f6ffed;
+            color: #52c41a;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .vehicle-sub {
+            margin-top: 2px;
+            font-size: 12px;
+            color: #00000073;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .signal {
+            min-width: 52px;
+            text-align: right;
+            font-size: 12px;
+            color: #1677ff;
+            font-weight: 600;
+        }
+        .route-layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 390px;
+            height: 844px;
+            z-index: 1;
+        }
+        .marker {
+            position: absolute;
+            z-index: 3;
+            display: grid;
+            place-items: center;
+            filter: drop-shadow(0 3px 7px rgba(0,0,0,0.16));
+        }
+        .marker.start { left: 50px; top: 156px; width: 34px; height: 34px; }
+        .marker.end { left: 296px; top: 394px; width: 34px; height: 34px; }
+        .marker.vehicle {
+            left: 222px;
+            top: 324px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #91d5ff;
+            box-shadow: 0 3px 10px rgba(22,119,255,0.32);
+        }
+        .marker.warn {
+            left: 182px;
+            top: 278px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ff4d4f;
+            border: 3px solid #ffffff;
+        }
+        .marker.dynamic {
+            left: 284px;
+            top: 268px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fa8c16;
+            border: 3px solid #ffffff;
+        }
+        .map-tools {
+            position: absolute;
+            right: 14px;
+            top: 192px;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .tool-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.96);
+            color: #1677ff;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 4px 13px rgba(0,0,0,0.15);
+        }
+        .alert-band {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 292px;
+            z-index: 6;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 12px;
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            color: #874d00;
+            font-size: 13px;
+            box-shadow: 0 8px 24px rgba(120, 80, 0, 0.1);
+        }
+        .console {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 7;
+            padding: 8px 16px 14px;
+            background: #ffffff;
+            border-radius: 22px 22px 0 0;
+            box-shadow: 0 -12px 34px rgba(0,0,0,0.14);
+        }
+        .handle {
+            width: 42px;
+            height: 4px;
+            margin: 0 auto 10px;
+            border-radius: 999px;
+            background: #e8e8e8;
+        }
+        .task-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .task-title {
+            font-size: 16px;
+            line-height: 23px;
+            font-weight: 750;
+        }
+        .task-route {
+            margin-top: 3px;
+            font-size: 12px;
+            color: #00000073;
+        }
+        .state-tag {
+            flex: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #f6ffed;
+            color: #389e0d;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .task-side {
+            flex: none;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        .task-list-btn {
+            height: 28px;
+            padding: 0 10px;
+            border: none;
+            border-radius: 999px;
+            background: #e6f4ff;
+            color: #1677ff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .task-sheet-mask {
+            position: absolute;
+            inset: 0;
+            z-index: 11;
+            background: rgba(0,0,0,0.34);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease;
+        }
+        .phone.sheet-open .task-sheet-mask {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .task-list-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 12;
+            max-height: 58vh;
+            padding: 8px 16px 18px;
+            border-radius: 22px 22px 0 0;
+            background: #ffffff;
+            box-shadow: 0 -18px 40px rgba(0,0,0,0.18);
+            transform: translateY(104%);
+            transition: transform 0.26s cubic-bezier(.2,.8,.2,1);
+        }
+        .phone.sheet-open .task-list-panel { transform: translateY(0); }
+        .sheet-handle {
+            width: 42px;
+            height: 4px;
+            margin: 0 auto 12px;
+            border-radius: 999px;
+            background: #e8e8e8;
+        }
+        .task-list-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            gap: 12px;
+        }
+        .task-list-title strong {
+            display: block;
+            font-size: 16px;
+            line-height: 22px;
+            color: #000000d9;
+        }
+        .task-list-title span {
+            display: block;
+            margin-top: 2px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
+        }
+        .collapse-list {
+            height: 32px;
+            padding: 0 4px;
+            border: none;
+            background: transparent;
+            color: #1677ff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .mini-task {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 8px;
+            min-height: 58px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f7f9fb;
+            border: 1px solid transparent;
+        }
+        .mini-task + .mini-task { margin-top: 8px; }
+        .mini-task.active {
+            background: #f6ffed;
+            border: 1px solid rgba(82,196,26,0.24);
+        }
+        .mini-name {
+            font-size: 13px;
+            line-height: 18px;
+            font-weight: 700;
+        }
+        .mini-meta {
+            margin-top: 1px;
+            font-size: 11px;
+            color: #00000073;
+        }
+        .mini-tag {
+            padding: 2px 7px;
+            border-radius: 5px;
+            background: #e6f4ff;
+            color: #1677ff;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .mini-tag.running {
+            background: #f6ffed;
+            color: #389e0d;
+        }
+        .mini-tag.urgent {
+            background: #fff2f0;
+            color: #ff4d4f;
+        }
+        .progress-main {
+            margin-top: 11px;
+            display: grid;
+            grid-template-columns: 88px 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+        .ring {
+            position: relative;
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            background: conic-gradient(#52c41a 0deg 331deg, #edf2ee 331deg 360deg);
+            display: grid;
+            place-items: center;
+        }
+        .ring::after {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            background: #ffffff;
+        }
+        .ring-value {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        .ring-value strong {
+            display: block;
+            font-size: 23px;
+            line-height: 27px;
+            color: #237804;
+        }
+        .ring-value span {
+            font-size: 11px;
+            color: #00000073;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .metric {
+            min-height: 52px;
+            padding: 7px 10px;
+            border-radius: 10px;
+            background: #f5f8fb;
+        }
+        .metric.warn-metric { background: #fff7e6; }
+        .metric-label {
+            font-size: 11px;
+            color: #00000073;
+            line-height: 16px;
+        }
+        .metric-value {
+            margin-top: 3px;
+            font-size: 17px;
+            line-height: 22px;
+            font-weight: 750;
+            color: #000000d9;
+        }
+        .warn-metric .metric-value { color: #d46b08; }
+        .progress-bar {
+            margin-top: 9px;
+            height: 8px;
+            border-radius: 999px;
+            background: #f0f0f0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 92%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #52c41a, #95de64);
+        }
+        .hint-row {
+            margin-top: 7px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fa8c16;
+            font-size: 12px;
+        }
+        .actions {
+            margin-top: 11px;
+            display: grid;
+            grid-template-columns: 112px 1fr;
+            gap: 10px;
+        }
+        .detail-btn {
+            height: 46px;
+            border-radius: 12px;
+            border: 1px solid #d9e8ff;
+            background: #ffffff;
+            color: #1677ff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .icon-action {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            border: 1px solid #e8e8e8;
+            background: #ffffff;
+            color: #1677ff;
+            display: grid;
+            place-items: center;
+        }
+        .end-btn {
+            height: 46px;
+            border: none;
+            border-radius: 12px;
+            background: #1677ff;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            box-shadow: 0 8px 18px rgba(22,119,255,0.28);
+        }
+        svg { display: block; }
+        @media (max-width: 430px) {
+            body { align-items: stretch; background: #eef2f5; }
+            .phone { width: 100vw; height: 100vh; box-shadow: none; }
+            .route-layer { width: 100vw; height: 100vh; }
+        }
+    </style>
+</head>
+<body>
+    <main class="phone" aria-label="地图工作台执行态控制台示意">
+        <section class="map">
+            <div class="map-grid"></div>
+        </section>
+        <svg class="route-layer" viewBox="0 0 390 844" aria-hidden="true">
+            <path d="M67 176 C93 207, 122 239, 146 270 S189 332, 236 346 S282 373, 313 411" fill="none" stroke="#1677ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 7" opacity="0.72"/>
+            <path d="M67 176 C94 210, 124 244, 148 274 S187 330, 236 346" fill="none" stroke="#ff4d4f" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+        <header class="top-card">
+            <button class="back" aria-label="返回">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="vehicle-main">
+                <div class="plate-row">粤B·D2856 <span class="status-pill">作业中</span></div>
+                <div class="vehicle-sub">洗扫车 · GPS 已开启 · 任务执行 01:44</div>
+            </div>
+            <div class="signal">网络良好</div>
+        </header>
+        <div class="marker start">
+            <svg viewBox="0 0 1024 1024" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
+                <path d="M642.662387 136.799666c-41.346687-24.686239-87.878466-34.570353-134.440945-34.570353-46.561455 0-93.093235 14.802124-134.439922 34.570353-118.919437 69.140707-155.082054 212.231659-87.877443 325.764412L508.221442 837.732689l222.319411-375.168612C797.745465 349.031325 761.520425 205.940372 642.662387 136.799666z" fill="#5B9B08"/>
+            </svg>
+        </div>
+        <div class="marker end">
+            <svg viewBox="0 0 32 32" width="34" height="34">
+                <path d="M16 29s10-7.5 10-17A10 10 0 1 0 6 12c0 9.5 10 17 10 17Z" fill="#1677ff"/>
+                <path d="M11 12l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="marker warn"></div>
+        <div class="marker dynamic"></div>
+        <div class="marker vehicle">
+            <svg viewBox="0 0 32 32" width="30" height="30">
+                <rect x="6" y="11" width="20" height="11" rx="3" fill="#1677ff"/>
+                <rect x="18" y="8" width="6" height="5" rx="1.5" fill="#69b1ff"/>
+                <circle cx="11" cy="24" r="3" fill="#2f54eb"/>
+                <circle cx="22" cy="24" r="3" fill="#2f54eb"/>
+                <path d="M7 8h8M5 15H2M5 19H2" stroke="#52c41a" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <nav class="map-tools" aria-label="地图工具">
+            <button class="tool-btn" aria-label="定位回正">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            </button>
+            <button class="tool-btn" aria-label="异常提醒">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff4d4f" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+            </button>
+            <button class="tool-btn" aria-label="补给上报">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2"><path d="M12 2c-5.3 4.6-8 8.5-8 11.8 0 5 3.8 8.2 8 8.2s8-3.2 8-8.2C20 10.5 17.3 6.6 12 2Z"/></svg>
+            </button>
+            <button class="tool-btn" aria-label="一键报修">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8Z"/></svg>
+            </button>
+        </nav>
+        <div class="alert-band">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><path d="M12 8v5"/><path d="M12 17h.01"/><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+            轻微偏离路线 1 次，已记录，不影响继续作业
+        </div>
+        <section class="console">
+            <div class="handle"></div>
+            <div class="task-head">
+                <div>
+                    <div class="task-title">科技园南区道路清扫</div>
+                    <div class="task-route">08:30-10:30 · 科苑南路至高新南九道</div>
+                </div>
+                <div class="task-side">
+                    <span class="state-tag">执行中</span>
+                    <button class="task-list-btn" type="button" aria-controls="taskSheet" aria-expanded="false" onclick="toggleTaskList()">今日任务 5</button>
+                </div>
+            </div>
+            <div class="progress-main">
+                <div class="ring">
+                    <div class="ring-value">
+                        <strong>92%</strong>
+                        <span>覆盖度</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="metric-grid">
+                        <div class="metric">
+                            <div class="metric-label">已作业</div>
+                            <div class="metric-value">1:44</div>
+                        </div>
+                        <div class="metric warn-metric">
+                            <div class="metric-label">异常</div>
+                            <div class="metric-value">1 次</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="hint-row">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><path d="M12 8v5"/><path d="M12 17h.01"/></svg>
+                        覆盖度达标后可结束任务
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="detail-btn" type="button">任务详情</button>
+                <button class="end-btn" type="button">结束任务</button>
+            </div>
+        </section>
+        <div class="task-sheet-mask" onclick="closeTaskList()" aria-hidden="true"></div>
+        <section class="task-list-panel" id="taskSheet" aria-label="今日任务列表">
+            <div class="sheet-handle"></div>
+            <div class="task-list-top">
+                <div class="task-list-title">
+                    <strong>今日任务</strong>
+                    <span>5 项任务 · 当前执行第 1 项</span>
+                </div>
+                <button class="collapse-list" type="button" onclick="closeTaskList()">收起</button>
+            </div>
+            <div class="mini-task active">
+                <div>
+                    <div class="mini-name">科技园南区道路清扫</div>
+                    <div class="mini-meta">08:30-10:30 · 覆盖度 92%</div>
+                </div>
+                <span class="mini-tag running">当前</span>
+            </div>
+            <div class="mini-task">
+                <div>
+                    <div class="mini-name">南山大道临停点巡扫</div>
+                    <div class="mini-meta">10:45-11:30 · 距离 1.8km</div>
+                </div>
+                <span class="mini-tag urgent">应急</span>
+            </div>
+            <div class="mini-task">
+                <div>
+                    <div class="mini-name">高新南九道补扫</div>
+                    <div class="mini-meta">13:20-14:10 · 待开始</div>
+                </div>
+                <span class="mini-tag">待办</span>
+            </div>
+            <div class="mini-task">
+                <div>
+                    <div class="mini-name">科技园北门收尾检查</div>
+                    <div class="mini-meta">16:00-16:40 · 待开始</div>
+                </div>
+                <span class="mini-tag">待办</span>
+            </div>
+            <div class="mini-task">
+                <div>
+                    <div class="mini-name">深南花园入口复核</div>
+                    <div class="mini-meta">17:10-17:35 · 待开始</div>
+                </div>
+                <span class="mini-tag">待办</span>
+            </div>
+        </section>
+    </main>
+    <script>
+        function setTaskList(open) {
+            const phone = document.querySelector('.phone');
+            const trigger = document.querySelector('.task-list-btn');
+            phone.classList.toggle('sheet-open', open);
+            trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        function toggleTaskList() {
+            const phone = document.querySelector('.phone');
+            setTaskList(!phone.classList.contains('sheet-open'));
+        }
+        function closeTaskList() {
+            setTaskList(false);
+        }
+    </script>
+</body>
+</html>

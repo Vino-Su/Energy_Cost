@@ -1325,7 +1325,8 @@
             setTimeout(function() {
                 showToast('提交成功');
                 setTimeout(() => {
-                    window.location.href = 'records.html';
+                    const currentFrom = new URLSearchParams(window.location.search).get('from') || '';
+                    window.location.href = currentFrom ? 'records.html?from=' + currentFrom : 'records.html';
                 }, 1500);
             }, 800);
         }
@@ -1338,9 +1339,34 @@
         (function() {
             const params = new URLSearchParams(window.location.search);
             const from = params.get('from');
+            const returnUrl = params.get('returnUrl');
             const backLink = document.querySelector('.top-nav-back');
             if (backLink) {
-                backLink.href = from === 'ocr' ? 'home-ocr.html' : 'home.html';
+                if (returnUrl) backLink.href = returnUrl;
+                else if (from === 'ocr') backLink.href = 'home-ocr.html';
+                else if (from === 'vehicle') backLink.href = 'vehicle-management.html';
+                else backLink.href = 'home.html';
+            }
+        })();
+
+        // 从 URL 参数预填车辆信息（地图工作台等入口带入）
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const plateNo = params.get('plateNo');
+            const vehicleId = params.get('vehicleId');
+            if (plateNo) {
+                const plateInput = document.getElementById('plateInput');
+                if (plateInput) {
+                    plateInput.value = plateNo;
+                    if (typeof checkPlate === 'function') checkPlate();
+                }
+            }
+            if (vehicleId) {
+                const vinInput = document.getElementById('vinInput');
+                if (vinInput) {
+                    vinInput.value = vehicleId;
+                    if (typeof checkVin === 'function') checkVin();
+                }
             }
         })();
     </script>

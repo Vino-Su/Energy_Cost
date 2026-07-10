@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>任务详情 - 城市管家</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="components/app-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { margin: 0 auto; max-width: 430px; min-height: 100vh; background: #f5f5f5; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5; width: 100%; margin: 0; min-height: 100vh;
+        }
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; margin: 0 auto;
+            width: 100%; max-width: 430px; height: 44px;
+            background: #ffffff; border-bottom: 1px solid #e8e8e8;
+            display: flex; align-items: center; z-index: 1000; padding: 0 16px;
+        }
+        .top-nav-back {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            color: #000000d9; text-decoration: none; margin-left: -8px;
+        }
+        .top-nav-back svg { width: 22px; height: 22px; }
+        .top-nav-title {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-size: 16px; font-weight: 600; color: #000000d9;
+        }
+        /* 演示切换 */
+        .demo-tabs {
+            position: fixed; top: 56px; left: 12px; right: 12px;
+            margin: 0 auto; max-width: 406px; z-index: 1000;
+            display: flex; gap: 6px; background: rgba(255,255,255,0.95);
+            border-radius: 8px; padding: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .demo-tab {
+            flex: 1; padding: 6px 4px; font-size: 11px;
+            text-align: center; border-radius: 4px;
+            background: transparent; color: #00000073; cursor: pointer;
+        }
+        .demo-tab.active { background: #1677ff; color: #ffffff; }
+        /* 地图区域 */
+        #map {
+            position: fixed; top: 100px; left: 0; right: 0; bottom: 0;
+            margin: 0 auto; max-width: 430px; z-index: 1;
+        }
+        /* 内容容器（位于地图上方） */
+        .content-area {
+            padding-top: 44px;
+        }
+        /* 任务详情卡片 */
+        .task-sheet {
+            position: fixed; left: 0; right: 0; bottom: 0;
+            margin: 0 auto; max-width: 430px;
+            background: #ffffff; border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+            z-index: 1000;
+            max-height: 60vh;
+        }
+        .sheet-handle {
+            width: 36px; height: 4px; border-radius: 2px;
+            background: #e8e8e8; margin: 8px auto;
+        }
+        .sheet-body {
+            padding: 4px 16px 24px;
+            overflow-y: auto; max-height: calc(60vh - 16px);
+        }
+        .task-header {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+        }
+        .task-type-tag {
+            display: inline-flex; align-items: center; height: 22px;
+            padding: 0 8px; border-radius: 4px;
+            font-size: 12px; line-height: 22px; font-weight: 500;
+        }
+        .task-type-tag.executing { background: #f6ffed; color: #52c41a; }
+        .task-type-tag.emergency { background: #fff1f0; color: #ff4d4f; }
+        .task-type-tag.normal { background: #e6f4ff; color: #1677ff; }
+        .task-priority {
+            font-size: 11px; padding: 2px 6px; border-radius: 4px;
+            background: #fff7e6; color: #fa8c16;
+        }
+        .task-name {
+            font-size: 18px; font-weight: 600; color: #000000d9;
+            margin-bottom: 12px; line-height: 26px;
+        }
+        /* 任务元信息 */
+        .task-info {
+            background: #f5f5f5; border-radius: 8px;
+            padding: 12px; margin-bottom: 12px;
+        }
+        .task-info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0; font-size: 13px;
+        }
+        .task-info-row + .task-info-row { border-top: 1px solid #e8e8e8; }
+        .task-info-row .label { color: #00000073; }
+        .task-info-row .value { color: #000000d9; font-weight: 500; }
+        /* 执行中进度 */
+        .progress-block {
+            background: #e6f4ff; border-radius: 8px;
+            padding: 12px; margin-bottom: 12px;
+            display: none;
+        }
+        .progress-block.show { display: block; }
+        .progress-title {
+            font-size: 13px; color: #1677ff; font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .progress-bar {
+            height: 8px; background: #ffffff; border-radius: 4px;
+            overflow: hidden; margin-bottom: 6px;
+        }
+        .progress-fill {
+            height: 100%; background: #1677ff; border-radius: 4px;
+        }
+        .progress-meta {
+            display: flex; justify-content: space-between;
+            font-size: 12px; color: #00000073;
+        }
+        .progress-meta .value { color: #1677ff; font-weight: 500; }
+        /* 异常提示 */
+        .alarm-block {
+            background: #fff1f0; border: 1px solid #ffccc7; border-radius: 8px;
+            padding: 12px; margin-bottom: 12px;
+            display: none;
+        }
+        .alarm-block.show { display: block; }
+        .alarm-row {
+            display: flex; gap: 8px; font-size: 12px; color: #ff4d4f;
+            padding: 4px 0; align-items: center;
+        }
+        .alarm-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+        /* 操作按钮 */
+        .sheet-actions {
+            display: flex; gap: 8px; margin-top: 16px;
+        }
+        .sheet-btn {
+            flex: 1; height: 44px; border-radius: 8px;
+            font-size: 15px; font-weight: 500;
+            display: flex; align-items: center; justify-content: center;
+            border: none; cursor: pointer; transition: opacity 0.15s;
+            text-decoration: none;
+        }
+        .sheet-btn.primary { background: #1677ff; color: #ffffff; }
+        .sheet-btn.secondary { background: #ffffff; color: #1677ff; border: 1px solid #1677ff; }
+        .sheet-btn:active { opacity: 0.85; }
+        /* 任务要求 */
+        .requirement-block {
+            background: #fffbe6; border-radius: 8px;
+            padding: 12px; margin-bottom: 12px;
+            font-size: 13px; color: #000000d9; line-height: 20px;
+        }
+        .requirement-title {
+            font-weight: 500; margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="map-workbench.html" class="top-nav-back" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+        <div class="top-nav-title">任务详情</div>
+    </div>
+
+    <!-- 演示切换：4 种状态 -->
+    <div class="demo-tabs">
+        <div class="demo-tab active" data-state="accepted">待开始</div>
+        <div class="demo-tab" data-state="executing">执行中</div>
+        <div class="demo-tab" data-state="emergency">应急</div>
+        <div class="demo-tab" data-state="finished">已完成</div>
+    </div>
+
+    <div class="content-area"></div>
+
+    <div id="map"></div>
+
+    <!-- 任务详情抽屉 -->
+    <div class="task-sheet" id="taskSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body">
+            <!-- 任务头部 -->
+            <div class="task-header">
+                <span class="task-type-tag" id="taskTypeTag">常规任务</span>
+                <span class="task-priority" id="taskPriority" style="display:none;">应急</span>
+            </div>
+            <div class="task-name" id="taskName">科技园南区道路清扫</div>
+
+            <!-- 任务信息 -->
+            <div class="task-info">
+                <div class="task-info-row">
+                    <span class="label">计划时间</span>
+                    <span class="value" id="taskTime">08:30 - 10:30</span>
+                </div>
+                <div class="task-info-row">
+                    <span class="label">作业路段</span>
+                    <span class="value" id="taskRoute">科苑南路至高新南九道</span>
+                </div>
+                <div class="task-info-row">
+                    <span class="label">任务编号</span>
+                    <span class="value">T20260710-001</span>
+                </div>
+                <div class="task-info-row">
+                    <span class="label">关联车辆</span>
+                    <span class="value">粤B·D2856</span>
+                </div>
+            </div>
+
+            <!-- 作业要求 -->
+            <div class="requirement-block">
+                <div class="requirement-title">作业要求</div>
+                <div id="requirementText">采用洗扫车进行清扫作业，覆盖道路两侧及辅道，作业速度不超过 25km/h。</div>
+            </div>
+
+            <!-- 执行中进度 -->
+            <div class="progress-block" id="progressBlock">
+                <div class="progress-title">任务执行进度</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width:60%;"></div>
+                </div>
+                <div class="progress-meta">
+                    <span>已作业 1 小时 12 分</span>
+                    <span class="value">剩余 48 分钟</span>
+                </div>
+                <div class="progress-meta" style="margin-top:6px;">
+                    <span>路线覆盖度</span>
+                    <span class="value">92%</span>
+                </div>
+            </div>
+
+            <!-- 异常提示（仅执行中显示） -->
+            <div class="alarm-block" id="alarmBlock">
+                <div class="alarm-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+                    <span>轻微偏离路线 1 次</span>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="sheet-actions" id="sheetActions">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 初始化地图
+        var map = L.map('map', { zoomControl: false, attributionControl: false })
+            .setView([22.5380, 113.9420], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, subdomains: ['a', 'b', 'c']
+        }).addTo(map);
+        var route = [
+            [22.5400, 113.9400],
+            [22.5380, 113.9420],
+            [22.5360, 113.9440],
+            [22.5340, 113.9460]
+        ];
+        L.polyline(route, { color: '#1677ff', weight: 4 }).addTo(map);
+        L.circleMarker(route[0], { radius: 8, color: '#52c41a', fillColor: '#52c41a', fillOpacity: 0.9 }).addTo(map).bindPopup('任务起点');
+        L.circleMarker(route[route.length - 1], { radius: 8, color: '#1677ff', fillColor: '#1677ff', fillOpacity: 0.9 }).addTo(map).bindPopup('任务终点');
+
+        // 状态切换
+        var STATES = {
+            accepted: {
+                typeTag: '常规任务', typeClass: 'normal', priority: false,
+                time: '08:30 - 10:30', route: '科苑南路至高新南九道',
+                requirement: '采用洗扫车进行清扫作业，覆盖道路两侧及辅道，作业速度不超过 25km/h。',
+                progress: false, alarm: false,
+                actions: '<a href="map-workbench.html" class="sheet-btn secondary">导航前往</a><a href="javascript:void(0)" onclick="startTask()" class="sheet-btn primary">开始任务</a>'
+            },
+            executing: {
+                typeTag: '执行中', typeClass: 'executing', priority: false,
+                time: '08:30 - 10:30', route: '科苑南路至高新南九道',
+                requirement: '采用洗扫车进行清扫作业，覆盖道路两侧及辅道，作业速度不超过 25km/h。',
+                progress: true, alarm: true,
+                actions: '<a href="map-workbench.html" class="sheet-btn secondary">查看地图</a><a href="finish-task.html" class="sheet-btn primary">结束任务</a>'
+            },
+            emergency: {
+                typeTag: '应急任务', typeClass: 'emergency', priority: true,
+                time: '10:30 - 11:30', route: '沙河西路全段',
+                requirement: '应急处置突发污染事件，要求 30 分钟内到达现场，并完成污染清理。',
+                progress: false, alarm: false,
+                actions: '<a href="map-workbench.html" class="sheet-btn secondary">导航前往</a><a href="javascript:void(0)" onclick="alert(\'演示：开始应急任务\')" class="sheet-btn primary">开始任务</a>'
+            },
+            finished: {
+                typeTag: '常规任务', typeClass: 'normal', priority: false,
+                time: '08:30 - 10:30', route: '科苑南路至高新南九道',
+                requirement: '采用洗扫车进行清扫作业，覆盖道路两侧及辅道，作业速度不超过 25km/h。',
+                progress: false, alarm: false,
+                actions: '<a href="map-workbench.html" class="sheet-btn secondary">返回工作台</a><a href="javascript:void(0)" class="sheet-btn primary" style="background:#52c41a;">已完成</a>'
+            }
+        };
+
+        function renderState(state) {
+            var s = STATES[state];
+            var typeTag = document.getElementById('taskTypeTag');
+            typeTag.textContent = s.typeTag;
+            typeTag.className = 'task-type-tag ' + s.typeClass;
+            document.getElementById('taskPriority').style.display = s.priority ? 'inline-block' : 'none';
+            document.getElementById('taskTime').textContent = s.time;
+            document.getElementById('taskRoute').textContent = s.route;
+            document.getElementById('requirementText').textContent = s.requirement;
+            document.getElementById('progressBlock').classList.toggle('show', s.progress);
+            document.getElementById('alarmBlock').classList.toggle('show', s.alarm);
+            document.getElementById('sheetActions').innerHTML = s.actions;
+        }
+
+        function startTask() {
+            alert('演示：开始任务校验，校验通过后状态变为执行中');
+            document.querySelectorAll('.demo-tab').forEach(function (b) { b.classList.remove('active'); });
+            document.querySelector('.demo-tab[data-state="executing"]').classList.add('active');
+            renderState('executing');
+        }
+
+        document.querySelectorAll('.demo-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.demo-tab').forEach(function (b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                renderState(this.getAttribute('data-state'));
+            });
+        });
+
+        renderState('accepted');
+    </script>
+</body>
+</html>

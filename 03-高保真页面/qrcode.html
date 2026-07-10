@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的二维码 - 城市管家</title>
+    <link rel="stylesheet" href="components/app-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { margin: 0 auto; max-width: 430px; min-height: 100vh; background: #f5f5f5; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5; width: 100%; margin: 0; min-height: 100vh;
+        }
+        /* 顶部导航 */
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; margin: 0 auto;
+            width: 100%; max-width: 430px; height: 44px;
+            background: #ffffff; border-bottom: 1px solid #e8e8e8;
+            display: flex; align-items: center; z-index: 1000; padding: 0 16px;
+        }
+        .top-nav-back {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            color: #000000d9; text-decoration: none; margin-left: -8px;
+        }
+        .top-nav-back svg { width: 22px; height: 22px; }
+        .top-nav-title {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-size: 16px; font-weight: 600; color: #000000d9;
+        }
+        /* 内容区 */
+        .content-area {
+            padding: 56px 0 24px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        /* 用户信息卡片 */
+        .user-card {
+            margin: 12px 16px 0; padding: 12px 16px;
+            background: #ffffff; border-radius: 12px;
+            display: flex; align-items: center; gap: 12px;
+            width: calc(100% - 32px);
+            box-sizing: border-box;
+        }
+        .user-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: #e6f4ff; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .user-avatar svg { width: 28px; height: 28px; }
+        .user-info { flex: 1; min-width: 0; }
+        .user-name-row {
+            display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+        }
+        .user-name {
+            font-size: 16px; font-weight: 600; color: #000000d9; line-height: 24px;
+        }
+        .user-phone {
+            font-size: 12px; color: #00000073; line-height: 18px;
+        }
+        .user-role {
+            margin-top: 2px; display: inline-block;
+            font-size: 11px; padding: 2px 6px; border-radius: 4px;
+            background: rgba(22,119,255,0.08); color: #1677ff;
+        }
+        /* 二维码卡片 */
+        .qrcode-card {
+            margin: 16px 16px 0; padding: 24px 16px 16px;
+            background: #ffffff; border-radius: 12px;
+            width: calc(100% - 32px);
+            display: flex; flex-direction: column; align-items: center;
+            box-sizing: border-box;
+        }
+        .qrcode-frame {
+            position: relative;
+            width: 220px; height: 220px;
+            padding: 8px;
+            background: #ffffff;
+            border: 1px solid #f0f0f0; border-radius: 8px;
+        }
+        .qrcode-svg {
+            width: 100%; height: 100%; display: block;
+        }
+        /* 右上角定位点（车辆端扫描识别点） */
+        .qrcode-scan-dot {
+            position: absolute; top: 16px; right: 16px;
+            width: 12px; height: 12px; border-radius: 50%;
+            background: #ff4d4f;
+            box-shadow: 0 0 0 4px rgba(255,77,79,0.2);
+        }
+        /* 刷新按钮 + 扫描按钮（按钮组） */
+        .action-buttons {
+            margin-top: 16px; display: flex; gap: 8px;
+            width: 100%;
+        }
+        .refresh-btn, .scan-btn {
+            flex: 1; height: 36px; padding: 0 12px;
+            border: none; border-radius: 18px;
+            font-size: 13px; font-weight: 500;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 6px; white-space: nowrap;
+            transition: opacity 0.15s;
+        }
+        .refresh-btn { background: #e6f4ff; color: #1677ff; }
+        .scan-btn { background: #f6ffed; color: #52c41a; }
+        .refresh-btn:active, .scan-btn:active { opacity: 0.8; }
+        .refresh-btn svg, .scan-btn svg { width: 14px; height: 14px; }
+        .refresh-btn.loading, .scan-btn.loading { opacity: 0.6; pointer-events: none; }
+        /* Toast 提示（用于扫描完成反馈） */
+        .toast {
+            position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%);
+            max-width: 280px; padding: 10px 18px; border-radius: 8px;
+            background: rgba(0,0,0,0.75); color: #ffffff;
+            font-size: 14px; line-height: 22px; text-align: center;
+            z-index: 3000; display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .toast.show {
+            display: block;
+            animation: toastIn 0.2s ease-out;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        /* 定位状态 */
+        .location-status {
+            margin: 12px 16px 0; padding: 10px 12px;
+            background: #f6ffed; border: 1px solid #b7eb8f;
+            border-radius: 8px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: #389e0d;
+            width: calc(100% - 32px);
+            box-sizing: border-box;
+        }
+        .location-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #52c41a;
+        }
+        /* 使用场景说明 */
+        .usage-card {
+            margin: 16px 16px 0; padding: 16px;
+            background: #ffffff; border-radius: 12px;
+            width: calc(100% - 32px);
+            box-sizing: border-box;
+        }
+        .usage-title {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 14px; font-weight: 500; color: #000000d9;
+            margin-bottom: 12px;
+        }
+        .usage-title-icon { font-size: 16px; }
+        .usage-list {
+            padding-left: 20px; font-size: 13px; color: #000000d9;
+            line-height: 24px;
+        }
+        .usage-list li { list-style: disc; }
+        /* 交车场景横幅 */
+        .handover-banner {
+            margin: 12px 16px 0; padding: 12px 14px;
+            background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 12px;
+            width: calc(100% - 32px); box-sizing: border-box;
+        }
+        .handover-banner-title {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 14px; font-weight: 600; color: #389e0d; margin-bottom: 4px;
+        }
+        .handover-banner-title svg { width: 18px; height: 18px; }
+        .handover-banner-desc {
+            font-size: 12px; color: #52664d; line-height: 20px;
+        }
+        .handover-complete-link {
+            display: inline-block; margin-top: 8px;
+            font-size: 13px; color: #52c41a; font-weight: 500;
+            text-decoration: none; cursor: pointer;
+        }
+        .handover-complete-link:active { opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="profile.html" class="top-nav-back" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+        <div class="top-nav-title">我的二维码</div>
+    </div>
+
+    <div class="content-area">
+        <!-- 交车场景横幅（仅 scene=handover 显示） -->
+        <div class="handover-banner" id="handoverBanner" style="display:none;">
+            <div class="handover-banner-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                交车确认
+            </div>
+            <div class="handover-banner-desc">
+                请将二维码对准车端摄像头，或点击"扫描二维码"扫描车端二维码，完成交车并解除人车绑定。
+            </div>
+            <a class="handover-complete-link" onclick="completeHandover()">车端已扫码？点此完成交车 →</a>
+        </div>
+
+        <!-- 用户信息卡片 -->
+        <div class="user-card">
+            <div class="user-avatar">
+                <svg viewBox="0 0 48 48" fill="none">
+                    <circle cx="24" cy="18" r="7" fill="#1677ff"/>
+                    <path d="M8 40c0-8 7-13 16-13s16 5 16 13" fill="#1677ff"/>
+                </svg>
+            </div>
+            <div class="user-info">
+                <div class="user-name-row">
+                    <span class="user-name">张星星</span>
+                    <span class="user-phone">18133695568</span>
+                </div>
+                <span class="user-role">运营总监</span>
+            </div>
+        </div>
+
+        <!-- 二维码卡片 -->
+        <div class="qrcode-card">
+            <div class="qrcode-frame">
+                <svg class="qrcode-svg" id="qrcodeSvg" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div class="qrcode-scan-dot"></div>
+            </div>
+            <div class="action-buttons">
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshQRCode()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    刷新二维码
+                </button>
+                <button class="scan-btn" id="scanBtn" onclick="triggerCamera()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M21 7V5a2 2 0 00-2-2h-2M3 17v2a2 2 0 002 2h2M21 17v2a2 2 0 01-2 2h-2"/><rect x="7" y="7" width="10" height="10"/></svg>
+                    扫描二维码
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast 提示 -->
+        <div class="toast" id="toast"></div>
+
+        <!-- 隐藏的 file input：用于触发系统相机 -->
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="onFileSelected(this)">
+
+        <!-- 定位状态 -->
+        <div class="location-status">
+            <div class="location-dot"></div>
+            <span>定位成功 · 22.5333, 113.9450 · GCJ-02</span>
+        </div>
+
+        <!-- 使用场景说明 -->
+        <div class="usage-card">
+            <div class="usage-title">
+                <span class="usage-title-icon">💡</span>
+                <span>该二维码可用于以下场景：</span>
+            </div>
+            <ul class="usage-list">
+                <li>司机考勤扫码，请将二维码对准车辆摄像头</li>
+                <li>更多场景持续更新...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 固定数据（演示用）
+        var USER_INFO = {
+            phone: '18133695568',
+            name: '张星星',
+            role: '运营总监',
+            lat: 22.5333,
+            lng: 113.9450,
+            coordSystem: 'GCJ-02'
+        };
+
+        // 生成二维码数据内容
+        function buildQRPayload() {
+            return JSON.stringify({
+                phone: USER_INFO.phone,
+                name: USER_INFO.name,
+                role: USER_INFO.role,
+                lat: USER_INFO.lat,
+                lng: USER_INFO.lng,
+                coord: USER_INFO.coordSystem,
+                ts: Date.now()  // 动态时间戳，刷新后变化
+            });
+        }
+
+        // 绘制二维码（25x25 网格）
+        function drawQRCode() {
+            var svg = document.getElementById('qrcodeSvg');
+            var size = 25;
+            var cellSize = 1;  // 1 单位 / 网格
+            var html = '';
+
+            // 三个角的定位图案（finder pattern）：7x7 方框
+            function drawFinderPattern(x, y) {
+                var result = '';
+                for (var row = 0; row < 7; row++) {
+                    for (var col = 0; col < 7; col++) {
+                        var isBorder = row === 0 || row === 6 || col === 0 || col === 6;
+                        var isCenter = row >= 2 && row <= 4 && col >= 2 && col <= 4;
+                        if (isBorder || isCenter) {
+                            result += '<rect x="' + (x + col) + '" y="' + (y + row) + '" width="1" height="1" fill="#000000"/>';
+                        }
+                    }
+                }
+                return result;
+            }
+
+            // 左上 finder
+            html += drawFinderPattern(0, 0);
+            // 右上 finder
+            html += drawFinderPattern(size - 7, 0);
+            // 左下 finder
+            html += drawFinderPattern(0, size - 7);
+
+            // 随机填充其他格子（用时间戳作种子，每次刷新不同）
+            var seed = Date.now();
+            for (var r = 0; r < size; r++) {
+                for (var c = 0; c < size; c++) {
+                    // 跳过三个 finder 区域
+                    if ((r < 8 && c < 8) || (r < 8 && c >= size - 8) || (r >= size - 8 && c < 8)) continue;
+                    // 中央定位点区域（避免遮挡）
+                    if (r >= 11 && r <= 13 && c >= 11 && c <= 13) continue;
+
+                    // 伪随机
+                    seed = (seed * 9301 + 49297) % 233280;
+                    var rand = seed / 233280;
+                    if (rand > 0.5) {
+                        html += '<rect x="' + c + '" y="' + r + '" width="1" height="1" fill="#000000"/>';
+                    }
+                }
+            }
+
+            // 中央定位点（车辆端摄像头扫描定位标记）
+            html += '<circle cx="12.5" cy="12.5" r="1.2" fill="#ff4d4f"/>';
+
+            // 右上角定位点附近的小色块（红色边框效果）
+            html += '<rect x="20" y="0" width="1" height="1" fill="#ff4d4f"/>';
+            html += '<rect x="24" y="0" width="1" height="1" fill="#ff4d4f"/>';
+
+            svg.innerHTML = html;
+        }
+
+        function refreshQRCode() {
+            var btn = document.getElementById('refreshBtn');
+            btn.classList.add('loading');
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="30 70"/></svg> 刷新中...';
+            setTimeout(function () {
+                drawQRCode();
+                btn.classList.remove('loading');
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> 刷新二维码';
+            }, 500);
+        }
+
+        // 初始化
+        drawQRCode();
+
+        // ========== 扫描二维码功能 ==========
+        // 直接调用系统相机（capture="environment" 优先调用后置摄像头）
+        function triggerCamera() {
+            document.getElementById('cameraInput').click();
+        }
+
+        // 通用 toast 提示
+        var toastTimer = null;
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 文件选择完成后的处理：模拟识别后用 toast 提示
+        function onFileSelected(input) {
+            if (!input.files || !input.files[0]) return;
+            // 模拟识别过程：1s 后 toast 提示已完成
+            setTimeout(function () {
+                input.value = '';
+                if (IS_HANDOVER) {
+                    completeHandover();
+                } else {
+                    showToast('扫描已完成');
+                }
+            }, 1000);
+        }
+
+        // ========== 交车场景 ==========
+        var IS_HANDOVER = (function () {
+            return /[?&]scene=handover(&|$)/.test(window.location.search);
+        })();
+
+        function initHandoverScene() {
+            if (!IS_HANDOVER) return;
+            document.querySelector('.top-nav-title').textContent = '交车';
+            document.querySelector('.top-nav-back').setAttribute('href', 'map-workbench.html');
+            document.getElementById('handoverBanner').style.display = 'block';
+            var usageTitle = document.querySelector('.usage-title span:last-child');
+            if (usageTitle) usageTitle.textContent = '交车说明：';
+            var usageList = document.querySelector('.usage-list');
+            if (usageList) {
+                usageList.innerHTML = '<li>支持车端扫描司机二维码，或司机扫描车端二维码</li>' +
+                    '<li>扫码成功后自动解除人车绑定并生成今日回顾</li>';
+            }
+        }
+
+        var handoverDone = false;
+        function completeHandover() {
+            if (handoverDone) return;
+            handoverDone = true;
+            showToast('交车成功，已解除人车绑定');
+            setTimeout(function () {
+                window.location.href = 'today-review.html';
+            }, 1000);
+        }
+
+        initHandoverScene();
+    </script>
+</body>
+</html>

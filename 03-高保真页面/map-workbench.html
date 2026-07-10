@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>地图工作台 - 城市管家</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="components/app-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { margin: 0 auto; max-width: 430px; min-height: 100vh; background: #f5f5f5; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5; width: 100%; margin: 0; min-height: 100vh;
+        }
+        /* 顶部状态栏：半透明悬浮 */
+        .top-status {
+            position: fixed; top: 12px; left: 12px; right: 12px;
+            margin: 0 auto; max-width: 406px; height: 44px;
+            background: rgba(255,255,255,0.95); border-radius: 22px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex; align-items: center; padding: 0 12px;
+            z-index: 1000; gap: 8px;
+        }
+        .top-status-back {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #000000d9; text-decoration: none;
+        }
+        .top-status-back svg { width: 22px; height: 22px; }
+        .top-status-info { flex: 1; min-width: 0; }
+        .top-status-plate {
+            font-size: 14px; font-weight: 600; color: #000000d9;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .top-status-plate-tag {
+            display: inline-block; padding: 1px 6px; border-radius: 4px;
+            background: #f6ffed; color: #52c41a;
+            font-size: 10px; font-weight: 500;
+        }
+        .top-status-meta {
+            font-size: 11px; color: #00000073; margin-top: 1px;
+        }
+        /* 地图 */
+        #map {
+            position: fixed; top: 0; left: 0; right: 0;
+            margin: 0 auto; max-width: 430px;
+            width: 100%; height: 100vh; z-index: 1;
+        }
+        /* 右侧悬浮工具组：跟随 430px 页面容器，并随底部抽屉展开/收起上下移动 */
+        .float-tools {
+            position: fixed;
+            /* 工具栏距离 430px 页面右边缘 28px，比页面内容缩进更大，营造呼吸感 */
+            right: max(28px, calc(50vw - 215px - 28px));
+            bottom: 220px;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 1000;
+            transition: bottom 0.3s ease;
+        }
+        .float-tool {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: #ffffff; color: #1677ff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: transform 0.15s;
+            text-decoration: none;
+        }
+        .float-tool:active { transform: scale(0.92); }
+        .float-tool svg { width: 22px; height: 22px; }
+        .float-tool.repair { color: #ff4d4f; }
+        .float-tool.report { color: #fa8c16; }
+        .float-tool.handover { color: #722ed1; }
+        /* 底部任务抽屉 */
+        .task-drawer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            margin: 0 auto; max-width: 430px;
+            background: #ffffff; border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+            z-index: 1000;
+            max-height: 50vh;
+            transition: max-height 0.3s ease;
+        }
+        .task-drawer.expanded {
+            max-height: 80vh;
+        }
+        .drawer-handle {
+            width: 36px; height: 4px; border-radius: 2px;
+            background: #e8e8e8; margin: 8px auto;
+        }
+        .drawer-header {
+            padding: 4px 16px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .drawer-title {
+            font-size: 16px; font-weight: 600; color: #000000d9;
+        }
+        .drawer-count {
+            font-size: 12px; color: #00000073;
+        }
+        .drawer-expand-btn {
+            font-size: 12px; color: #1677ff; cursor: pointer;
+            background: none; border: none;
+        }
+        /* 当前任务卡片（半展开默认显示） */
+        .current-task {
+            margin: 0 16px 12px; padding: 12px;
+            background: #e6f4ff; border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid rgba(22,119,255,0.14);
+        }
+        .current-task.executing { background: #f6ffed; border-color: rgba(82,196,26,0.24); }
+        .current-task.completed { background: #f5f5f5; border-color: #e8e8e8; }
+        .task-card-top {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .current-task-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            height: 20px; padding: 0 6px; border-radius: 4px;
+            font-size: 11px; line-height: 20px;
+            background: #e6f4ff; color: #1677ff;
+        }
+        .current-task-tag.executing {
+            background: #52c41a; color: #ffffff;
+        }
+        .current-task-tag.completed { background: #e8e8e8; color: #00000073; }
+        .task-nav-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: none; background: #ffffff; color: #1677ff;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            cursor: pointer; flex-shrink: 0;
+        }
+        .task-nav-btn svg { width: 17px; height: 17px; }
+        .current-task-name {
+            font-size: 16px; font-weight: 600; color: #000000d9;
+            margin: 6px 0 4px;
+        }
+        .current-task-meta {
+            font-size: 12px; color: #00000073; line-height: 18px;
+        }
+        .current-task-actions {
+            margin-top: 12px; display: flex; gap: 8px;
+        }
+        .task-btn {
+            flex: 1; height: 36px; border-radius: 6px;
+            font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; justify-content: center;
+            border: none; cursor: pointer; transition: opacity 0.15s;
+            text-decoration: none;
+        }
+        .task-btn.primary {
+            background: #1677ff; color: #ffffff;
+        }
+        .task-btn.success { background: #52c41a; color: #ffffff; }
+        .task-btn.secondary {
+            background: #ffffff; color: #1677ff; border: 1px solid #1677ff;
+        }
+        .task-btn.ghost {
+            flex: 0 0 auto; min-width: 68px; padding: 0 10px;
+            background: transparent; color: #00000073; border: 1px solid #e8e8e8;
+        }
+        .task-btn.disabled {
+            background: #f5f5f5; color: #00000040; border: 1px solid #e8e8e8;
+            pointer-events: none;
+        }
+        .task-btn:active { opacity: 0.85; }
+        .task-notice {
+            margin: 0 16px 10px; padding: 8px 10px; border-radius: 8px;
+            background: #fffbe6; color: #ad6800; font-size: 12px; line-height: 18px;
+            display: none;
+        }
+        .task-notice.show { display: block; }
+        /* 任务列表（全展开显示） */
+        .task-list {
+            padding: 0 16px 16px; display: none;
+        }
+        .task-drawer.expanded .task-list { display: block; }
+        .task-list-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 0; border-bottom: 1px solid #f5f5f5;
+            cursor: pointer; text-decoration: none; color: inherit;
+        }
+        .task-list-item.active {
+            margin: 0 -8px; padding: 12px 8px; border-radius: 10px;
+            background: #e6f4ff; border-bottom-color: transparent;
+        }
+        @keyframes taskFlash {
+            0%, 100% { background: #e6f4ff; }
+            50% { background: #ffe7ba; }
+        }
+        .task-list-item.flash {
+            margin: 0 -8px; padding: 12px 8px; border-radius: 10px;
+            border-bottom-color: transparent;
+            animation: taskFlash 0.6s ease-in-out 3;
+        }
+        .task-list-item:last-child { border-bottom: none; }
+        .task-list-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .task-list-icon.executing { background: #52c41a; color: #ffffff; }
+        .task-list-icon.emergency { background: #fff1f0; color: #ff4d4f; }
+        .task-list-icon.normal { background: #e6f4ff; color: #1677ff; }
+        .task-list-icon svg { width: 20px; height: 20px; }
+        .task-list-main { flex: 1; min-width: 0; }
+        .task-list-name {
+            font-size: 14px; font-weight: 500; color: #000000d9;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .task-list-meta {
+            font-size: 12px; color: #00000073; margin-top: 2px;
+        }
+        .task-list-tag {
+            font-size: 11px; padding: 2px 6px; border-radius: 4px;
+            background: #fff7e6; color: #fa8c16;
+        }
+        .task-list-tag.executing { background: #f6ffed; color: #52c41a; }
+        .task-list-tag.pending { background: #f5f5f5; color: #00000073; }
+        .task-list-tag.completed { background: #f5f5f5; color: #00000040; }
+        .toast {
+            position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            max-width: 260px; padding: 10px 14px; border-radius: 8px;
+            background: rgba(0,0,0,0.75); color: #ffffff;
+            font-size: 14px; line-height: 20px; text-align: center;
+            z-index: 3000; display: none;
+        }
+        .toast.show { display: block; }
+    </style>
+</head>
+<body>
+    <!-- 顶部状态栏 -->
+    <div class="top-status">
+        <a href="vehicle-management.html" class="top-status-back" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+        <div class="top-status-info">
+            <div class="top-status-plate">
+                粤B·D2856
+                <span class="top-status-plate-tag">使用中</span>
+            </div>
+            <div class="top-status-meta">今日任务 5 项 · 网络良好 · GPS 已开启</div>
+        </div>
+    </div>
+
+    <!-- Leaflet 地图 -->
+    <div id="map"></div>
+
+    <!-- 右侧悬浮工具 -->
+    <div class="float-tools">
+        <a href="javascript:void(0)" onclick="centerMap()" class="float-tool" aria-label="定位回正">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </a>
+        <a href="javascript:void(0)" onclick="openReportPicker()" class="float-tool report" aria-label="水电油上报">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </a>
+        <a href="repair-bottomsheet.html" class="float-tool repair" aria-label="一键报修">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        </a>
+        <a href="javascript:void(0)" onclick="handleHandover()" class="float-tool handover" aria-label="交车">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+    </div>
+
+    <!-- 底部任务抽屉 -->
+    <div class="task-drawer" id="taskDrawer">
+        <div class="drawer-handle" onclick="toggleDrawer()"></div>
+        <div class="drawer-header">
+            <div>
+                <div class="drawer-title">待办任务</div>
+                <div class="drawer-count">5 项 · 1 项执行中</div>
+            </div>
+            <button class="drawer-expand-btn" id="drawerExpandBtn" onclick="toggleDrawer()">展开 ▾</button>
+        </div>
+        <div class="task-notice" id="taskNotice"></div>
+        <div id="currentTask"></div>
+        <div class="task-list" id="taskList"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <!-- 上报类型选择弹窗 -->
+    <div id="reportModal" style="position:fixed;top:0;left:0;right:0;bottom:0;margin:0 auto;max-width:430px;background:rgba(0,0,0,0.5);z-index:2000;display:none;align-items:flex-end;">
+        <div style="width:100%;background:#ffffff;border-radius:16px 16px 0 0;padding:8px 0 24px;">
+            <div style="width:36px;height:4px;border-radius:2px;background:#e8e8e8;margin:8px auto 16px;"></div>
+            <div style="padding:0 16px 16px;font-size:16px;font-weight:600;color:#000000d9;">选择上报类型</div>
+            <a href="fuel-report-ocr.html?source=map-workbench&vehicleId=VH20260710001&plateNo=%E7%B2%A4B%C2%B7D2856&vehicleType=%E6%B4%97%E6%89%AB%E8%BD%A6&returnUrl=map-workbench.html" style="display:flex;align-items:center;gap:12px;padding:16px;text-decoration:none;color:inherit;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#fff7e6;color:#fa8c16;display:flex;align-items:center;justify-content:center;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:15px;font-weight:500;color:#000000d9;">加油上报</div>
+                    <div style="font-size:12px;color:#00000073;margin-top:2px;">加油量、单价、费用、当前里程</div>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00000040" stroke-width="2" width="18" height="18"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+            <a href="water-report-ocr.html?source=map-workbench&vehicleId=VH20260710001&plateNo=%E7%B2%A4B%C2%B7D2856&vehicleType=%E6%B4%97%E6%89%AB%E8%BD%A6&returnUrl=map-workbench.html" style="display:flex;align-items:center;gap:12px;padding:16px;text-decoration:none;color:inherit;border-top:1px solid #f5f5f5;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#e6f4ff;color:#1677ff;display:flex;align-items:center;justify-content:center;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8z"/></svg>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:15px;font-weight:500;color:#000000d9;">加水上报</div>
+                    <div style="font-size:12px;color:#00000073;margin-top:2px;">加水量、估算水费、当前里程</div>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00000040" stroke-width="2" width="18" height="18"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+            <a href="charge-report-ocr.html?source=map-workbench&vehicleId=VH20260710001&plateNo=%E7%B2%A4B%C2%B7D2856&vehicleType=%E6%B4%97%E6%89%AB%E8%BD%A6&returnUrl=map-workbench.html" style="display:flex;align-items:center;gap:12px;padding:16px;text-decoration:none;color:inherit;border-top:1px solid #f5f5f5;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#f6ffed;color:#52c41a;display:flex;align-items:center;justify-content:center;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:15px;font-weight:500;color:#000000d9;">充电上报</div>
+                    <div style="font-size:12px;color:#00000073;margin-top:2px;">充电量、单价、费用、当前里程</div>
+                </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00000040" stroke-width="2" width="18" height="18"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+            <div onclick="closeReportModal()" style="margin:16px 16px 0;height:44px;border-radius:8px;background:#f5f5f5;color:#000000d9;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;">取消</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 初始化 Leaflet 地图（以深圳南山为中心）
+        var map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([22.5333, 113.9450], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            subdomains: ['a', 'b', 'c']
+        }).addTo(map);
+
+        var vehicleIcon = L.divIcon({
+            html: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="width:36px;height:36px;background:#ffffff;border-radius:50%;box-shadow:0 2px 6px rgba(18,150,219,0.4);"><path d="M514.96 964.94666667c-247.4 0-448.68-201.28-448.68-448.68S267.56 67.54666667 514.96 67.54666667s448.68 201.28 448.68 448.68-201.28 448.72-448.68 448.72z m0-856.6c-224.92 0-407.88 182.96-407.88 407.88s183 407.88 407.88 407.88 407.88-182.96 407.88-407.88S739.88 108.34666667 514.96 108.34666667z" fill="#1296db"></path><path d="M740 766.74666667h-52.28c-29.08 0-52.72-23.64-52.72-52.72v-17H391.88v17c0 29.08-23.64 52.72-52.72 52.72H286.92c-29.08 0-52.72-23.64-52.72-52.72l0.24-107.48 13.96-83.76h-3.76l-5.24-5.24c-25.8-25.76-5.72-68.16-3.36-72.88l4.92-9.88h48.12c4.72-29.84 14.76-96.24 14.76-121.56 0-46.36 57.88-67 64.48-69.2l2.76-0.92h284.6l2.76 0.92c6.6 2.2 64.48 22.84 64.48 69.2 0 25.36 10.04 91.72 14.76 121.56h48.12l4.92 9.88c2.36 4.76 22.44 47.12-3.32 72.88l-5.24 5.24h-3.76l14.2 86.72v104.56c0.12 29.04-23.52 52.68-52.6 52.68z m-383.8-105.44h314.52v52.72a17.04 17.04 0 0 0 17 17H740a17.04 17.04 0 0 0 17-17v-103.08l-20.64-123.92h28.16c0.72-4.56-0.24-10.76-1.88-16.56h-55.16l-2.48-14.92c-0.72-4.32-17.68-106.44-17.68-142.36 0-16.76-26.64-30.16-37.56-34.4H377.16c-13.72 5.28-37.56 19-37.56 34.4 0 35.92-16.96 138.04-17.68 142.36l-2.48 14.92H264.28c-1.68 5.8-2.6 12-1.88 16.56h28.16l-20.64 123.92v103.08a17.04 17.04 0 0 0 17 17H339.2a17.04 17.04 0 0 0 17-17v-52.72z" fill="#1296db"></path><path d="M618.44 470.50666667h-209.96c-18.24 0-35.72-7.8-47.88-21.4-12.16-13.6-18-31.8-16-49.96l8.24-56.72c3.12-26.84 25.8-47.04 52.84-47.04h215.52c27.16 0 49.92 20.36 52.92 47.36l8.12 55.8c2.08 18.76-3.72 36.96-15.92 50.56-12.16 13.6-29.64 21.4-47.88 21.4zM405.68 331.06666667c-8.92 0-16.4 6.72-17.4 15.6l-0.08 0.6-8.2 56.4c-0.84 7.6 1.68 15.48 7.2 21.6a28.24 28.24 0 0 0 21.28 9.52h209.96c8.24 0 15.8-3.4 21.28-9.52 5.48-6.12 8-14 7.12-22.2l-8.12-55.8c-1.08-9.48-8.56-16.2-17.48-16.2h-215.56zM356.6 627.34666667c-29.04 0-52.72-23.64-52.72-52.72s23.64-52.72 52.72-52.72 52.72 23.64 52.72 52.72-23.64 52.72-52.72 52.72z m0-69.72a17.04 17.04 0 0 0-17 17c0 9.36 7.6 17 17 17a17.04 17.04 0 0 0 17-17 17.04 17.04 0 0 0-17-17zM670.28 627.34666667c-29.04 0-52.72-23.64-52.72-52.72s23.64-52.72 52.72-52.72 52.72 23.64 52.72 52.72-23.64 52.72-52.72 52.72z m0-69.72a17.04 17.04 0 0 0-17 17c0 9.36 7.6 17 17 17a17.04 17.04 0 0 0 17-17 17.04 17.04 0 0 0-17-17z" fill="#1296db"></path></svg>',
+            className: '', iconSize: [36, 36], iconAnchor: [18, 18]
+        });
+        var startPointIcon = L.divIcon({
+            html: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;filter:drop-shadow(0 2px 5px rgba(91,155,8,0.35));"><path d="M642.662387 136.799666c-41.346687-24.686239-87.878466-34.570353-134.440945-34.570353-46.561455 0-93.093235 14.802124-134.439922 34.570353-118.919437 69.140707-155.082054 212.231659-87.877443 325.764412L508.221442 837.732689l222.319411-375.168612C797.745465 349.031325 761.520425 205.940372 642.662387 136.799666zM515.71716 229.455949c10.806113 1.671059 19.11229 2.49789 24.982998 2.49789l56.213279 0c9.118682 0 19.549242-0.827855 31.229259-2.49789-2.49789 11.663644-3.372817 20.407796-2.49789 26.232454l0 61.208037c0 7.494695 0.811482 17.08205 2.49789 28.730345l-28.730345 0c0.811482-5.823636 1.249457-9.993608 1.249457-12.491499l-49.967018 0 0 67.454298c-0.873903 6.667863 2.873444 10.41521 11.242042 11.242042 17.488303 1.671059 32.041764 0.843204 43.721781-2.49789 9.118682-3.325745 13.740956-15.395642 13.740956-36.225039 9.118682 9.993608 18.73776 16.238846 28.730345 18.73776-4.996804 20.829398-11.242042 33.727149-18.73776 38.723953-4.996804 2.49789-17.926278 4.590552-38.723953 6.246261-17.489326 0.843204-30.854728 0.421602-39.97341-1.249457-17.488303-3.325745-25.857924-11.242042-24.982998-23.733541l0-84.942601c-0.873903-4.996804-1.685385-11.242042-2.49789-18.73776 9.993608 1.671059 17.862833 2.49789 23.733541 2.49789l53.714366 0 0-56.212256-53.714366 0c-16.675798 0-27.106358 0.421602-31.229259 1.249457L515.718183 229.455949zM641.882628 490.530013c-63.333444 0-108.302635-1.671059-134.909619-4.996804-27.480888-2.49789-47.093575-7.916297-58.710147-16.238846-21.672602-15.818267-35.413558-30.807656-41.221844-44.970214-5.870708 27.481911-14.177907 52.043307-24.982998 73.700559-6.683213-8.337899-14.989389-15.412015-24.982998-21.23565 20.798698-22.485107 32.04074-62.036915 33.727149-118.66975 22.485107 1.671059 33.727149 4.168949 33.727149 7.494695 0 0.843204-0.436952 1.671059-1.249457 2.49789-4.184299 6.667863-7.494695 16.238846-9.993608 28.730345 7.494695 12.491499 14.989389 23.328311 22.485107 32.477692l0-91.187839L413.286256 338.13209c-14.989389 0-29.605272 0.843204-43.720757 2.49789l0-27.480888c11.617595 0.843204 26.232454 1.671059 43.720757 2.49789l21.23565 0 0-38.723953c-23.359011 0-42.4713 0.843204-57.46069 2.49789l0-26.232454c15.801894 0.843204 34.976606 1.249457 57.46069 1.249457 0.811482-22.485107-0.436952-38.302351-3.747347-47.468105 23.296589 1.671059 34.538631 3.747347 33.727149 6.246261 0 0.843204-0.436952 2.49789-1.249457 4.996804-2.49789 4.168949-3.747347 8.337899-3.747347 12.491499l0 22.485107c22.485107 0 37.849026-0.406253 46.218648-1.249457l0 27.480888c-12.491499-1.655709-27.918863-2.49789-46.218648-2.49789l0 38.723953 11.242042 0c10.80509 0 24.546046-0.827855 41.221844-2.49789l0 27.480888c-14.176884-1.655709-27.91784-2.49789-41.221844-2.49789l-9.993608 0 0 37.474496 9.993608 0c21.61018 0 35.789111-0.405229 42.4713-1.249457l0 28.730345c-14.176884-1.654686-28.355815-2.49789-42.4713-2.49789l-9.993608 0 0 47.468105c31.603789 15.832594 97.80863 18.73776 198.61657 8.744151C648.502395 467.623303 642.694109 478.865345 641.882628 490.530013z" fill="#5B9B08"></path></svg>',
+            className: '', iconSize: [34, 34], iconAnchor: [17, 28], popupAnchor: [0, -28]
+        });
+        var endPointIcon = L.divIcon({
+            html: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;filter:drop-shadow(0 2px 5px rgba(215,25,9,0.35));"><path d="M552.321846 285.001009c6.302543 18.23941 15.043624 32.509415 26.161846 42.811038 8.680706-7.92346 18.611893-22.594601 29.730115-44.00012C596.321966 284.615223 577.651744 285.001009 552.321846 285.001009z" fill="#D71909"></path><path d="M652.957871 152.792918c-39.392172-23.50125-83.689051-32.910551-127.986953-32.910551-44.296879 0-88.623433 14.09195-127.98593 32.910551-113.211435 65.822125-147.668201 202.043622-83.659375 310.126246l211.646328 357.158423 211.646328-357.158423C800.595372 354.836541 766.10893 218.615043 652.957871 152.792918zM400.106072 337.325725l-3.567245 1.189082-8.324596-24.972764 2.378164-2.378164c26.935466-25.359574 44.357254-54.30072 52.324716-86.811158 19.027355 6.347568 29.730115 11.104919 32.108279 14.270005 0 0.803295-0.831948 1.992377-2.378164 3.567245-3.983731 1.591241-7.135514 4.370541-9.513678 8.324596-1.605567 1.591241-3.567245 4.370541-5.946432 8.324596-21.405519 30.131251-35.675524 47.968501-42.811038 53.513798l41.621956-1.189082c7.135514-10.301623 14.270005-25.359574 21.405519-45.189202 15.816221 7.937786 24.972764 14.671141 27.350928 20.216437 0 0.803295-1.189082 1.992377-3.567245 3.567245-3.211135 1.590218-5.588275 3.567245-7.134491 5.946432-1.605567 1.590218-5.172813 6.347568-10.70276 14.270005-27.767414 38.856983-47.567365 64.216557-59.459207 76.108399 26.935466-4.756327 48.756447-9.112542 65.405639-13.080923l-1.189082 24.972764c-36.508495 4.756327-64.633043 9.513678-84.432994 14.270005l-4.756327 1.189082-11.891841-27.351951 2.378164-1.189082c13.438057-3.954055 31.275307-22.193465 53.513798-54.702879C424.662351 331.781452 410.392346 334.159616 400.106072 337.325725zM400.106072 472.894354l-9.513678-26.161846 104.649432-20.216437 2.378164 23.783683L400.106072 472.894354zM608.213807 501.434364c-19.859303-18.23941-51.551096-35.274388-95.135754-51.135634l16.649192-22.594601c36.449143 15.861246 69.330018 32.509415 98.702999 49.946552L608.213807 501.434364zM615.349321 445.542402c-24.616654-17.437138-49.589418-29.730115-74.919317-36.864606l14.270005-21.405519c15.043624 6.347568 39.599903 17.838274 73.730235 34.486442L615.349321 445.542402zM648.646682 397.975037c-30.919197-11.891841-54.345746-24.972764-70.161966-39.243793-20.6319 15.861246-44.833091 29.730115-72.541153 41.621956-3.983731-9.513678-9.156544-17.437138-15.459087-23.783683 28.54001-7.92346 52.323693-19.413142 71.351048-34.486442-11.118222-13.467733-18.670222-26.161846-22.594601-38.054711-10.345626 17.451464-19.859303 31.722492-28.541033 42.811038-4.756327-6.332219-12.307304-10.70276-22.594601-13.080923 24.557302-26.949792 45.189202-64.602344 61.83737-112.973004 11.059893 2.378164 22.179139 6.748704 33.29736 13.080923 0 0.803295-0.831948 1.992377-2.378164 3.567245-6.361895 5.559623-12.724813 14.672164-19.027355 27.351951 43.584658-0.787946 72.124667-1.977028 85.622076-3.567245-11.118222 26.161846-28.956495 53.513798-53.513798 82.054831 17.421788 13.482059 41.978067 22.208814 73.730235 26.161846C660.538523 375.781572 654.176628 385.29525 648.646682 397.975037z" fill="#D71909"></path></svg>',
+            className: '', iconSize: [34, 34], iconAnchor: [17, 28], popupAnchor: [0, -28]
+        });
+        var routeLayer = L.layerGroup().addTo(map);
+        var pointLayer = L.layerGroup().addTo(map);
+        var vehicleMarker = L.marker([22.5333, 113.9450], { icon: vehicleIcon }).addTo(map).bindPopup('当前车辆位置');
+        var moveTimer = null;
+        var selectedTaskId = '1';
+        var executingTaskId = '1';
+        var tasks = [
+            {
+                id: '1',
+                name: '科技园南区道路清扫',
+                type: '常规任务',
+                icon: 'normal',
+                status: 'executing',
+                time: '08:30-10:30',
+                routeName: '科苑南路至高新南九道',
+                requirement: '洗扫车覆盖道路两侧及辅道，作业速度不超过 25km/h。',
+                route: [[22.5400,113.9400],[22.5394,113.9405],[22.5388,113.9410],[22.5382,113.9415],[22.5376,113.9420],[22.5370,113.9425],[22.5364,113.9430],[22.5358,113.9435],[22.5352,113.9440],[22.5347,113.9446],[22.5342,113.9452],[22.5338,113.9460],[22.5335,113.9470],[22.5333,113.9480]],
+                actualIndex: 12,
+                coverage: 92,
+                duration: '1 小时 12 分',
+                warning: '轻微偏离路线 1 次',
+                canStart: true,
+                canFinish: true
+            },
+            {
+                id: '2',
+                name: '沙河西路应急处置',
+                type: '应急任务',
+                icon: 'emergency',
+                status: 'pending',
+                time: '10:30-11:30',
+                routeName: '沙河西路全段',
+                requirement: '突发污染点清理，要求 30 分钟内到达并完成路面清洗。',
+                route: [[22.5300,113.9300],[22.5301,113.9308],[22.5303,113.9316],[22.5305,113.9324],[22.5307,113.9332],[22.5309,113.9340],[22.5311,113.9350],[22.5313,113.9360],[22.5316,113.9370],[22.5319,113.9380],[22.5323,113.9390],[22.5328,113.9402],[22.5334,113.9412],[22.5340,113.9420]],
+                actualIndex: 0,
+                coverage: 0,
+                duration: '0 分钟',
+                warning: '',
+                canStart: true,
+                canFinish: true
+            },
+            {
+                id: '3',
+                name: '滨海大道夜间冲洗',
+                type: '常规任务',
+                icon: 'normal',
+                status: 'pending',
+                time: '19:00-22:00',
+                routeName: '滨海大道东段',
+                requirement: '夜间冲洗主干道，避开交通高峰，保持低速匀速作业。',
+                route: [[22.5260,113.9360],[22.5261,113.9369],[22.5263,113.9378],[22.5265,113.9388],[22.5267,113.9398],[22.5269,113.9408],[22.5272,113.9418],[22.5275,113.9429],[22.5278,113.9440],[22.5281,113.9451],[22.5284,113.9462],[22.5287,113.9473],[22.5289,113.9482],[22.5290,113.9490]],
+                actualIndex: 0,
+                coverage: 0,
+                duration: '0 分钟',
+                warning: '',
+                canStart: false,
+                failReason: '当前不在计划任务时间内，请确认后再开始'
+            },
+            {
+                id: '4',
+                name: '高新南九道日常巡检',
+                type: '常规任务',
+                icon: 'normal',
+                status: 'pending',
+                time: '14:00-15:00',
+                routeName: '高新南九道',
+                requirement: '巡检道路洁净度并处理零星垃圾点。',
+                route: [[22.5340,113.9500],[22.5343,113.9502],[22.5346,113.9505],[22.5349,113.9507],[22.5352,113.9509],[22.5355,113.9512],[22.5358,113.9514],[22.5361,113.9516],[22.5364,113.9519],[22.5367,113.9521],[22.5370,113.9523],[22.5373,113.9526],[22.5377,113.9528],[22.5380,113.9530]],
+                actualIndex: 0,
+                coverage: 0,
+                duration: '0 分钟',
+                warning: '',
+                canStart: false,
+                failReason: '当前未到达任务路段，暂不可开始'
+            },
+            {
+                id: '5',
+                name: '南山垃圾中转站对接',
+                type: '常规任务',
+                icon: 'normal',
+                status: 'pending',
+                time: '16:00-17:00',
+                routeName: '南山站',
+                requirement: '前往中转站完成车辆对接和站点清洁确认。',
+                route: [[22.5280,113.9510],[22.5277,113.9514],[22.5274,113.9518],[22.5271,113.9522],[22.5268,113.9526],[22.5265,113.9530],[22.5262,113.9535],[22.5259,113.9540],[22.5256,113.9544],[22.5252,113.9548],[22.5249,113.9552],[22.5246,113.9555],[22.5243,113.9558],[22.5240,113.9560]],
+                actualIndex: 0,
+                coverage: 0,
+                duration: '0 分钟',
+                warning: '',
+                canStart: true,
+                canFinish: true
+            }
+        ];
+
+        function getTask(id) {
+            return tasks.find(function (task) { return task.id === id; });
+        }
+
+        function statusText(status) {
+            if (status === 'executing') return '执行中';
+            if (status === 'completed') return '已完成';
+            return '待开始';
+        }
+
+        function taskIconSvg(icon) {
+            if (icon === 'emergency') {
+                return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+            }
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+        }
+
+        function renderTaskDrawer(notice) {
+            var selectedTask = getTask(selectedTaskId);
+            var activeCount = tasks.filter(function (task) { return task.status !== 'completed'; }).length;
+            var executingCount = tasks.filter(function (task) { return task.status === 'executing'; }).length;
+            document.querySelector('.drawer-count').textContent = activeCount + ' 项 · ' + executingCount + ' 项执行中';
+
+            var noticeEl = document.getElementById('taskNotice');
+            if (notice) {
+                noticeEl.textContent = notice;
+                noticeEl.classList.add('show');
+            } else {
+                noticeEl.classList.remove('show');
+            }
+
+            document.getElementById('currentTask').innerHTML = buildCurrentTask(selectedTask);
+            document.getElementById('taskList').innerHTML = tasks.map(function (task) {
+                var tagClass = task.status === 'executing' ? 'executing' : task.status === 'completed' ? 'completed' : 'pending';
+                return '<div class="task-list-item ' + (task.id === selectedTaskId ? 'active' : '') + '" onclick="selectTask(\'' + task.id + '\')">' +
+                    '<div class="task-list-icon ' + (task.status === 'executing' ? 'executing' : task.icon) + '">' + taskIconSvg(task.icon) + '</div>' +
+                    '<div class="task-list-main"><div class="task-list-name">' + task.name + '</div><div class="task-list-meta">' + task.time + ' · ' + task.routeName + '</div></div>' +
+                    '<span class="task-list-tag ' + tagClass + '">' + (task.icon === 'emergency' && task.status === 'pending' ? '应急' : statusText(task.status)) + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function buildCurrentTask(task) {
+            var tagClass = task.status === 'executing' ? 'executing' : task.status === 'completed' ? 'completed' : '';
+            var progressText = task.status === 'executing'
+                ? '<div class="current-task-meta" style="color:#1677ff;margin-top:4px;">路线覆盖度 ' + task.coverage + '% · 已作业 ' + task.duration + '</div>'
+                : '<div class="current-task-meta" style="color:#1677ff;margin-top:4px;">作业要求：' + task.requirement + '</div>';
+            var primaryAction = '';
+            if (task.status === 'executing') {
+                primaryAction = '<button class="task-btn primary" onclick="finishTask(\'' + task.id + '\')">结束任务</button>';
+            } else if (task.status === 'pending') {
+                primaryAction = '<button class="task-btn primary" onclick="startTask(\'' + task.id + '\')">开始任务</button>';
+            } else {
+                primaryAction = '<span class="task-btn disabled">已完成</span>';
+            }
+            return '<div class="current-task ' + task.status + '">' +
+                '<div class="task-card-top">' +
+                '<span class="current-task-tag ' + tagClass + '">' + statusText(task.status) + '</span>' +
+                '<button class="task-nav-btn" onclick="openAmapNavigation(\'' + task.id + '\')" aria-label="高德导航">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-6.5 8-13a8 8 0 10-16 0c0 6.5 8 13 8 13z"/><circle cx="12" cy="9" r="2.5"/></svg>' +
+                '</button></div>' +
+                '<div class="current-task-name">' + task.name + '</div>' +
+                '<div class="current-task-meta">' + task.time + ' · ' + task.routeName + '</div>' +
+                progressText +
+                (task.warning ? '<div class="current-task-meta" style="color:#fa8c16;margin-top:4px;">' + task.warning + '</div>' : '') +
+                '<div class="current-task-actions">' +
+                '<a href="task-detail.html?id=' + task.id + '" class="task-btn ghost">任务详情</a>' +
+                primaryAction +
+                '</div></div>';
+        }
+
+        function selectTask(id) {
+            selectedTaskId = id;
+            renderTaskDrawer();
+            drawSelectedTask(true);
+        }
+
+        function startTask(id) {
+            var task = getTask(id);
+            if (executingTaskId && executingTaskId !== id) {
+                showToast('请先结束当前任务');
+                selectTask(executingTaskId);
+                return;
+            }
+            if (!task.canStart) {
+                showToast(task.failReason || '当前暂不可开始任务');
+                return;
+            }
+            task.status = 'executing';
+            task.actualIndex = 0;
+            task.coverage = 12;
+            task.duration = '0 分钟';
+            executingTaskId = id;
+            selectedTaskId = id;
+            showToast('任务已开始');
+            renderTaskDrawer();
+            drawSelectedTask(true);
+            startVehicleMotion(task);
+        }
+
+        function finishTask(id) {
+            var task = getTask(id);
+            if (!task || task.status !== 'executing') {
+                showToast('当前无可结束任务');
+                return;
+            }
+            if (task.canFinish === false) {
+                showToast(task.blockReason || '存在未完成事项，暂不可结束');
+                return;
+            }
+            clearInterval(moveTimer);
+            task.status = 'completed';
+            task.coverage = Math.max(task.coverage, 96);
+            task.duration = task.duration || '已完成';
+            executingTaskId = null;
+            var nextTask = tasks.find(function (item) { return item.status === 'pending'; });
+            if (nextTask) {
+                selectedTaskId = nextTask.id;
+                renderTaskDrawer('当前任务已结束，已自动推送下一任务：' + nextTask.name);
+                showToast('任务已结束，已推送下一任务');
+            } else {
+                selectedTaskId = task.id;
+                renderTaskDrawer('今日任务已完成，可导航返场并交车');
+                showToast('今日任务已完成');
+            }
+            drawSelectedTask(true);
+        }
+
+        function startVehicleMotion(task) {
+            clearInterval(moveTimer);
+            moveTimer = setInterval(function () {
+                if (task.status !== 'executing') {
+                    clearInterval(moveTimer);
+                    return;
+                }
+                if (task.actualIndex < task.route.length - 1) {
+                    task.actualIndex += 1;
+                    task.coverage = Math.min(98, Math.round(((task.actualIndex + 1) / task.route.length) * 100));
+                    task.duration = task.actualIndex * 8 + ' 分钟';
+                    renderTaskDrawer();
+                    drawSelectedTask(false);
+                } else {
+                    clearInterval(moveTimer);
+                }
+            }, 1800);
+        }
+
+        function drawSelectedTask(fitBounds) {
+            var task = getTask(selectedTaskId);
+            routeLayer.clearLayers();
+            pointLayer.clearLayers();
+            var route = task.route;
+            L.polyline(route, { color: '#1677ff', weight: 4, opacity: 0.85, dashArray: '8,6' }).addTo(routeLayer);
+            L.marker(route[0], { icon: startPointIcon }).addTo(pointLayer).bindPopup('任务起点');
+            L.marker(route[route.length - 1], { icon: endPointIcon }).addTo(pointLayer).bindPopup('任务终点');
+
+            var vehiclePoint = task.status === 'executing' ? route[task.actualIndex] : [22.5333, 113.9450];
+            if (task.status === 'executing') {
+                L.polyline(route.slice(0, task.actualIndex + 1), { color: '#ff4d4f', weight: 5, opacity: 0.9 }).addTo(routeLayer);
+            }
+            vehicleMarker.setLatLng(vehiclePoint);
+
+            if (fitBounds) {
+                map.fitBounds(L.latLngBounds(route), { padding: [48, 48], maxZoom: 15 });
+            } else if (task.status === 'executing') {
+                map.setView(vehiclePoint, 15, { animate: true });
+            }
+        }
+
+        function openAmapNavigation(id) {
+            var task = getTask(id);
+            var target = task.route[task.route.length - 1];
+            var url = 'https://uri.amap.com/navigation?to=' + target[1] + ',' + target[0] + ',' + encodeURIComponent(task.routeName) + '&mode=car&policy=1&src=kuwash-app&coordinate=wgs84&callnative=1';
+            showToast('正在打开高德地图导航');
+            window.open(url, '_blank');
+        }
+
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(function () {
+                toast.classList.remove('show');
+            }, 1800);
+        }
+
+        function centerMap() {
+            map.setView(vehicleMarker.getLatLng(), 15, { animate: true });
+        }
+
+        // 交车：先校验是否存在未结束任务，仅拦截"进行中未结束"任务；未开始任务不阻断
+        function handleHandover() {
+            var unfinished = tasks.filter(function (task) { return task.status === 'executing'; });
+            if (unfinished.length > 0) {
+                showToast('存在未结束任务，无法交车，请结束任务或异常关闭');
+                var target = unfinished[0];
+                var drawer = document.getElementById('taskDrawer');
+                if (!drawer.classList.contains('expanded')) {
+                    drawer.classList.add('expanded');
+                    setTimeout(adjustToolsPosition, 320);
+                }
+                selectTask(target.id);
+                highlightTask(target.id);
+                return;
+            }
+            // 无进行中任务 → 调用个人二维码页面完成交车
+            window.location.href = 'qrcode.html?scene=handover';
+        }
+
+        // 在待办任务列表中高亮闪烁指定任务
+        function highlightTask(id) {
+            var idx = tasks.findIndex(function (task) { return task.id === id; });
+            if (idx < 0) return;
+            setTimeout(function () {
+                var items = document.getElementById('taskList').querySelectorAll('.task-list-item');
+                var el = items[idx];
+                if (!el) return;
+                el.classList.add('flash');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(function () { el.classList.remove('flash'); }, 2000);
+            }, 80);
+        }
+
+        function toggleDrawer() {
+            var drawer = document.getElementById('taskDrawer');
+            drawer.classList.toggle('expanded');
+            // 等 CSS 过渡完成后再调整工具栏位置
+            setTimeout(adjustToolsPosition, 320);
+        }
+
+        // 让右侧工具栏始终在底部抽屉上方 16px
+        function adjustToolsPosition() {
+            var drawer = document.getElementById('taskDrawer');
+            var tools = document.querySelector('.float-tools');
+            if (!drawer || !tools) return;
+            var drawerHeight = drawer.offsetHeight;
+            tools.style.bottom = (drawerHeight + 16) + 'px';
+        }
+
+        // 监听窗口尺寸变化与初始加载
+        window.addEventListener('load', adjustToolsPosition);
+        window.addEventListener('resize', adjustToolsPosition);
+        // 立即执行一次（确保初始位置正确）
+        adjustToolsPosition();
+        renderTaskDrawer();
+        drawSelectedTask(true);
+        startVehicleMotion(getTask(executingTaskId));
+
+        function openReportPicker() {
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+        document.getElementById('reportModal').addEventListener('click', function (e) {
+            if (e.target === this) closeReportModal();
+        });
+    </script>
+</body>
+</html>
