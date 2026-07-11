@@ -94,83 +94,65 @@
         .filter-chip .filter-text {
             max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        .refresh-btn {
-            margin-left: auto; display: inline-flex; align-items: center; gap: 4px;
-            font-size: 13px; color: #1677ff; background: none; border: none;
-            cursor: pointer; padding: 6px 8px; font-family: inherit; font-weight: 500;
-        }
-        .refresh-btn svg { width: 14px; height: 14px; transition: transform 0.6s; }
-        .refresh-btn:active svg { transform: rotate(360deg); }
         /* 列表区 */
         .list-area {
             padding: 140px 16px 24px; min-height: calc(100vh - 132px);
         }
-        .list-summary {
-            font-size: 12px; color: #00000073; padding: 0 4px 12px;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .list-summary .count-num {
-            color: #1677ff; font-weight: 600; font-feature-settings: 'tnum';
-        }
         .task-list { display: flex; flex-direction: column; gap: 12px; }
-        /* 任务卡片（对齐 map-workbench .current-task） */
+        /* 任务卡片（扁平卡片，不带状态底色） */
         .task-card {
             margin: 0;
-            padding: 12px;
-            background: #e6f4ff;
+            padding: 14px 16px;
+            background: #ffffff;
             border-radius: 12px;
             cursor: pointer;
-            border: 1px solid rgba(22,119,255,0.14);
+            border: 1px solid #e8e8e8;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             transition: transform 0.15s;
         }
         .task-card:active { transform: scale(0.99); }
-        .task-card.status-pending {
-            background: #e6f4ff; border-color: rgba(22,119,255,0.14);
+        /* 三行式布局：第一行 名称+状态 / 第二行 日期+时间+路段 / 第三行 作业要求 */
+        .task-card-row {
+            display: flex; align-items: center; gap: 8px;
+            line-height: 22px;
         }
-        .task-card.status-running {
-            background: #f6ffed; border-color: rgba(82,196,26,0.24);
-        }
-        .task-card.status-done {
-            background: #f5f5f5; border-color: #e8e8e8;
-        }
-        .task-card-top {
-            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        .task-card-row + .task-card-row { margin-top: 6px; }
+        .task-card-row1 .task-name {
+            font-size: 16px; font-weight: 600; color: #000000d9;
+            flex: 1; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         /* 状态标签 - 与 map-workbench .current-task-tag 一致 */
         .status-tag {
             display: inline-flex; align-items: center; gap: 4px;
             height: 20px; padding: 0 6px; border-radius: 4px;
-            font-size: 11px; line-height: 20px;
+            font-size: 11px; line-height: 20px; flex-shrink: 0;
             background: #e6f4ff; color: #1677ff;
         }
         .status-tag.pending { background: #e6f4ff; color: #1677ff; }
         .status-tag.running { background: #52c41a; color: #ffffff; }
         .status-tag.done { background: #e8e8e8; color: #00000073; }
-        .task-date {
-            font-size: 11px; color: #00000073;
-            font-feature-settings: 'tnum'; font-variant-numeric: tabular-nums;
+        /* 第二行：日期 + 时间 + 路段 */
+        .task-card-row2 {
+            font-size: 12px; color: #00000073; line-height: 20px;
         }
-        .task-name {
-            font-size: 16px; font-weight: 600; color: #000000d9;
-            margin: 6px 0 4px; line-height: 22px;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .task-meta {
-            font-size: 12px; color: #00000073; line-height: 18px;
-        }
-        .task-meta .time {
-            display: inline-block;
-            font-feature-settings: 'tnum'; font-variant-numeric: tabular-nums;
-            color: #000000d9;
-        }
-        .task-meta .sep {
+        .task-card-row2 .sep {
             display: inline-block; width: 1px; height: 10px;
             background: #e8e8e8; vertical-align: middle; margin: 0 6px;
         }
+        .task-card-row2 .time {
+            font-feature-settings: 'tnum'; font-variant-numeric: tabular-nums;
+            color: #000000d9;
+        }
+        .task-card-row2 .route {
+            flex: 1; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        /* 第三行：作业要求 */
         .task-requirement {
-            font-size: 12px; color: #00000073; line-height: 18px;
+            font-size: 12px; color: #00000073; line-height: 20px;
             display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
-            overflow: hidden; margin-top: 4px;
+            overflow: hidden;
         }
         /* 空状态 */
         .empty-state {
@@ -316,15 +298,10 @@
             <span class="filter-text" id="filterLabel">今天</span>
             <span class="arrow">▾</span>
         </div>
-        <button class="refresh-btn" onclick="refreshList()" aria-label="刷新列表">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            刷新
-        </button>
     </div>
 
     <!-- 列表区 -->
     <div class="list-area">
-        <div class="list-summary" id="listSummary"></div>
         <div class="task-list" id="taskList"></div>
     </div>
 
@@ -485,21 +462,25 @@
                 });
         }
 
-        // ============ 渲染（对齐 map-workbench current-task 卡片） ============
+        // ============ 渲染（三行式扁平卡片） ============
         function renderCard(task) {
             return ''
-                + '<div class="task-card status-' + task.status + '" onclick="onCardClick(\'' + task.id + '\')">'
-                + '<div class="task-card-top">'
-                + '<span class="status-tag ' + task.status + '">' + statusText(task.status) + '</span>'
-                + '<span class="task-date">' + task.date + '</span>'
-                + '</div>'
+                + '<div class="task-card" onclick="onCardClick(\'' + task.id + '\')">'
+                // 第一行：任务名称 + 任务状态
+                + '<div class="task-card-row task-card-row1">'
                 + '<div class="task-name">' + task.name + '</div>'
-                + '<div class="task-meta">'
-                + '<span class="time">' + task.timeStart + ' - ' + task.timeEnd + '</span>'
-                + '<span class="sep"></span>'
-                + '<span>' + task.routeName + '</span>'
+                + '<span class="status-tag ' + task.status + '">' + statusText(task.status) + '</span>'
                 + '</div>'
-                + (task.requirement ? '<div class="task-requirement">' + task.requirement + '</div>' : '')
+                // 第二行：日期 + 计划时间 + 路段
+                + '<div class="task-card-row task-card-row2">'
+                + '<span>' + task.date + '</span>'
+                + '<span class="sep"></span>'
+                + '<span class="time">' + task.timeStart + '-' + task.timeEnd + '</span>'
+                + '<span class="sep"></span>'
+                + '<span class="route">' + task.routeName + '</span>'
+                + '</div>'
+                // 第三行：作业要求
+                + (task.requirement ? '<div class="task-card-row task-card-row3"><div class="task-requirement">' + task.requirement + '</div></div>' : '')
                 + '</div>';
         }
         function renderEmpty(title, desc) {
@@ -532,13 +513,9 @@
                 };
                 var desc = '当前筛选：' + currentFilter.label + '。可切换其他时间范围或 Tab 查看。';
                 container.innerHTML = renderEmpty(emptyTitles[currentTab], desc);
-                document.getElementById('listSummary').innerHTML =
-                    '本视图共 <span class="count-num">' + list.length + '</span> 项 · 当前筛选：' + currentFilter.label;
                 return;
             }
             container.innerHTML = list.map(renderCard).join('');
-            document.getElementById('listSummary').innerHTML =
-                '本视图共 <span class="count-num">' + list.length + '</span> 项 · 当前筛选：' + currentFilter.label;
         }
 
         function refreshList() {
