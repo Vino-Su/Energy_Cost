@@ -40,7 +40,7 @@ const initial = await page.evaluate(() => {
     markerLeft: Math.round(markerRect.left),
     markerTop: Math.round(markerRect.top),
     actualTrack: document.getElementById('actualTrack').getAttribute('points') || '',
-    dynamicInList: Array.from(document.querySelectorAll('#taskList .mini-name')).some((item) => item.textContent.includes('\u5783\u573e\u9057\u6f0f\u590d\u6838')),
+    dynamicInList: Boolean(document.querySelector('#taskList .mini-task[data-task-id="6"][data-task-type="\u52a8\u6001\u4efb\u52a1"]')),
   };
 });
 
@@ -81,7 +81,7 @@ await page.waitForFunction(() => {
 
 const dispatched = await page.evaluate(() => ({
   bannerVisible: getComputedStyle(document.querySelector('[data-testid="dynamic-task-banner"]')).display !== 'none',
-  dynamicInList: Array.from(document.querySelectorAll('#taskList .mini-name')).some((item) => item.textContent.includes('\u5783\u573e\u9057\u6f0f\u590d\u6838')),
+  dynamicInList: Boolean(document.querySelector('#taskList .mini-task[data-task-id="6"][data-task-type="\u52a8\u6001\u4efb\u52a1"]')),
   topTaskCount: document.getElementById('topTaskCount').textContent.trim(),
 }));
 

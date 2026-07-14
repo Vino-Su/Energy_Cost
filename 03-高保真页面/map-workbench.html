@@ -535,7 +535,7 @@
         }
         .detail-link:active { opacity: 0.7; }
 
-        /* 第 3 行：开始时间 + 覆盖度 + 作业时长 */
+        /* 第 3 行：开始时间 + 作业里程 + 作业时长 */
         .task-line-metrics {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -564,12 +564,27 @@
             color: #000000d9;
         }
 
-        /* 第 4 行：导航 + 主操作 */
+        /* 第 4 行：更多 + 导航 + 主操作 */
         .task-line-actions {
             display: grid;
-            grid-template-columns: 46px 1fr;
+            grid-template-columns: 46px 46px 1fr;
             gap: 10px;
         }
+        .more-wrap { position: relative; }
+        .more-wrap .icon-action { width: 100%; }
+        .more-menu {
+            position: absolute; bottom: calc(100% + 6px); left: 0;
+            min-width: 128px; background: #ffffff; border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(31,35,41,0.16); padding: 4px 0;
+            z-index: 20; border: 1px solid #f0f1f2;
+        }
+        .more-menu .more-item {
+            padding: 10px 14px; font-size: 14px; line-height: 20px;
+            color: #1f2329; cursor: pointer; white-space: nowrap;
+        }
+        .more-menu .more-item:active { background: #f2f3f5; }
+        .more-menu .more-item.danger { color: #f5222d; }
+        .more-menu[hidden] { display: none; }
         .task-line-actions .icon-action,
         .task-line-actions .primary-action {
             height: 46px;
@@ -698,12 +713,12 @@
         .mini-task {
             width: 100%;
             display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 8px;
-            min-height: 58px;
-            padding: 10px 12px;
-            border-radius: 12px;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: start;
+            gap: 10px;
+            min-height: 68px;
+            padding: 11px 12px;
+            border-radius: 8px;
             background: #f7f9fb;
             border: 1px solid transparent;
             text-align: left;
@@ -713,6 +728,7 @@
             background: #f6ffed;
             border-color: rgba(82,196,26,0.24);
         }
+        .mini-task.is-completed { background: #fafafa; }
         .mini-task.flash {
             animation: taskFlash 0.6s ease-in-out 3;
         }
@@ -727,40 +743,65 @@
             0%, 100% { color: #000000d9; }
             50% { color: #fa8c16; }
         }
-        .mini-name {
+        .mini-content { min-width: 0; }
+        .mini-heading {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mini-primary {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             font-size: 13px;
             line-height: 18px;
             font-weight: 700;
             color: #000000d9;
         }
-        .mini-meta {
-            margin-top: 1px;
+        .mini-type {
+            flex: 0 0 auto;
+            min-height: 20px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: #e6f4ff;
+            color: #1677ff;
+            font-size: 10px;
+            line-height: 18px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .mini-type.emergency { background: #fff2f0; color: #d9363e; }
+        .mini-type.dynamic { background: #fff7e6; color: #d46b08; }
+        .mini-secondary {
+            display: block;
+            min-width: 0;
+            margin-top: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             font-size: 11px;
             line-height: 16px;
             color: #00000073;
         }
-        .mini-tag {
+        .mini-status {
+            min-width: 46px;
             padding: 2px 7px;
-            border-radius: 5px;
+            border-radius: 4px;
             background: #e6f4ff;
             color: #1677ff;
             font-size: 11px;
+            line-height: 18px;
             font-weight: 700;
+            text-align: center;
             white-space: nowrap;
         }
-        .mini-tag.running {
+        .mini-status.running {
             background: #f6ffed;
             color: #389e0d;
         }
-        .mini-tag.urgent {
-            background: #fff2f0;
-            color: #ff4d4f;
-        }
-        .mini-tag.dynamic {
-            background: #fff7e6;
-            color: #d46b08;
-        }
-        .mini-tag.completed {
+        .mini-status.completed {
             background: #f5f5f5;
             color: #00000040;
         }
@@ -972,15 +1013,15 @@
                 <a class="detail-link" id="detailBtn" href="task-detail.html?id=1">任务详情</a>
             </div>
 
-            <!-- 第 3 行：开始时间 + 覆盖度 + 作业时长 -->
+            <!-- 第 3 行：开始时间 + 作业里程 + 作业时长 -->
             <div class="task-line task-line-metrics">
                 <div class="metric">
                     <div class="metric-label">开始</div>
                     <div class="metric-value" id="startTimeValue">-</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-label">覆盖度</div>
-                    <div class="metric-value" id="coverageValue">-</div>
+                    <div class="metric-label">作业里程</div>
+                    <div class="metric-value" id="mileageValue">-</div>
                 </div>
                 <div class="metric">
                     <div class="metric-label">作业时长</div>
@@ -988,10 +1029,19 @@
                 </div>
             </div>
 
-            <!-- 第 4 行：导航 + 主操作 -->
+            <!-- 第 4 行：更多 + 导航 + 主操作 -->
             <div class="task-line task-line-actions">
+                <div class="more-wrap">
+                    <button class="icon-action" id="moreBtn" type="button" onclick="toggleMoreMenu(event)" aria-label="更多操作">
+                        <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                    </button>
+                    <div class="more-menu" id="moreMenu" hidden>
+                        <div class="more-item" onclick="onMoreAction('pause')">暂停任务</div>
+                        <div class="more-item danger" onclick="onMoreAction('close')">关闭任务</div>
+                    </div>
+                </div>
                 <button class="icon-action" id="navBtn" type="button" onclick="openAmapNavigation(selectedTaskId)" aria-label="高德导航">
-                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-6.5 8-13a8 8 0 1 0-16 0c0 6.5 8 13 8 13Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
                 </button>
                 <button class="primary-action" id="primaryAction" type="button">开始任务</button>
             </div>
@@ -1074,11 +1124,12 @@
                 status: 'pending',
                 time: '08:30-10:30',
                 routeName: '科苑南路至高新南九道',
+                segmentName: '科苑南路南行路段',
                 requirement: '洗扫车覆盖道路两侧及辅道，作业速度不超过 25km/h。',
                 route: [[22.5392,113.9386],[22.5387,113.9393],[22.5381,113.9402],[22.5374,113.9412],[22.5366,113.9419],[22.5371,113.9425],[22.5378,113.9430],[22.5383,113.9441],[22.5379,113.9452],[22.5370,113.9461],[22.5360,113.9465],[22.5351,113.9458],[22.5343,113.9452],[22.5335,113.9460],[22.5328,113.9473],[22.5320,113.9486],[22.5311,113.9492],[22.5302,113.9487],[22.5295,113.9478],[22.5287,113.9486],[22.5281,113.9500],[22.5273,113.9514],[22.5265,113.9526],[22.5259,113.9538],[22.5252,113.9555]],
                 actualRoute: [[22.5392,113.9386],[22.5386,113.9390],[22.5380,113.9398],[22.5372,113.9410],[22.5363,113.9416],[22.5368,113.9423],[22.5375,113.9428],[22.5380,113.9438],[22.5384,113.9446],[22.5376,113.9456],[22.5365,113.9462],[22.5357,113.9469],[22.5348,113.9460],[22.5339,113.9454],[22.5331,113.9464],[22.5324,113.9477],[22.5316,113.9491],[22.5306,113.9496],[22.5298,113.9490],[22.5290,113.9480],[22.5284,113.9491],[22.5277,113.9504],[22.5269,113.9517],[22.5262,113.9530],[22.5257,113.9540],[22.5252,113.9555]],
                 actualIndex: 0,
-                coverage: 0,
+                mileage: 0,
                 duration: '0 分钟',
                 warning: '',
                 canStart: true,
@@ -1092,10 +1143,13 @@
                 status: 'pending',
                 time: '行驶中派发',
                 routeName: '科技园南门垃圾遗漏点',
+                issueType: '明显垃圾 / 大件垃圾',
+                severity: '紧急',
+                issueLocation: '李屋小区内，李屋居民小组党群服务站附近 17 米',
                 requirement: '系统识别到道路边侧存在垃圾遗漏点，需就近复核并完成现场清理确认。',
                 route: [[22.5352,113.9440],[22.5351,113.9446],[22.5350,113.9452],[22.5349,113.9458],[22.5348,113.9464],[22.5346,113.9470],[22.5344,113.9476],[22.5341,113.9482],[22.5338,113.9488],[22.5335,113.9494],[22.5331,113.9500],[22.5328,113.9505]],
                 actualIndex: 0,
-                coverage: 0,
+                mileage: 0,
                 duration: '0 分钟',
                 warning: '系统派发动态任务，已进入待办列表。',
                 dispatchSource: '系统派发',
@@ -1113,10 +1167,11 @@
                 status: 'pending',
                 time: '10:30-11:30',
                 routeName: '沙河西路全段',
+                segmentName: '沙河西路应急作业路段',
                 requirement: '突发污染点清理，要求 30 分钟内到达并完成路面清洗。',
                 route: [[22.5300,113.9300],[22.5301,113.9308],[22.5303,113.9316],[22.5305,113.9324],[22.5307,113.9332],[22.5309,113.9340],[22.5311,113.9350],[22.5313,113.9360],[22.5316,113.9370],[22.5319,113.9380],[22.5323,113.9390],[22.5328,113.9402],[22.5334,113.9412],[22.5340,113.9420]],
                 actualIndex: 0,
-                coverage: 0,
+                mileage: 0,
                 duration: '0 分钟',
                 warning: '',
                 canStart: true,
@@ -1130,10 +1185,11 @@
                 status: 'pending',
                 time: '19:00-22:00',
                 routeName: '滨海大道东段',
+                segmentName: '滨海大道东行路段',
                 requirement: '夜间冲洗主干道，避开交通高峰，保持低速匀速作业。',
                 route: [[22.5260,113.9360],[22.5261,113.9369],[22.5263,113.9378],[22.5265,113.9388],[22.5267,113.9398],[22.5269,113.9408],[22.5272,113.9418],[22.5275,113.9429],[22.5278,113.9440],[22.5281,113.9451],[22.5284,113.9462],[22.5287,113.9473],[22.5289,113.9482],[22.5290,113.9490]],
                 actualIndex: 0,
-                coverage: 0,
+                mileage: 0,
                 duration: '0 分钟',
                 warning: '',
                 canStart: false,
@@ -1147,10 +1203,11 @@
                 status: 'pending',
                 time: '14:00-15:00',
                 routeName: '高新南九道',
+                segmentName: '高新南九道巡检路段',
                 requirement: '巡检道路洁净度并处理零星垃圾点。',
                 route: [[22.5340,113.9500],[22.5343,113.9502],[22.5346,113.9505],[22.5349,113.9507],[22.5352,113.9509],[22.5355,113.9512],[22.5358,113.9514],[22.5361,113.9516],[22.5364,113.9519],[22.5367,113.9521],[22.5370,113.9523],[22.5373,113.9526],[22.5377,113.9528],[22.5380,113.9530]],
                 actualIndex: 0,
-                coverage: 0,
+                mileage: 0,
                 duration: '0 分钟',
                 warning: '',
                 canStart: false,
@@ -1164,10 +1221,11 @@
                 status: 'pending',
                 time: '16:00-17:00',
                 routeName: '南山站',
+                segmentName: '科技园至南山站接驳路段',
                 requirement: '前往中转站完成车辆对接和站点清洁确认。',
                 route: [[22.5280,113.9510],[22.5277,113.9514],[22.5274,113.9518],[22.5271,113.9522],[22.5268,113.9526],[22.5265,113.9530],[22.5262,113.9535],[22.5259,113.9540],[22.5256,113.9544],[22.5252,113.9548],[22.5249,113.9552],[22.5246,113.9555],[22.5243,113.9558],[22.5240,113.9560]],
                 actualIndex: 0,
-                coverage: 0,
+                mileage: 0,
                 duration: '0 分钟',
                 warning: '',
                 canStart: true,
@@ -1183,6 +1241,24 @@
         function getVisibleTasks() {
             return tasks.filter(function (task) {
                 return !task.hiddenUntilDispatch || task.dispatched;
+            }).map(function (task, index) {
+                return { task: task, originalIndex: index };
+            }).sort(function (a, b) {
+                var aCompleted = a.task.status === 'completed';
+                var bCompleted = b.task.status === 'completed';
+                if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+                if (aCompleted && bCompleted) return a.originalIndex - b.originalIndex;
+
+                var priority = { executing: 0, emergency: 1, dynamic: 2, normal: 3 };
+                var aRank = a.task.status === 'executing' ? priority.executing : (priority[a.task.icon] || priority.normal);
+                var bRank = b.task.status === 'executing' ? priority.executing : (priority[b.task.icon] || priority.normal);
+                if (aRank !== bRank) return aRank - bRank;
+
+                var aTime = /^\d{2}:\d{2}/.test(a.task.time || '') ? a.task.time : '99:99';
+                var bTime = /^\d{2}:\d{2}/.test(b.task.time || '') ? b.task.time : '99:99';
+                return aTime === bTime ? a.originalIndex - b.originalIndex : aTime.localeCompare(bTime);
+            }).map(function (item) {
+                return item.task;
             });
         }
 
@@ -1198,20 +1274,29 @@
             return '';
         }
 
-        function taskTagClass(task) {
+        function taskStatusClass(task) {
             if (task.status === 'executing') return 'running';
             if (task.status === 'completed') return 'completed';
-            if (task.icon === 'dynamic') return 'dynamic';
-            if (task.icon === 'emergency') return 'urgent';
             return '';
         }
 
-        function taskTagText(task) {
-            if (task.status === 'executing') return '当前';
-            if (task.status === 'completed') return statusText(task.status);
-            if (task.icon === 'dynamic') return '动态';
-            if (task.icon === 'emergency') return '应急';
-            return statusText(task.status);
+        function taskTypeClass(task) {
+            if (task.icon === 'dynamic') return 'dynamic';
+            if (task.icon === 'emergency') return 'emergency';
+            return 'regular';
+        }
+
+        function taskCardFields(task) {
+            if (task.icon === 'dynamic') {
+                return {
+                    primary: (task.issueType || '待确认问题') + ' · ' + (task.severity || '一般'),
+                    secondary: task.issueLocation || task.routeName
+                };
+            }
+            return {
+                primary: task.routeName,
+                secondary: (task.segmentName || task.name) + ' · ' + task.time
+            };
         }
 
         function projectPoint(point) {
@@ -1319,13 +1404,11 @@
             syncTopVehicleStatus();
 
             document.getElementById('taskList').innerHTML = visibleTasks.map(function (task) {
-                var tagClass = taskTagClass(task);
-                var meta = task.status === 'executing'
-                    ? task.time + ' · 覆盖度 ' + task.coverage + '%'
-                    : task.time + ' · ' + task.routeName + (task.distance ? ' · ' + task.distance : '');
-                return '<button type="button" class="mini-task ' + (task.id === selectedTaskId ? 'active' : '') + '" data-task-id="' + task.id + '" onclick="selectTask(' + task.id + ')">' +
-                    '<span><span class="mini-name">' + task.name + '</span><span class="mini-meta">' + meta + '</span></span>' +
-                    '<span class="mini-tag ' + tagClass + '">' + taskTagText(task) + '</span>' +
+                var fields = taskCardFields(task);
+                var status = statusText(task.status);
+                return '<button type="button" class="mini-task ' + (task.id === selectedTaskId ? 'active ' : '') + (task.status === 'completed' ? 'is-completed' : '') + '" data-task-id="' + task.id + '" data-task-type="' + task.type + '" aria-label="' + task.name + '，' + status + '" onclick="selectTask(' + task.id + ')">' +
+                    '<span class="mini-content"><span class="mini-heading"><span class="mini-primary">' + fields.primary + '</span><span class="mini-type ' + taskTypeClass(task) + '">' + task.type + '</span></span><span class="mini-secondary">' + fields.secondary + '</span></span>' +
+                    '<span class="mini-status ' + taskStatusClass(task) + '">' + status + '</span>' +
                     '</button>';
             }).join('');
 
@@ -1335,7 +1418,7 @@
         function renderConsole() {
             var task = getTask(selectedTaskId);
             var isPending = task.status === 'pending';
-            var coverage = Math.max(0, Math.min(100, task.coverage || 0));
+            var mileage = Math.max(0, Math.min(100, task.mileage || 0));
             var planStart = (task.time || '').split('-')[0] || '--:--';
             var startTime = task.startTime || planStart;
 
@@ -1345,9 +1428,9 @@
             document.getElementById('taskState').textContent = statusText(task.status);
             document.getElementById('taskState').className = 'state-tag ' + statusClass(task.status);
             document.getElementById('startTimeValue').textContent = isPending ? '-' : startTime;
-            document.getElementById('coverageValue').textContent = isPending ? '-' : (coverage + '%');
+            document.getElementById('mileageValue').textContent = isPending ? '-' : (mileage + ' km');
             document.getElementById('durationValue').textContent = isPending ? '-' : (task.duration || '0 分钟');
-            document.getElementById('detailBtn').href = 'task-detail.html?id=' + task.id;
+            document.getElementById('detailBtn').href = 'task-detail.html?id=' + encodeURIComponent(task.id) + '&status=' + encodeURIComponent(task.status);
             syncTopVehicleStatus();
 
             var primaryAction = document.getElementById('primaryAction');
@@ -1417,7 +1500,7 @@
             }
             task.status = 'executing';
             task.actualIndex = 0;
-            task.coverage = Math.max(task.coverage, 8);
+            task.mileage = Math.max(task.mileage, 8);
             task.duration = '0 分钟';
             task.startTime = formatHHMM(new Date());
             executingTaskId = id;
@@ -1442,15 +1525,15 @@
                 showToast(task.blockReason || '存在未完成事项，暂不可结束');
                 return;
             }
-            // 后台校验：路线覆盖度（演示阈值 50%）
-            if (typeof task.coverage === 'number' && task.coverage < 50) {
-                showToast('路线覆盖度 ' + task.coverage + '%，未达 50%，请补作业后再结束');
+            // 后台校验：作业里程（演示阈值 50 km）
+            if (typeof task.mileage === 'number' && task.mileage < 50) {
+                showToast('作业里程 ' + task.mileage + ' km，未达 50 km，请补作业后再结束');
                 return;
             }
             // 校验通过：结束任务
             clearInterval(moveTimer);
             task.status = 'completed';
-            task.coverage = Math.max(task.coverage, 96);
+            task.mileage = Math.max(task.mileage, 96);
             task.duration = task.duration || '已完成';
             executingTaskId = null;
             var nextTask = getVisibleTasks().find(function (item) { return item.status === 'pending'; });
@@ -1477,7 +1560,7 @@
                 var motionPath = task.actualRoute || task.route;
                 if (task.actualIndex < motionPath.length - 1) {
                     task.actualIndex += 1;
-                    task.coverage = Math.min(98, Math.round(((task.actualIndex + 1) / motionPath.length) * 100));
+                    task.mileage = Math.min(98, Math.round(((task.actualIndex + 1) / motionPath.length) * 100));
                     task.duration = task.actualIndex * 8 + ' 分钟';
                     if (task.actualIndex >= Math.floor(motionPath.length * DYNAMIC_TASK_TRIGGER_RATIO)) {
                         showDynamicTaskBanner();
@@ -1514,6 +1597,22 @@
             showToast('正在打开高德地图导航');
             window.open(url, '_blank');
         }
+
+        function toggleMoreMenu(e) {
+            if (e) { e.stopPropagation(); }
+            var menu = document.getElementById('moreMenu');
+            if (menu) { menu.hidden = !menu.hidden; }
+        }
+        function onMoreAction(act) {
+            var menu = document.getElementById('moreMenu');
+            if (menu) { menu.hidden = true; }
+            if (act === 'pause') { showToast('暂停任务（演示）'); }
+            else if (act === 'close') { showToast('关闭任务（演示）'); }
+        }
+        document.addEventListener('click', function () {
+            var menu = document.getElementById('moreMenu');
+            if (menu) { menu.hidden = true; }
+        });
 
         function centerMap() {
             var marker = document.getElementById('vehicleMarker');

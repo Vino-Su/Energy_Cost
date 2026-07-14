@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>常规任务 - 城市管家</title>
+    <title>动态任务 - 城市管家</title>
     <link rel="stylesheet" href="components/app-common.css">
     <link rel="stylesheet" href="components/driver-task-list.css">
 </head>
@@ -12,7 +12,7 @@
         <a href="vehicle-management.html" class="top-nav-back" aria-label="返回用车管理" title="返回">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
         </a>
-        <h1 class="top-nav-title" id="pageTitle">常规任务</h1>
+        <h1 class="top-nav-title" id="pageTitle">动态任务</h1>
     </header>
     <main class="page">
         <div class="tab-bar" id="tabBar" role="tablist" aria-label="任务状态">
@@ -55,6 +55,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="components/task-detail-demo-data.js"></script>
     <script src="components/driver-task-list.js"></script>
-    <script>DriverTaskList.init({ listType: 'schedule', title: '常规任务', driverName: '李四', referenceDate: '2026-07-11' });</script>
+    <script>DriverTaskList.init({ listType: 'dynamic', title: '动态任务', driverName: '李四', referenceDate: '2026-07-11' });</script>
 </body>
 </html>

@@ -286,7 +286,7 @@
         }
         .verify-modal-btn {
             flex: 1; height: 40px; border-radius: 8px;
-            font-size: 14px; cursor: pointer;
+            padding: 0; font-family: inherit; font-size: 14px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: opacity 0.15s;
         }
@@ -327,22 +327,22 @@
             <svg class="today-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
         </a>
 
-        <!-- 排班任务 -->
-        <div class="section-title">排班任务</div>
+        <!-- 任务管理 -->
+        <div class="section-title">任务管理</div>
         <div class="module-grid cols-3">
             <a href="schedule-tasks.html" class="module-item">
                 <div class="module-icon schedule">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h4M8 18h4"/></svg>
                 </div>
-                <span class="module-name">排班任务</span>
+                <span class="module-name">常规任务</span>
             </a>
-            <a href="placeholder.html?from=schedule-emergency&title=应急任务" class="module-item">
+            <a href="emergency-tasks.html" class="module-item">
                 <div class="module-icon emergency">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 </div>
                 <span class="module-name">应急任务</span>
             </a>
-            <a href="placeholder.html?from=schedule-dynamic&title=动态任务" class="module-item">
+            <a href="dynamic-tasks.html" class="module-item">
                 <div class="module-icon dynamic">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </div>
@@ -447,34 +447,35 @@
             <div class="verify-modal-title" id="verifyModalTitle">无法进入今日用车</div>
             <div class="verify-modal-desc" id="verifyModalDesc">请稍后重试或联系管理员。</div>
             <div class="verify-modal-buttons">
-                <div class="verify-modal-btn secondary" onclick="closeVerifyModal()">知道了</div>
-                <div class="verify-modal-btn primary" onclick="alert('演示：请联系项目经理')">联系管理员</div>
+                <button type="button" class="verify-modal-btn secondary" onclick="closeVerifyModal()">知道了</button>
+                <button type="button" class="verify-modal-btn primary" id="verifyModalPrimary" onclick="handleVerifyPrimary()">去绑定车辆</button>
             </div>
         </div>
     </div>
 
+    <script src="components/vehicle-demo-state.js"></script>
     <script>
-        // 今日用车入口校验逻辑
-        // URL 参数 ?demo=unbound 触发未绑定演示；?demo=unavailable 触发不可用演示
+        var verifyModalAction = null;
+
+        // 今日用车入口校验逻辑。默认无绑定，扫码完成后由 sessionStorage 记录本次演示状态。
         function verifyAndGo(event) {
             if (event) event.preventDefault();
             var url = new URL(window.location.href);
             var demo = url.searchParams.get('demo');
 
-            if (demo === 'unbound') {
-                showVerifyModal('暂未绑定车辆', '请先完成车辆绑定后开始今日任务。');
-                return;
-            }
             if (demo === 'unavailable') {
-                showVerifyModal('无法进入今日用车', '当前车辆保险已到期，请联系管理员处理后再使用。');
+                showVerifyModal('无法进入今日用车', '当前车辆保险已到期，请联系管理员处理后再使用。', 'contact', '联系管理员');
                 return;
             }
             if (demo === 'maintenance') {
-                showVerifyModal('无法进入今日用车', '当前车辆维修中，暂不可用车。');
+                showVerifyModal('无法进入今日用车', '当前车辆维修中，暂不可用车。', 'contact', '联系管理员');
+                return;
+            }
+            if (!VehicleDemoState.isBound()) {
+                showVerifyModal('暂未绑定车辆', '校验未通过，请先展示个人二维码完成车辆绑定。', 'bind', '去绑定车辆');
                 return;
             }
 
-            // 默认：loading → 跳地图工作台
             showVerifyOverlay();
             setTimeout(function () {
                 window.location.href = 'map-workbench.html';
@@ -485,41 +486,54 @@
             document.getElementById('verifyOverlay').classList.add('show');
         }
 
-        function showVerifyModal(title, desc) {
+        function showVerifyModal(title, desc, action, primaryText) {
+            verifyModalAction = action || null;
             document.getElementById('verifyModalTitle').textContent = title;
             document.getElementById('verifyModalDesc').textContent = desc;
+            document.getElementById('verifyModalPrimary').textContent = primaryText || '知道了';
             document.getElementById('verifyModal').classList.add('show');
         }
 
         function closeVerifyModal() {
             document.getElementById('verifyModal').classList.remove('show');
+            verifyModalAction = null;
         }
 
-        // 根据绑定状态切换今日用车卡片右侧文案
-        // demo=unbound 视为未绑定，隐藏车牌号、显示"当前未绑定车辆"；其他情况按已绑定处理
+        function handleVerifyPrimary() {
+            if (verifyModalAction === 'bind') {
+                window.location.href = 'qrcode.html?scene=bind&returnUrl=map-workbench.html';
+                return;
+            }
+            if (verifyModalAction === 'contact') {
+                alert('演示：请联系项目经理');
+                return;
+            }
+            closeVerifyModal();
+        }
+
         function syncTodayCardState() {
-            var url = new URL(window.location.href);
-            var demo = url.searchParams.get('demo');
+            var binding = VehicleDemoState.getBinding();
             var plate = document.getElementById('todayPlate');
             var unbound = document.getElementById('todayUnbound');
             if (!plate || !unbound) return;
 
-            if (demo === 'unbound') {
+            if (!binding) {
                 plate.style.display = 'none';
                 unbound.style.display = 'inline';
             } else {
+                plate.querySelector('.today-plate-plate').textContent = binding.plateNo;
                 plate.style.display = 'inline-flex';
                 unbound.style.display = 'none';
             }
         }
 
-        // 页面加载即同步一次卡片状态
-        syncTodayCardState();
-
-        // URL 含 demo 参数时，自动触发对应演示（便于评审时直接打开演示链接）
         (function () {
             var url = new URL(window.location.href);
-            if (url.searchParams.get('demo')) {
+            var demo = url.searchParams.get('demo');
+            if (demo === 'reset' || demo === 'unbound') VehicleDemoState.unbind();
+            if (demo === 'bound') VehicleDemoState.bind();
+            syncTodayCardState();
+            if (demo === 'unbound' || demo === 'unavailable' || demo === 'maintenance') {
                 setTimeout(verifyAndGo, 100);
             }
         })();

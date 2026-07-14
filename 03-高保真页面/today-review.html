@@ -27,7 +27,7 @@
             position: absolute; left: 50%; transform: translateX(-50%);
             font-size: 16px; font-weight: 600; color: #000000d9;
         }
-        .content-area { padding: 56px 16px 100px; }
+        .content-area { padding: 56px 16px 120px; }
         /* 交车成功横幅 */
         .success-card {
             background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
@@ -87,9 +87,26 @@
         .todo-time-end { font-size: 11px; color: #00000073; margin-top: 2px; }
         .todo-divider { width: 1px; align-self: stretch; background: #e8e8e8; }
         .todo-main { flex: 1; min-width: 0; }
+        .todo-name-row {
+            display: flex; align-items: center; gap: 6px; min-width: 0;
+        }
         .todo-name {
             font-size: 14px; font-weight: 500; color: #000000d9;
+            min-width: 0; flex-shrink: 1;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        /* 车牌号徽章：紧跟任务名称，白底细边框在浅蓝灰背景上凸显 */
+        .todo-plate {
+            flex-shrink: 0;
+            display: inline-flex; align-items: center;
+            height: 18px; padding: 0 6px;
+            border-radius: 4px;
+            background: #ffffff; color: #000000a6;
+            font-size: 11px; font-weight: 500;
+            font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.2px;
+            border: 1px solid #e8e8e8;
         }
         .todo-meta { font-size: 12px; color: #00000073; margin-top: 3px; }
         .todo-tag {
@@ -97,6 +114,64 @@
             background: #e6f4ff; color: #1677ff;
         }
         .todo-tag.emergency { background: #fff1f0; color: #ff4d4f; }
+        /* 异常关闭任务标签：错误色浅底，与常规任务待开始/执行中标签区分 */
+        .todo-tag.abnormal { background: #fff1f0; color: #ff4d4f; }
+        /* 执行中任务标签：成功色浅底 */
+        .todo-tag.running { background: #f6ffed; color: #52c41a; }
+        /* 今日未完成任务分组 */
+        .unfinished-group { margin-top: 14px; }
+        .unfinished-group:first-child { margin-top: 0; }
+        .unfinished-group + .unfinished-group { margin-top: 18px; }
+        .unfinished-group-head {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px;
+        }
+        /* 当前车辆：主色色块；其他车辆：警告色色块（强对比区分） */
+        .unfinished-group-bar {
+            width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0;
+        }
+        .unfinished-group.current .unfinished-group-bar { background: #1677ff; }
+        .unfinished-group.other .unfinished-group-bar { background: #faad14; }
+        .unfinished-group-title {
+            font-size: 14px; font-weight: 600; color: #000000d9;
+        }
+        .unfinished-group-count {
+            font-size: 12px; color: #00000073; font-weight: 400;
+        }
+        /* 当前车辆组：列表卡片左侧 3px 主色描边强化归属感 */
+        .unfinished-group.current .todo-item {
+            border-left: 3px solid #1677ff;
+            padding-left: 9px;
+            background: #f0f6ff;
+        }
+        /* 其他车辆组：列表卡片左侧 3px 警告色描边，与当前车辆形成强烈对比 */
+        .unfinished-group.other .todo-item {
+            border-left: 3px solid #faad14;
+            padding-left: 9px;
+            background: #fffbe6;
+        }
+        /* 任务卡片可点击反馈（今日待办 + 明日待办） */
+        .todo-item {
+            cursor: pointer;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .todo-item:active {
+            opacity: 0.85;
+            transform: scale(0.995);
+        }
+        /* 未完成任务整组空态（区分于明日待办的整页空态） */
+        .unfinished-empty {
+            padding: 24px 16px; text-align: center;
+        }
+        .unfinished-empty-icon {
+            width: 56px; height: 56px; margin: 0 auto 10px;
+            border-radius: 50%; background: #f6ffed;
+            display: flex; align-items: center; justify-content: center;
+            color: #52c41a;
+        }
+        .unfinished-empty-icon svg { width: 30px; height: 30px; }
+        .unfinished-empty-text { font-size: 13px; color: #00000073; }
         .todo-empty {
             padding: 28px 16px; text-align: center;
         }
@@ -167,15 +242,16 @@
                     <div class="review-value">7<span class="unit">时42分</span></div>
                     <div class="review-label">出车时长</div>
                 </div>
-                <div class="review-item">
-                    <div class="review-value">2</div>
-                    <div class="review-label">水电油上报数</div>
-                </div>
-                <div class="review-item">
-                    <div class="review-value">0</div>
-                    <div class="review-label">报修数</div>
-                </div>
             </div>
+        </div>
+
+        <!-- 今日待办 -->
+        <div class="card">
+            <div class="card-title">
+                <span class="bar"></span>今日待办
+                <span id="unfinishedTotal" class="unfinished-group-count" style="margin-left:auto;"></span>
+            </div>
+            <div id="unfinishedList"></div>
         </div>
 
         <!-- 明日待办 -->
@@ -190,12 +266,128 @@
     </div>
 
     <script>
-        // 明日待办任务（演示数据）；置为空数组可查看空态
-        var TOMORROW_TASKS = [
-            { start: '08:30', end: '10:30', name: '科技园南区道路清扫', route: '科苑南路至高新南九道', type: 'normal', tag: '常规' },
-            { start: '11:00', end: '12:00', name: '沙河西路应急处置', route: '沙河西路全段', type: 'emergency', tag: '应急' },
-            { start: '19:00', end: '22:00', name: '滨海大道夜间冲洗', route: '滨海大道东段', type: 'normal', tag: '常规' }
+        // 当前车辆（交车车辆）今日待办演示数据：全部为待开始，匹配 task-detail-demo-data.js 已有任务
+        var CURRENT_VEHICLE_TASKS = [
+            { start: '08:30', end: '10:30', name: '科技园南区道路清扫', plate: '粤B·D2856', route: '科苑南路至高新南九道', status: 'pending', tag: '待开始', taskId: '1', detailStatus: 'pending' },
+            { start: '14:00', end: '15:00', name: '高新南九道日常巡检', plate: '粤B·D2856', route: '高新南九道', status: 'pending', tag: '待开始', taskId: '4', detailStatus: 'pending' }
         ];
+
+        // 其他车辆（同一司机名下其他车）今日待办演示数据：包含执行中+待开始，匹配已有任务
+        var OTHER_VEHICLE_TASKS = [
+            { start: '08:00', end: '10:00', name: '西丽留仙洞片区道路清扫', plate: '粤B·A778K', route: '西丽留仙洞片区', status: 'running', tag: '执行中', taskId: 'R01', detailStatus: 'executing' },
+            { start: '10:30', end: '12:00', name: '海岸城周边精细化保洁', plate: '粤B·B229L', route: '海岸城片区', status: 'running', tag: '执行中', taskId: 'R02', detailStatus: 'executing' },
+            { start: '16:00', end: '17:00', name: '南山垃圾中转站对接', plate: '粤B·3368F', route: '南山站', status: 'pending', tag: '待开始', taskId: 'P03', detailStatus: 'pending' }
+        ];
+
+        // 明日待办任务（演示数据）；置为空数组可查看空态；新增 taskId/detailStatus/source 用于点击跳转任务详情
+        var TOMORROW_TASKS = [
+            { start: '08:30', end: '10:30', name: '科技园南区道路清扫', plate: '粤B·8829D', route: '科苑南路至高新南九道', type: 'normal', tag: '常规', taskId: 'P01', detailStatus: 'pending', source: 'schedule' },
+            { start: '11:00', end: '12:00', name: '沙河西路应急处置', plate: '粤B·E550F', route: '沙河西路全段', type: 'emergency', tag: '应急', taskId: 'E-P01', detailStatus: 'pending', source: 'emergency' },
+            { start: '19:00', end: '22:00', name: '滨海大道夜间冲洗', plate: '粤B·7720A', route: '滨海大道东段', type: 'normal', tag: '常规', taskId: 'P04', detailStatus: 'pending', source: 'schedule' }
+        ];
+
+        // 排序：执行中 > 待开始 > 异常关闭；同状态按计划开始时间升序
+        var STATUS_RANK = { running: 0, pending: 1, abnormal: 2 };
+        function sortByStatusAndTime(list) {
+            return list.slice().sort(function (a, b) {
+                var ra = STATUS_RANK[a.status] == null ? 99 : STATUS_RANK[a.status];
+                var rb = STATUS_RANK[b.status] == null ? 99 : STATUS_RANK[b.status];
+                if (ra !== rb) return ra - rb;
+                return (a.start || '').localeCompare(b.start || '');
+            });
+        }
+
+        // 状态→标签 class 映射：执行中=running（绿色）、待开始=pending（默认蓝色）、异常关闭=abnormal（红色）
+        function statusClass(status) {
+            if (status === 'abnormal') return 'abnormal';
+            if (status === 'running') return 'running';
+            return '';
+        }
+
+        function renderGroup(label, list, kind) {
+            var sorted = sortByStatusAndTime(list);
+            var itemsHtml = sorted.map(function (t) {
+                return '<div class="todo-item" data-task-id="' + (t.taskId || '') + '" data-detail-status="' + (t.detailStatus || t.status || '') + '">' +
+                    '<div class="todo-time"><div class="todo-time-start">' + t.start + '</div><div class="todo-time-end">' + t.end + '</div></div>' +
+                    '<div class="todo-divider"></div>' +
+                    '<div class="todo-main">' +
+                        '<div class="todo-name-row"><div class="todo-name">' + t.name + '</div>' +
+                        '<span class="todo-plate">' + t.plate + '</span></div>' +
+                        '<div class="todo-meta">' + t.route + '</div>' +
+                    '</div>' +
+                    '<span class="todo-tag ' + statusClass(t.status) + '">' + t.tag + '</span>' +
+                    '</div>';
+            }).join('');
+            return '<div class="unfinished-group ' + kind + '">' +
+                '<div class="unfinished-group-head">' +
+                    '<span class="unfinished-group-bar"></span>' +
+                    '<span class="unfinished-group-title">' + label + '</span>' +
+                    '<span class="unfinished-group-count">共 ' + list.length + ' 项</span>' +
+                '</div>' +
+                itemsHtml +
+                '</div>';
+        }
+
+        function renderUnfinished() {
+            var box = document.getElementById('unfinishedList');
+            var totalEl = document.getElementById('unfinishedTotal');
+            var total = CURRENT_VEHICLE_TASKS.length + OTHER_VEHICLE_TASKS.length;
+            totalEl.textContent = total > 0 ? ('共 ' + total + ' 项待办') : '';
+
+            // 两类都为空：合并显示正向空态
+            if (total === 0) {
+                box.innerHTML = '<div class="unfinished-empty">' +
+                    '<div class="unfinished-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+                    '<div class="unfinished-empty-text">今日所有任务已闭环，干得漂亮！</div>' +
+                    '</div>';
+                return;
+            }
+
+            var html = '';
+            // 当前车辆分组（仅当存在时展示）
+            if (CURRENT_VEHICLE_TASKS.length > 0) {
+                html += renderGroup('当前车辆 · 粤B·D2856', CURRENT_VEHICLE_TASKS, 'current');
+            }
+            // 其他车辆分组（仅当存在时展示）
+            if (OTHER_VEHICLE_TASKS.length > 0) {
+                html += renderGroup('其他车辆', OTHER_VEHICLE_TASKS, 'other');
+            }
+            box.innerHTML = html;
+
+            // 绑定任务卡片点击事件：跳转到任务详情页（仅查看，来源=today-review）
+            box.querySelectorAll('.todo-item').forEach(function (el) {
+                el.addEventListener('click', function () {
+                    var taskId = el.getAttribute('data-task-id');
+                    var detailStatus = el.getAttribute('data-detail-status');
+                    if (!taskId) {
+                        showToast('任务详情页建设中');
+                        return;
+                    }
+                    var url = 'task-detail.html?id=' + encodeURIComponent(taskId) +
+                        '&status=' + encodeURIComponent(detailStatus || 'pending') +
+                        '&source=today-review';
+                    window.location.href = url;
+                });
+            });
+        }
+
+        // 简单 toast 提示（无依赖）
+        function showToast(message) {
+            var existing = document.getElementById('__toast');
+            if (existing) existing.remove();
+            var el = document.createElement('div');
+            el.id = '__toast';
+            el.textContent = message;
+            el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+                'background:rgba(0,0,0,0.78);color:#fff;padding:10px 18px;border-radius:8px;' +
+                'font-size:14px;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;';
+            document.body.appendChild(el);
+            requestAnimationFrame(function () { el.style.opacity = '1'; });
+            setTimeout(function () {
+                el.style.opacity = '0';
+                setTimeout(function () { el.remove(); }, 220);
+            }, 1600);
+        }
 
         function renderTodo() {
             var box = document.getElementById('todoList');
@@ -207,16 +399,38 @@
                 return;
             }
             box.innerHTML = TOMORROW_TASKS.map(function (t) {
-                return '<div class="todo-item">' +
+                return '<div class="todo-item" data-task-id="' + (t.taskId || '') + '" data-detail-status="' + (t.detailStatus || 'pending') + '" data-source="' + (t.source || 'schedule') + '">' +
                     '<div class="todo-time"><div class="todo-time-start">' + t.start + '</div><div class="todo-time-end">' + t.end + '</div></div>' +
                     '<div class="todo-divider"></div>' +
-                    '<div class="todo-main"><div class="todo-name">' + t.name + '</div><div class="todo-meta">' + t.route + '</div></div>' +
+                    '<div class="todo-main">' +
+                        '<div class="todo-name-row"><div class="todo-name">' + t.name + '</div>' +
+                        (t.plate ? '<span class="todo-plate">' + t.plate + '</span>' : '') + '</div>' +
+                        '<div class="todo-meta">' + t.route + '</div>' +
+                    '</div>' +
                     '<span class="todo-tag ' + (t.type === 'emergency' ? 'emergency' : '') + '">' + t.tag + '</span>' +
                     '</div>';
             }).join('');
+
+            // 绑定任务卡片点击事件：根据任务类型跳转到对应来源的只读详情
+            box.querySelectorAll('.todo-item').forEach(function (el) {
+                el.addEventListener('click', function () {
+                    var taskId = el.getAttribute('data-task-id');
+                    var detailStatus = el.getAttribute('data-detail-status');
+                    var source = el.getAttribute('data-source') || 'schedule';
+                    if (!taskId) {
+                        showToast('任务详情页建设中');
+                        return;
+                    }
+                    var url = 'task-detail.html?id=' + encodeURIComponent(taskId) +
+                        '&status=' + encodeURIComponent(detailStatus || 'pending') +
+                        '&source=' + encodeURIComponent(source);
+                    window.location.href = url;
+                });
+            });
         }
 
         renderTodo();
+        renderUnfinished();
     </script>
 </body>
 </html>

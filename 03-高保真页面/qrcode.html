@@ -170,11 +170,20 @@
             font-size: 12px; color: #52664d; line-height: 20px;
         }
         .handover-complete-link {
-            display: inline-block; margin-top: 8px;
+            display: inline-block; margin-top: 8px; padding: 0;
             font-size: 13px; color: #52c41a; font-weight: 500;
-            text-decoration: none; cursor: pointer;
+            text-decoration: none; cursor: pointer; border: 0; background: transparent;
+            font-family: inherit;
         }
         .handover-complete-link:active { opacity: 0.7; }
+        .binding-banner {
+            margin: 12px 16px 0; padding: 12px 14px;
+            background: #e6f4ff; border: 1px solid #91caff; border-radius: 12px;
+            width: calc(100% - 32px); box-sizing: border-box;
+        }
+        .binding-banner .handover-banner-title { color: #0958d9; }
+        .binding-banner .handover-banner-desc { color: #3f5f82; }
+        .binding-banner .handover-complete-link { color: #1677ff; }
     </style>
 </head>
 <body>
@@ -195,7 +204,19 @@
             <div class="handover-banner-desc">
                 请将二维码对准车端摄像头，或点击"扫描二维码"扫描车端二维码，完成交车并解除人车绑定。
             </div>
-            <a class="handover-complete-link" onclick="completeHandover()">车端已扫码？点此完成交车 →</a>
+            <button type="button" class="handover-complete-link" onclick="completeHandover()">车端已扫码？点此完成交车 →</button>
+        </div>
+
+        <!-- 车辆绑定场景横幅（仅 scene=bind 显示） -->
+        <div class="binding-banner" id="bindingBanner" style="display:none;">
+            <div class="handover-banner-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14l-1.6-5.2A2.5 2.5 0 0015 10H9a2.5 2.5 0 00-2.4 1.8L5 17z"/><path d="M7 17v2M17 17v2M8 14h8"/></svg>
+                等待车辆扫码绑定
+            </div>
+            <div class="handover-banner-desc">
+                请将个人二维码对准车端摄像头。扫码成功后将自动绑定车辆并进入今日用车地图工作台。
+            </div>
+            <button type="button" class="handover-complete-link" data-testid="binding-complete" onclick="completeBinding()">模拟扫码完成并绑定车辆 →</button>
         </div>
 
         <!-- 用户信息卡片 -->
@@ -258,6 +279,7 @@
         </div>
     </div>
 
+    <script src="components/vehicle-demo-state.js"></script>
     <script>
         // 固定数据（演示用）
         var USER_INFO = {
@@ -379,6 +401,8 @@
                 input.value = '';
                 if (IS_HANDOVER) {
                     completeHandover();
+                } else if (IS_BINDING) {
+                    completeBinding();
                 } else {
                     showToast('扫描已完成');
                 }
@@ -388,6 +412,9 @@
         // ========== 交车场景 ==========
         var IS_HANDOVER = (function () {
             return /[?&]scene=handover(&|$)/.test(window.location.search);
+        })();
+        var IS_BINDING = (function () {
+            return /[?&]scene=bind(&|$)/.test(window.location.search);
         })();
 
         function initHandoverScene() {
@@ -408,13 +435,43 @@
         function completeHandover() {
             if (handoverDone) return;
             handoverDone = true;
+            VehicleDemoState.unbind();
             showToast('交车成功，已解除人车绑定');
             setTimeout(function () {
                 window.location.href = 'today-review.html';
             }, 1000);
         }
 
+        function initBindingScene() {
+            if (!IS_BINDING) return;
+            document.querySelector('.top-nav-title').textContent = '车辆绑定';
+            document.querySelector('.top-nav-back').setAttribute('href', 'vehicle-management.html');
+            document.getElementById('bindingBanner').style.display = 'block';
+            document.querySelector('.user-role').textContent = '作业车辆驾驶员';
+            var usageTitle = document.querySelector('.usage-title span:last-child');
+            if (usageTitle) usageTitle.textContent = '绑定说明：';
+            var usageList = document.querySelector('.usage-list');
+            if (usageList) {
+                usageList.innerHTML = '<li>车端识别个人身份后建立本次人车绑定关系</li>' +
+                    '<li>演示车辆：粤B·D2856 · 洗扫车</li>';
+            }
+        }
+
+        var bindingDone = false;
+        function completeBinding() {
+            if (bindingDone) return;
+            bindingDone = true;
+            VehicleDemoState.bind();
+            showToast('车辆绑定成功，正在进入地图工作台');
+            var returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+            var nextPage = returnUrl === 'vehicle-management.html' ? returnUrl : 'map-workbench.html';
+            setTimeout(function () {
+                window.location.href = nextPage;
+            }, 900);
+        }
+
         initHandoverScene();
+        initBindingScene();
     </script>
 </body>
 </html>
