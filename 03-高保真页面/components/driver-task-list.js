@@ -4,11 +4,12 @@
     var STATUS_ORDER = ['pending', 'executing', 'completed'];
     var STATUS_TEXT = { pending: '待开始', executing: '执行中', completed: '已完成' };
     var TYPE_TEXT = { schedule: '常规任务', emergency: '应急任务', dynamic: '动态任务' };
+    // 时间搜索选项：今天、明天、近七天、全部、自定义时间段
     var FILTERS = [
         { type: 'today', label: '今天', days: 0 },
-        { type: 'week', label: '近 7 天', days: 6 },
-        { type: 'month', label: '近 30 天', days: 29 },
-        { type: 'all', label: '全部时间', days: null },
+        { type: 'tomorrow', label: '明天', days: -1 },
+        { type: 'week', label: '近七天', days: 6 },
+        { type: 'all', label: '全部', days: null },
         { type: 'custom', label: '自定义时间段', days: null }
     ];
 
@@ -21,7 +22,10 @@
         var tasks = allTasks.filter(function (task) { return task.listType === listType; });
         var currentStatus = 'pending';
         var referenceDate = parseDate(config.referenceDate || formatDate(new Date()));
+        // 默认时间范围：今天
         var currentFilter = rangeFor('today');
+        // 车牌筛选：null = 全部车牌（默认值）
+        var currentPlate = null;
 
         document.body.setAttribute('data-list-type', listType);
         document.getElementById('pageTitle').textContent = config.title;
@@ -30,8 +34,15 @@
             var selected = FILTERS.filter(function (item) { return item.type === type; })[0] || FILTERS[0];
             if (selected.days === null) return { type: type, label: selected.label, from: null, to: null };
             var from = new Date(referenceDate);
-            from.setDate(from.getDate() - selected.days);
-            return { type: type, label: selected.label, from: formatDate(from), to: formatDate(referenceDate) };
+            var to = new Date(referenceDate);
+            if (type === 'tomorrow') {
+                // 明天：起止都是 referenceDate + 1
+                from.setDate(from.getDate() + 1);
+                to.setDate(to.getDate() + 1);
+            } else {
+                from.setDate(from.getDate() - selected.days);
+            }
+            return { type: type, label: selected.label, from: formatDate(from), to: formatDate(to) };
         }
 
         function taskDate(task) {
@@ -46,7 +57,10 @@
 
         function filteredTasks(status) {
             return tasks.filter(function (task) {
-                return task.status === status && isInRange(task);
+                if (task.status !== status) return false;
+                if (!isInRange(task)) return false;
+                if (currentPlate && (task.plateNo || '') !== currentPlate) return false;
+                return true;
             }).sort(function (a, b) {
                 var aTime = taskDate(a) + ' ' + (a.time || a.dispatchedAt || '');
                 var bTime = taskDate(b) + ' ' + (b.time || b.dispatchedAt || '');
@@ -77,17 +91,31 @@
             var href = 'task-detail.html?id=' + encodeURIComponent(task.id) +
                 '&status=' + encodeURIComponent(task.status) +
                 '&source=' + encodeURIComponent(task.listType);
-            var tags = '<span class="plate-tag' + plateClass + '">' + escapeHtml(plateText) + '</span>' +
-                '<span class="type-tag ' + task.listType + '">' + typeText + '</span>';
-            if (task.listType === 'dynamic' && task.severity) {
-                tags += '<span class="severity-tag">' + escapeHtml(task.severity) + '</span>';
+
+            // 第一行：任务标题 + 车牌号 + 任务状态
+            var firstLine = '<span class="task-card-head">' +
+                '<span class="task-card-title-wrap">' +
+                    '<span class="task-card-title-row">' +
+                        '<span class="task-card-title">' + escapeHtml(title) + '</span>' +
+                        '<span class="plate-tag' + plateClass + '">' + escapeHtml(plateText) + '</span>' +
+                    '</span>' +
+                '</span>' +
+                '<span class="status-tag ' + task.status + '">' + STATUS_TEXT[task.status] + '</span>' +
+            '</span>';
+
+            // 第二行：作业类型 + 严重程度（动态任务）
+            var secondLine = '';
+            if (task.workType || (task.listType === 'dynamic' && task.severity)) {
+                var tagList = [];
+                if (task.workType) tagList.push('<span class="work-type">' + escapeHtml(task.workType) + '</span>');
+                if (task.listType === 'dynamic' && task.severity) {
+                    tagList.push('<span class="severity-tag">' + escapeHtml(task.severity) + '</span>');
+                }
+                secondLine = '<span class="task-card-tags">' + tagList.join('') + '</span>';
             }
 
             return '<button type="button" class="task-card' + contextClass + '" data-detail-href="' + href + '" aria-label="查看' + escapeHtml(title) + '详情">' +
-                '<span class="task-card-head"><span class="task-card-title-wrap">' +
-                    '<span class="task-card-title">' + escapeHtml(title) + '</span>' +
-                    '<span class="task-card-identifiers">' + tags + '</span>' +
-                '</span><span class="status-tag ' + task.status + '">' + STATUS_TEXT[task.status] + '</span></span>' +
+                firstLine + secondLine +
                 renderMeta(task) + renderSummary(task) +
             '</button>';
         }
@@ -185,6 +213,52 @@
             }
             currentFilter = { type: 'custom', label: from + ' 至 ' + to, from: from, to: to };
             closeSheet();
+            render();
+        });
+
+        // ====== 车牌筛选：取当前 listType 下所有任务的唯一 plateNo ======
+        function availablePlates() {
+            var seen = {};
+            var list = [];
+            tasks.forEach(function (task) {
+                var plate = task.plateNo || task.vehicle || '';
+                if (plate && !seen[plate]) {
+                    seen[plate] = true;
+                    list.push(plate);
+                }
+            });
+            return list;
+        }
+        function renderPlateSheet() {
+            var plates = availablePlates();
+            var html = '<button type="button" class="sheet-item' + (currentPlate == null ? ' active' : '') +
+                '" data-plate=""><span>全部车牌</span><span class="sheet-check">✓</span></button>';
+            plates.forEach(function (plate) {
+                var active = currentPlate === plate ? ' active' : '';
+                html += '<button type="button" class="sheet-item' + active +
+                    '" data-plate="' + escapeHtml(plate) + '"><span>' + escapeHtml(plate) + '</span><span class="sheet-check">✓</span></button>';
+            });
+            document.getElementById('plateSheetItems').innerHTML = html;
+        }
+        function openPlateSheet() {
+            renderPlateSheet();
+            document.getElementById('plateSheet').classList.add('show');
+        }
+        function closePlateSheet() {
+            document.getElementById('plateSheet').classList.remove('show');
+        }
+        document.getElementById('plateChip').addEventListener('click', openPlateSheet);
+        document.getElementById('plateSheetClose').addEventListener('click', closePlateSheet);
+        document.getElementById('plateSheet').addEventListener('click', function (event) {
+            if (event.target === this) closePlateSheet();
+        });
+        document.getElementById('plateSheetItems').addEventListener('click', function (event) {
+            var item = event.target.closest('[data-plate]');
+            if (!item) return;
+            var value = item.getAttribute('data-plate');
+            currentPlate = value || null;
+            document.getElementById('plateLabel').textContent = currentPlate || '全部车牌';
+            closePlateSheet();
             render();
         });
 

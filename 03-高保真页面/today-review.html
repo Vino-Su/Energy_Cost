@@ -7,14 +7,14 @@
     <link rel="stylesheet" href="components/app-common.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { margin: 0 auto; max-width: 430px; min-height: 100vh; background: #f5f5f5; }
+        html { margin: 0 auto; max-width: 375px; min-height: 100vh; background: #f5f5f5; }
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f5f5; width: 100%; margin: 0; min-height: 100vh;
         }
         .top-nav {
             position: fixed; top: 0; left: 0; right: 0; margin: 0 auto;
-            width: 100%; max-width: 430px; height: 44px;
+            width: 100%; max-width: 375px; height: 44px;
             background: #ffffff; border-bottom: 1px solid #e8e8e8;
             display: flex; align-items: center; z-index: 1000; padding: 0 16px;
         }
@@ -186,7 +186,7 @@
         /* 底部 */
         .bottom-actions {
             position: fixed; bottom: 0; left: 0; right: 0;
-            margin: 0 auto; max-width: 430px;
+            margin: 0 auto; max-width: 375px;
             padding: 12px 16px 16px; background: #ffffff; border-top: 1px solid #e8e8e8;
             z-index: 1000;
         }
@@ -200,9 +200,9 @@
         .action-btn:active { opacity: 0.85; }
     </style>
 </head>
-<body>
+<body data-no-project-switcher="true">
     <div class="top-nav">
-        <a href="home.html" class="top-nav-back" aria-label="返回首页">
+        <a href="vehicle-management.html" class="top-nav-back" aria-label="返回首页">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </a>
         <div class="top-nav-title">今日回顾</div>
@@ -262,7 +262,7 @@
     </div>
 
     <div class="bottom-actions">
-        <a href="home.html" class="action-btn">返回首页</a>
+        <a href="vehicle-management.html" class="action-btn">返回首页</a>
     </div>
 
     <script>
@@ -432,5 +432,6 @@
         renderTodo();
         renderUnfinished();
     </script>
+    <script src="components/app-common.js"></script>
 </body>
 </html>

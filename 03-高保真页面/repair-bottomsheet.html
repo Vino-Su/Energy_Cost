@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="components/app-common.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { margin: 0 auto; max-width: 430px; min-height: 100vh; background: #f5f5f5; }
+        html { margin: 0 auto; max-width: 375px; min-height: 100vh; background: #f5f5f5; }
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f5f5; width: 100%; margin: 0; min-height: 100vh;
@@ -15,7 +15,7 @@
         /* 顶部遮罩 */
         .top-nav {
             position: fixed; top: 0; left: 0; right: 0; margin: 0 auto;
-            width: 100%; max-width: 430px; height: 44px;
+            width: 100%; max-width: 375px; height: 44px;
             background: #ffffff; border-bottom: 1px solid #e8e8e8;
             display: flex; align-items: center; z-index: 1000; padding: 0 16px;
         }
@@ -142,7 +142,7 @@
         /* 底部操作（fixed） */
         .bottom-actions {
             position: fixed; bottom: 0; left: 0; right: 0;
-            margin: 0 auto; max-width: 430px;
+            margin: 0 auto; max-width: 375px;
             padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
             background: #ffffff; border-top: 1px solid #e8e8e8;
             display: flex; gap: 8px;
@@ -162,7 +162,7 @@
         .action-btn:active { opacity: 0.85; }
     </style>
 </head>
-<body>
+<body data-no-project-switcher="true">
     <div class="top-nav">
         <a href="javascript:history.back()" class="top-nav-back" aria-label="返回">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -247,7 +247,7 @@
                 <div class="field-label"><span>期望维修时间</span></div>
                 <div class="select-field" onclick="alert('演示：弹出时间选择器')">
                     <span>2026-07-10 14:00</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="6 9l6 6 6-6"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </div>
             </div>
 
@@ -292,7 +292,7 @@
         // 根据 URL ?source= 参数判断返回页面（vehicle-management / 其他）
         function getReturnPage() {
             var src = new URLSearchParams(location.search).get('source');
-            if (src === 'vehicle-management') return 'vehicle-management.html';
+            if (src === 'vehicle-management') return 'vehicle-management.html?tab=service';
             return 'map-workbench.html';
         }
 
@@ -307,5 +307,6 @@
             window.location.href = getReturnPage();
         }
     </script>
+    <script src="components/app-common.js"></script>
 </body>
 </html>

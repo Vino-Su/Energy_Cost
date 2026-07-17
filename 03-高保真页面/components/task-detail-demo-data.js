@@ -32,7 +32,14 @@
             routeId: config.routeId,
             routeName: config.routeName,
             routePoints: config.routePoints || [[8, 28], [22, 36], [38, 32], [52, 48], [68, 44], [82, 61], [94, 54]],
-            segments: config.segments || commonSegments.south
+            segments: config.segments || commonSegments.south,
+            // V1.12 任务完成信息字段（已完成：actualStartTime/actualEndTime/mileage/duration；执行中：actualStartTime/currentMileage/currentDuration）
+            actualStartTime: null,
+            actualEndTime: null,
+            currentMileage: null,
+            currentDuration: null,
+            mileage: null,
+            duration: null
         };
     }
 
@@ -61,7 +68,14 @@
                 { label: '现场全景', visual: 'debris' },
                 { label: '问题近照', visual: 'waste' }
             ],
-            point: config.point
+            point: config.point,
+            // V1.12 任务完成信息字段（已完成：actualStartTime/actualEndTime/mileage/duration；执行中：actualStartTime/currentMileage/currentDuration）
+            actualStartTime: null,
+            actualEndTime: null,
+            currentMileage: null,
+            currentDuration: null,
+            mileage: null,
+            duration: null
         };
     }
 
@@ -131,6 +145,17 @@
     };
 
     Object.assign(global.TASK_DETAIL_DATA, {
+        // 地图工作台 tasks 数组里的 7、8 号任务（应急/常规 route），用于修复"任务详情显示不存在"bug
+        '7': makeRouteTask({
+            id: '7', listType: 'emergency', status: 'pending', name: '科技园北门路面冲洗', workType: '路面冲洗',
+            number: 'YJRW2026042800007', date: '2026-04-28', time: '09:00~10:00', plateNo: '粤B·E550F',
+            routeId: 'route232987', routeName: '科技园北门', requirement: '路面油污应急冲洗，要求 30 分钟内到场。'
+        }),
+        '8': makeRouteTask({
+            id: '8', listType: 'schedule', status: 'pending', name: '高新南片区巡检', workType: '巡检',
+            number: 'CGRW2026042800008', date: '2026-04-28', time: '11:00~12:00', plateNo: '粤B·A118G',
+            routeId: 'route232989', routeName: '高新南片区', requirement: '片区道路洁净度巡检，处理零星垃圾点。'
+        }),
         'P01': makeRouteTask({
             id: 'P01', listType: 'schedule', status: 'pending', name: '科技园南区道路清扫', workType: '道路清扫',
             number: 'CGRW202607110001', date: '2026-07-11', time: '08:30~10:30', plateNo: '粤B·8829D',
@@ -256,5 +281,76 @@
             dispatchedAt: '2026-07-10 16:35:00', plateNo: '粤B·P771A', coordinates: ['113.9165, 22.4941'],
             location: '蛇口工业路四海公园东门', issueTypes: ['垃圾桶满溢', '明显垃圾'], severity: '一般', point: [28, 67]
         })
+    });
+
+    // V1.12 任务完成信息字段补全（已完成任务：实际开始/结束 + 里程/时长；执行中任务：实际开始 + 当前里程/时长）
+    Object.assign(global.TASK_DETAIL_DATA['D01'], {
+        actualStartTime: '2026-07-11 06:02:15', actualEndTime: '2026-07-11 07:35:48',
+        mileage: '4.80', duration: 93
+    });
+    Object.assign(global.TASK_DETAIL_DATA['D02'], {
+        actualStartTime: '2026-07-11 05:00:32', actualEndTime: '2026-07-11 07:08:21',
+        mileage: '18.50', duration: 128
+    });
+    Object.assign(global.TASK_DETAIL_DATA['D03'], {
+        actualStartTime: '2026-07-10 05:32:48', actualEndTime: '2026-07-10 07:25:36',
+        mileage: '12.30', duration: 118
+    });
+    Object.assign(global.TASK_DETAIL_DATA['D04'], {
+        actualStartTime: '2026-07-10 07:01:12', actualEndTime: '2026-07-10 08:28:54',
+        mileage: '9.20', duration: 95
+    });
+    Object.assign(global.TASK_DETAIL_DATA['D05'], {
+        actualStartTime: '2026-07-10 02:03:08', actualEndTime: '2026-07-10 04:12:30',
+        mileage: '11.60', duration: 132
+    });
+    Object.assign(global.TASK_DETAIL_DATA['D06'], {
+        actualStartTime: '2026-07-09 05:00:45', actualEndTime: '2026-07-09 07:05:18',
+        mileage: '16.40', duration: 122
+    });
+    Object.assign(global.TASK_DETAIL_DATA['E-D01'], {
+        actualStartTime: '2026-07-11 07:12:20', actualEndTime: '2026-07-11 08:05:42',
+        mileage: '3.20', duration: 58
+    });
+    Object.assign(global.TASK_DETAIL_DATA['E-D02'], {
+        actualStartTime: '2026-07-10 18:22:05', actualEndTime: '2026-07-10 19:42:18',
+        mileage: '5.80', duration: 78
+    });
+    Object.assign(global.TASK_DETAIL_DATA['T-D01'], {
+        actualStartTime: '2026-07-11 07:21:30', actualEndTime: '2026-07-11 07:56:48',
+        mileage: '1.20', duration: 35
+    });
+    Object.assign(global.TASK_DETAIL_DATA['T-D02'], {
+        actualStartTime: '2026-07-10 16:36:18', actualEndTime: '2026-07-10 17:21:42',
+        mileage: '2.80', duration: 45
+    });
+    // 执行中任务：实际开始 + 当前里程 + 当前时长
+    Object.assign(global.TASK_DETAIL_DATA['R01'], {
+        actualStartTime: '2026-07-11 08:01:30',
+        currentMileage: '12.50', currentDuration: 105
+    });
+    Object.assign(global.TASK_DETAIL_DATA['R02'], {
+        actualStartTime: '2026-07-11 10:32:18',
+        currentMileage: '7.30', currentDuration: 68
+    });
+    Object.assign(global.TASK_DETAIL_DATA['R03'], {
+        actualStartTime: '2026-07-11 13:00:45',
+        currentMileage: '4.80', currentDuration: 35
+    });
+    Object.assign(global.TASK_DETAIL_DATA['E-R01'], {
+        actualStartTime: '2026-07-11 09:42:08',
+        currentMileage: '3.60', currentDuration: 28
+    });
+    Object.assign(global.TASK_DETAIL_DATA['E-R02'], {
+        actualStartTime: '2026-07-11 10:11:32',
+        currentMileage: '5.20', currentDuration: 42
+    });
+    Object.assign(global.TASK_DETAIL_DATA['T-R01'], {
+        actualStartTime: '2026-07-11 10:19:15',
+        currentMileage: '1.80', currentDuration: 18
+    });
+    Object.assign(global.TASK_DETAIL_DATA['T-R02'], {
+        actualStartTime: '2026-07-11 11:43:22',
+        currentMileage: '2.40', currentDuration: 12
     });
 }(window));

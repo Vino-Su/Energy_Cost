@@ -10,7 +10,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
             margin: 0 auto;
-            max-width: 430px;
+            max-width: 375px;
             min-height: 100vh;
             background: #f5f5f5;
         }
@@ -29,7 +29,7 @@
             right: 0;
             margin: 0 auto;
             width: 100%;
-            max-width: 430px;
+            max-width: 375px;
             height: 44px;
             background: #ffffff;
             border-bottom: 1px solid #e8e8e8;
@@ -290,6 +290,17 @@
             font-size: 12px;
             color: #00000073;
         }
+        .upload-area.has-ocr svg {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 3px;
+        }
+        .upload-area .upload-ocr-hint {
+            font-size: 10px;
+            line-height: 14px;
+            color: #00000073;
+            margin-top: 1px;
+        }
         .upload-preview {
             width: 96px;
             height: 96px;
@@ -319,21 +330,161 @@
             cursor: pointer;
         }
         .upload-hint {
-            margin-top: 6px;
-            font-size: 11px;
-            color: #00000073;
-            line-height: 16px;
+            margin-top: 0;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            flex: 0 0 auto;
         }
-        .ocr-status {
+        .photo-feedback-row {
             margin-top: 6px;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .photo-example-btn {
+            min-height: 28px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            color: #1677ff;
+            font-family: inherit;
+            font-size: 12px;
+            line-height: 18px;
+            cursor: pointer;
+        }
+        .photo-example-btn:active {
+            opacity: 0.7;
+        }
+        .photo-example-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+        .photo-guide-panel {
+            max-height: 74vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .photo-guide-body {
+            padding: 12px 16px 20px;
+            overflow-y: auto;
+        }
+        .photo-guide-card {
+            display: none;
+        }
+        .photo-guide-card.show {
+            display: block;
+        }
+        .photo-guide-visual {
+            height: 184px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .guide-odometer {
+            background: linear-gradient(145deg, #151b22, #34404c);
+        }
+        .guide-dashboard {
+            width: 246px;
+            height: 116px;
+            border: 8px solid #0d1218;
+            border-radius: 52px 52px 14px 14px;
+            background: #202a33;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 0 1px #566574;
+        }
+        .guide-odometer-screen {
+            min-width: 132px;
+            padding: 9px 12px;
+            border-radius: 5px;
+            background: #dff5df;
+            color: #193525;
+            font-family: 'SF UI Text', Arial, sans-serif;
+            font-size: 26px;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 0;
+        }
+        .guide-odometer-screen small {
+            font-size: 11px;
+            font-weight: 400;
+        }
+        .guide-focus-frame {
+            position: absolute;
+            width: 150px;
+            height: 58px;
+            border: 2px solid #1677ff;
+            border-radius: 6px;
+            pointer-events: none;
+        }
+        .guide-payment {
+            background: #edf7ee;
+        }
+        .guide-payment-sheet {
+            width: 196px;
+            padding: 16px;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #000000d9;
+            font-size: 12px;
+        }
+        .guide-payment-check {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #52c41a;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .guide-payment-amount {
+            font-size: 22px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .guide-payment-sheet em {
+            color: #00000073;
+            font-size: 10px;
+            font-style: normal;
+        }
+        .photo-guide-copy {
+            margin-top: 12px;
+            font-size: 13px;
+            line-height: 20px;
+            color: #00000073;
+        }
+        .photo-guide-copy strong {
+            color: #000000d9;
+            font-weight: 500;
+        }
+        .photo-item .ocr-status {
+            margin-top: 0;
             font-size: 11px;
             line-height: 16px;
-            display: none;
+            display: none !important;
             align-items: center;
             gap: 4px;
+            flex: 0 0 auto;
         }
         .ocr-status.show {
-            display: flex;
+            display: flex !important;
         }
         .ocr-status.loading {
             color: #1677ff;
@@ -368,7 +519,7 @@
             right: 0;
             margin: 0 auto;
             width: 100%;
-            max-width: 430px;
+            max-width: 375px;
             padding: 12px 16px 16px;
             background: #ffffff;
             border-top: 1px solid #e8e8e8;
@@ -416,7 +567,7 @@
             bottom: 0;
             background: rgba(0,0,0,0.5);
             z-index: 2000;
-            max-width: 430px;
+            max-width: 375px;
             margin: 0 auto;
         }
         .picker-panel {
@@ -495,7 +646,7 @@
             bottom: 0;
             background: rgba(0,0,0,0.5);
             z-index: 3000;
-            max-width: 430px;
+            max-width: 375px;
             margin: 0 auto;
             align-items: center;
             justify-content: center;
@@ -541,7 +692,7 @@
         }
     </style>
 </head>
-<body>
+<body data-no-project-switcher="true">
     <!-- 顶部导航 -->
     <div class="top-nav">
         <a href="home.html" class="top-nav-back">
@@ -549,10 +700,6 @@
             <span>返回</span>
         </a>
         <div class="top-nav-title">加水上报</div>
-        <div class="project-switcher" role="button" aria-label="切换项目" onclick="CityStewardCommon.openProjectPicker()">
-            <span class="project-switcher-text">选择项目</span>
-            <svg class="project-switcher-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
     </div>
 
     <div class="content-area">
@@ -567,23 +714,31 @@
                 <div class="photo-item">
                     <label class="photo-label">里程照片</label>
                     <div class="upload-row" id="odometerRow">
-                        <div class="upload-area" id="odometerUpload" onclick="showUploadOptions('odometer')">
+                        <div class="upload-area has-ocr" id="odometerUpload" onclick="showUploadOptions('odometer')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                             <span>上传</span>
+                            <span class="upload-ocr-hint">支持 OCR 识别</span>
                         </div>
                     </div>
-                    <div class="upload-hint" id="odometerUploadHint">支持 OCR 识别</div>
-                    <div class="ocr-status loading" id="odometerOcrLoading">
-                        <span class="ocr-dot"></span>
-                        <span>正在识别中</span>
-                    </div>
-                    <div class="ocr-status success" id="odometerOcrSuccess">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-                        <span>识别成功</span>
-                    </div>
-                    <div class="ocr-status error" id="odometerOcrError">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <span>识别失败</span>
+                    <div class="photo-feedback-row">
+                        <div class="upload-hint" id="odometerUploadHint">
+                            <button type="button" class="photo-example-btn" onclick="openPhotoGuide('odometer')" aria-label="查看里程照片示例">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                <span>示例</span>
+                            </button>
+                        </div>
+                        <div class="ocr-status loading" id="odometerOcrLoading">
+                            <span class="ocr-dot"></span>
+                            <span>正在识别中</span>
+                        </div>
+                        <div class="ocr-status success" id="odometerOcrSuccess">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                            <span>识别成功</span>
+                        </div>
+                        <div class="ocr-status error" id="odometerOcrError">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span>识别失败</span>
+                        </div>
                     </div>
                     <div class="error-text" id="odometerError"></div>
                 </div>
@@ -597,7 +752,14 @@
                             <span>上传</span>
                         </div>
                     </div>
-                    <div class="upload-hint" id="paymentUploadHint">暂不参与 OCR</div>
+                    <div class="photo-feedback-row">
+                        <div class="upload-hint" id="paymentUploadHint">
+                            <button type="button" class="photo-example-btn" onclick="openPhotoGuide('payment')" aria-label="查看支付照片示例">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                <span>示例</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="error-text" id="paymentError"></div>
                 </div>
             </div>
@@ -739,6 +901,31 @@
                 <span>本地上传</span>
             </div>
             <div style="height:20px;background:#fff;"></div>
+        </div>
+    </div>
+
+    <!-- 拍摄示例 -->
+    <div class="picker-overlay" id="photoGuidePicker" onclick="closePicker(event, 'photoGuidePicker')">
+        <div class="picker-panel photo-guide-panel" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <span class="picker-title" id="photoGuideTitle">拍摄示例</span>
+                <span class="picker-close" onclick="closePickerDirect('photoGuidePicker')">关闭</span>
+            </div>
+            <div class="photo-guide-body">
+                <div class="photo-guide-card" data-guide="odometer" data-title="里程照片示例">
+                    <div class="photo-guide-visual guide-odometer">
+                        <div class="guide-dashboard"><div class="guide-odometer-screen">12560 <small>km</small></div></div>
+                        <div class="guide-focus-frame"></div>
+                    </div>
+                    <p class="photo-guide-copy"><strong>拍摄要点：</strong>完整拍入里程数字，保持画面清晰，避免反光和遮挡。</p>
+                </div>
+                <div class="photo-guide-card" data-guide="payment" data-title="支付照片示例">
+                    <div class="photo-guide-visual guide-payment">
+                        <div class="guide-payment-sheet"><div class="guide-payment-check">✓</div><strong>支付成功</strong><span class="guide-payment-amount">¥ 28.00</span><span>清水补给服务</span><em>交易号已脱敏</em></div>
+                    </div>
+                    <p class="photo-guide-copy"><strong>拍摄要点：</strong>保留付款金额和商户信息，其余敏感信息可遮盖。</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1065,18 +1252,15 @@
 
         function renderOdometerPhoto() {
             const row = document.getElementById('odometerRow');
-            const hint = document.getElementById('odometerUploadHint');
             if (!odometerPhoto) {
-                row.innerHTML = '<div class="upload-area" id="odometerUpload" onclick="showUploadOptions(\'odometer\')">' +
+                row.innerHTML = '<div class="upload-area has-ocr" id="odometerUpload" onclick="showUploadOptions(\'odometer\')">' +
                     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
-                    '<span>上传</span></div>';
-                hint.style.display = 'block';
+                    '<span>上传</span><span class="upload-ocr-hint">支持 OCR 识别</span></div>';
                 return;
             }
             row.innerHTML = '<div class="upload-preview" id="odometer_preview_' + odometerPhoto.id + '">' +
                 '<img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'%3E%3Crect fill=\'%23e8e8e8\' width=\'96\' height=\'96\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3E里程%3C/text%3E%3C/svg%3E" alt="里程照片">' +
                 '<div class="delete-btn" onclick="deleteOdometerPhoto()">×</div></div>';
-            hint.style.display = 'none';
         }
 
         function renderPaymentPhoto() {
@@ -1189,6 +1373,18 @@
         }
         function closePickerDirect(id) {
             document.getElementById(id).style.display = 'none';
+        }
+
+        function openPhotoGuide(type) {
+            const picker = document.getElementById('photoGuidePicker');
+            const cards = picker.querySelectorAll('.photo-guide-card');
+            const activeCard = picker.querySelector('[data-guide="' + type + '"]');
+            cards.forEach(function(card) { card.classList.remove('show'); });
+            if (activeCard) {
+                activeCard.classList.add('show');
+                document.getElementById('photoGuideTitle').textContent = activeCard.getAttribute('data-title');
+                picker.style.display = 'block';
+            }
         }
 
         function showToast(msg) {
@@ -1344,7 +1540,7 @@
             if (backLink) {
                 if (returnUrl) backLink.href = returnUrl;
                 else if (from === 'ocr') backLink.href = 'home-ocr.html';
-                else if (from === 'vehicle') backLink.href = 'vehicle-management.html';
+                else if (from === 'vehicle') backLink.href = 'vehicle-management.html?tab=service';
                 else backLink.href = 'home.html';
             }
         })();

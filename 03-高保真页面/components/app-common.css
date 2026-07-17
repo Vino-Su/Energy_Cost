@@ -412,26 +412,30 @@
     background: rgba(255, 255, 255, 0.15);
 }
 
-/* 历史记录下拉列表 */
+/* 历史记录下拉列表（与项目切换弹窗风格保持一致） */
 .history-list {
     background: #ffffff;
-    border: 1px solid #e8e8e8;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
     margin-top: 4px;
-    max-height: 200px;
+    max-height: 260px;
     overflow-y: auto;
     z-index: 100;
 }
 
 .history-item {
-    padding: 12px 16px;
+    min-height: 52px;
+    padding: 8px 16px;
     border-bottom: 1px solid #f5f5f5;
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 2px;
+    font-size: 14px;
+    color: #000000d9;
     transition: background-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .history-item:last-child {
@@ -442,9 +446,14 @@
     background-color: #f5f5f5;
 }
 
+.history-item.active {
+    color: #1677ff;
+    font-weight: 500;
+}
+
 .history-item .history-text {
     font-size: 14px;
-    color: #000000d9;
+    color: inherit;
 }
 
 .history-item .history-hint {
@@ -453,8 +462,40 @@
 }
 
 .history-empty {
-    padding: 12px 16px;
-    font-size: 13px;
+    padding: 16px;
+    font-size: 14px;
     color: #00000073;
     text-align: center;
+}
+
+/* ============================================================
+ * 毛玻璃工具类（.glass）
+ * 用途：用于顶部状态栏、悬浮卡等需要"原生气质"的容器
+ * 规范：禁止在 HTML 内直接写 backdrop-filter，所有毛玻璃必须用 .glass
+ * 视觉：用 92% 透明白底 + 阴影 模拟毛玻璃层次感，避免 backdrop-filter 被 AXhub 误丢
+ * ============================================================ */
+.glass {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 16px rgba(15, 35, 70, 0.08);
+}
+
+/* ============================================================
+ * 全局隐藏页面级滚动条
+ * 原因：桌面 Chrome 默认显示经典滚动条（占 15-17px），导致 AXhub 复制时
+ *       clientWidth = scrollWidth - 15 = 360，Figma 节点变 360 而非 375。
+ * 影响：
+ *   - 移动端浏览器无变化（本来就不显示）
+ *   - 桌面端开发者看不到滚动条，但鼠标滚轮 / Page Down / 触摸板全部正常
+ *   - AXhub 复制时 clientWidth === scrollWidth === 375
+ *   - 子容器（如 .filter-bar 横向滚动）滚动条仍正常显示
+ * ============================================================ */
+html, body {
+    scrollbar-width: none;            /* Firefox */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;                    /* Chrome / Safari / Edge */
+    width: 0;
+    height: 0;
 }

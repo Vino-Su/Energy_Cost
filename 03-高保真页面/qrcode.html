@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="components/app-common.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { margin: 0 auto; max-width: 430px; min-height: 100vh; background: #f5f5f5; }
+        html { margin: 0 auto; max-width: 375px; min-height: 100vh; background: #f5f5f5; }
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f5f5; width: 100%; margin: 0; min-height: 100vh;
@@ -15,7 +15,7 @@
         /* 顶部导航 */
         .top-nav {
             position: fixed; top: 0; left: 0; right: 0; margin: 0 auto;
-            width: 100%; max-width: 430px; height: 44px;
+            width: 100%; max-width: 375px; height: 44px;
             background: #ffffff; border-bottom: 1px solid #e8e8e8;
             display: flex; align-items: center; z-index: 1000; padding: 0 16px;
         }
@@ -186,7 +186,7 @@
         .binding-banner .handover-complete-link { color: #1677ff; }
     </style>
 </head>
-<body>
+<body data-no-project-switcher="true">
     <div class="top-nav">
         <a href="profile.html" class="top-nav-back" aria-label="返回">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -420,7 +420,7 @@
         function initHandoverScene() {
             if (!IS_HANDOVER) return;
             document.querySelector('.top-nav-title').textContent = '交车';
-            document.querySelector('.top-nav-back').setAttribute('href', 'map-workbench.html');
+            document.querySelector('.top-nav-back').setAttribute('href', 'vehicle-management.html');
             document.getElementById('handoverBanner').style.display = 'block';
             var usageTitle = document.querySelector('.usage-title span:last-child');
             if (usageTitle) usageTitle.textContent = '交车说明：';
@@ -473,5 +473,6 @@
         initHandoverScene();
         initBindingScene();
     </script>
+    <script src="components/app-common.js"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
             margin: 0 auto;
-            max-width: 430px;
+            max-width: 375px;
             min-height: 100vh;
             background: #f5f5f5;
         }
@@ -29,7 +29,7 @@
             right: 0;
             margin: 0 auto;
             width: 100%;
-            max-width: 430px;
+            max-width: 375px;
             height: 44px;
             background: #ffffff;
             border-bottom: 1px solid #e8e8e8;
@@ -183,7 +183,7 @@
             bottom: 0;
             background: rgba(0,0,0,0.5);
             z-index: 2000;
-            max-width: 430px;
+            max-width: 375px;
             margin: 0 auto;
         }
         .picker-panel {
@@ -238,26 +238,43 @@
             border-color: #1677ff;
             box-shadow: 0 0 0 2px #e6f4ff;
         }
+        /* 时间预设：行样式（与 driver-task-list.js 的 .sheet-item 保持一致） */
         .date-presets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 16px;
-            border-bottom: 1px solid #f5f5f5;
+            padding: 0;
+            background: #ffffff;
         }
         .date-preset {
-            padding: 6px 14px;
-            border: 1px solid #e8e8e8;
-            border-radius: 16px;
-            font-size: 13px;
+            width: 100%;
+            min-height: 50px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 0;
+            border-bottom: 1px solid #f5f5f5;
+            background: #ffffff;
             color: #000000d9;
+            font-size: 14px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background-color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .date-preset:last-child {
+            border-bottom: none;
+        }
+        .date-preset:active {
+            background-color: #f5f5f5;
         }
         .date-preset.active {
-            background: #e6f4ff;
-            border-color: #1677ff;
             color: #1677ff;
+            font-weight: 500;
+        }
+        .date-preset .preset-check {
+            color: #1677ff;
+            visibility: hidden;
+        }
+        .date-preset.active .preset-check {
+            visibility: visible;
         }
         .date-range-row {
             display: flex;
@@ -266,6 +283,21 @@
         }
         .date-range-row .form-input {
             flex: 1;
+        }
+        /* 自定义范围面板：默认隐藏，点击"自定义时间段"后展开（与任务页 customPanel 行为一致） */
+        .custom-range-panel {
+            display: none;
+            padding: 16px;
+            border-top: 1px solid #f5f5f5;
+            background: #fafafa;
+        }
+        .custom-range-panel.show {
+            display: block;
+        }
+        .custom-range-title {
+            font-size: 13px;
+            color: #00000073;
+            margin-bottom: 8px;
         }
         .reset-btn, .confirm-btn {
             flex: 1;
@@ -285,7 +317,7 @@
         }
     </style>
 </head>
-<body>
+<body data-no-project-switcher="true">
     <!-- 顶部导航 -->
     <div class="top-nav">
         <a href="home.html" class="top-nav-back">
@@ -293,10 +325,6 @@
             <span>返回</span>
         </a>
         <div class="top-nav-title">上报记录</div>
-        <div class="project-switcher" role="button" aria-label="切换项目" onclick="CityStewardCommon.openProjectPicker()">
-            <span class="project-switcher-text">选择项目</span>
-            <svg class="project-switcher-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
     </div>
 
     <div class="content-area">
@@ -336,22 +364,23 @@
                 <span class="picker-close" onclick="closePickerDirect('dateFilterPicker')">关闭</span>
             </div>
             <div class="date-presets">
-                <div class="date-preset" onclick="selectDatePreset('all')">全部</div>
-                <div class="date-preset" onclick="selectDatePreset('7')">近7天</div>
-                <div class="date-preset" onclick="selectDatePreset('30')">近30天</div>
-                <div class="date-preset" onclick="selectDatePreset('180')">近半年</div>
+                <button type="button" class="date-preset" data-preset="all" onclick="selectDatePreset('all')"><span>全部</span><span class="preset-check">✓</span></button>
+                <button type="button" class="date-preset" data-preset="7" onclick="selectDatePreset('7')"><span>近7天</span><span class="preset-check">✓</span></button>
+                <button type="button" class="date-preset" data-preset="30" onclick="selectDatePreset('30')"><span>近30天</span><span class="preset-check">✓</span></button>
+                <button type="button" class="date-preset" data-preset="180" onclick="selectDatePreset('180')"><span>近半年</span><span class="preset-check">✓</span></button>
+                <button type="button" class="date-preset" data-preset="custom" onclick="selectDatePreset('custom')"><span>自定义时间段</span><span class="preset-check">✓</span></button>
             </div>
-            <div style="padding: 16px; border-top: 1px solid #f5f5f5;">
-                <div style="font-size:13px;color:#00000073;margin-bottom:8px;">自定义范围</div>
+            <div class="custom-range-panel" id="customRangePanel">
+                <div class="custom-range-title">自定义范围</div>
                 <div class="date-range-row">
                     <input type="date" class="form-input" id="startDate" style="height:36px;">
                     <span style="color:#00000073;">至</span>
                     <input type="date" class="form-input" id="endDate" style="height:36px;">
                 </div>
-            </div>
-            <div style="padding: 12px 16px 20px; display:flex; gap:12px;">
-                <button class="reset-btn" onclick="resetDateFilter()">重置</button>
-                <button class="confirm-btn" onclick="confirmDateFilter()">确定</button>
+                <div style="padding: 12px 0 0; display:flex; gap:12px;">
+                    <button class="reset-btn" onclick="resetDateFilter()">重置</button>
+                    <button class="confirm-btn" onclick="confirmDateFilter()">确定</button>
+                </div>
             </div>
         </div>
     </div>
@@ -364,7 +393,7 @@
             const backLink = document.querySelector('.top-nav-back');
             if (backLink) {
                 if (from === 'ocr') backLink.href = 'home-ocr.html';
-                else if (from === 'vehicle') backLink.href = 'vehicle-management.html';
+                else if (from === 'vehicle') backLink.href = 'vehicle-management.html?tab=service';
                 else backLink.href = 'home.html';
             }
         })();
@@ -406,6 +435,9 @@
             document.getElementById('startDate').value = startDate;
             document.getElementById('endDate').value = endDate;
             document.getElementById('dateRangeLabel').textContent = '近7天';
+            document.querySelectorAll('.date-preset').forEach(p => p.classList.remove('active'));
+            var defaultPreset = document.querySelector('.date-preset[data-preset="7"]');
+            if (defaultPreset) defaultPreset.classList.add('active');
         }
 
         function getCurrentProjectName() {
@@ -460,7 +492,9 @@
         }
 
         function showDateFilter() {
-            document.getElementById('dateFilterPicker').style.display = 'block';
+            var p = document.getElementById('dateFilterPicker');
+            p.style.display = 'block';
+            p.classList.add('show');
         }
 
         function formatDate(date) {
@@ -472,7 +506,19 @@
 
         function selectDatePreset(days) {
             document.querySelectorAll('.date-preset').forEach(p => p.classList.remove('active'));
-            event.target.classList.add('active');
+            var target = (event && event.target) ? event.target.closest('.date-preset') : null;
+            if (!target) {
+                target = document.querySelector('.date-preset[data-preset="' + days + '"]');
+            }
+            if (target) target.classList.add('active');
+
+            // 自定义时间段：展开自定义范围面板，不应用筛选、不关闭弹窗（与任务页一致）
+            if (days === 'custom') {
+                document.getElementById('customRangePanel').classList.add('show');
+                return;
+            }
+            // 其它预设项：收起自定义范围面板，立即应用筛选并关闭弹窗
+            document.getElementById('customRangePanel').classList.remove('show');
             const end = new Date();
             const start = new Date();
             if (days !== 'all') {
@@ -480,14 +526,22 @@
             } else {
                 start.setFullYear(2000, 0, 1);
             }
-            document.getElementById('startDate').value = formatDate(start);
-            document.getElementById('endDate').value = formatDate(end);
+            startDate = formatDate(start);
+            endDate = formatDate(end);
+            document.getElementById('startDate').value = startDate;
+            document.getElementById('endDate').value = endDate;
+
+            const labels = { all: '全部时间', '7': '近7天', '30': '近30天', '180': '近半年' };
+            document.getElementById('dateRangeLabel').textContent = labels[days] || '自定义';
+            closePickerDirect('dateFilterPicker');
+            renderList();
         }
 
         function confirmDateFilter() {
             startDate = document.getElementById('startDate').value || null;
             endDate = document.getElementById('endDate').value || null;
             document.getElementById('dateFilterPicker').style.display = 'none';
+            document.getElementById('customRangePanel').classList.remove('show');
 
             let label = '自定义';
             if (!startDate && !endDate) label = '全部时间';

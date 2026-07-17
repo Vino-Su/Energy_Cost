@@ -57,9 +57,15 @@
 
     // 为没有项目切换器的 top-nav 自动注入
     function ensureProjectSwitcher() {
+        // 页面通过在 body/html 上声明 data-no-project-switcher="true" 来禁用自动注入
+        var root = document.body || document.documentElement;
+        if (root && root.getAttribute('data-no-project-switcher') === 'true') return;
+
         var navs = document.querySelectorAll('.top-nav');
         navs.forEach(function (nav) {
             if (nav.querySelector('.project-switcher')) return;
+            // 单个 top-nav 也可以通过 data-no-project-switcher="true" 禁用
+            if (nav.getAttribute('data-no-project-switcher') === 'true') return;
 
             var switcher = document.createElement('div');
             switcher.className = 'project-switcher';
