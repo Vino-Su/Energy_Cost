@@ -907,16 +907,14 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label"><span class="required">*</span>充电开始时间</label>
+                <label class="form-label"><span class="required">*</span>充电时长（分钟）</label>
                 <div class="input-with-icon">
-                    <div class="select-trigger" onclick="showTimePicker('start')">
-                        <span id="startTime" class="placeholder">请选择开始时间</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                    </div>
-                    <svg class="ocr-field-icon success-icon" id="startTimeOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="right:34px;"><path d="M20 6L9 17l-5-5"/></svg>
-                    <svg class="ocr-field-icon error-icon" id="startTimeOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="right:34px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <input type="number" class="form-input" id="chargeDuration" placeholder="OCR识别自动填充" value="" min="0" step="1" onblur="validateDuration()">
+                    <svg class="ocr-field-icon success-icon" id="chargeDurationOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="chargeDurationOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
-                <div class="error-text" id="startTimeError"></div>
+                <div class="vehicle-hint" id="chargeDurationHint" style="display:none;">由结束时间和时长自动计算</div>
+                <div class="error-text" id="chargeDurationError"></div>
             </div>
 
             <div class="form-group">
@@ -933,6 +931,18 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label">充电开始时间</label>
+                <div class="input-with-icon">
+                    <div class="select-trigger" id="startTimeTrigger" style="background:#f5f5f5;cursor:not-allowed;pointer-events:none;">
+                        <span id="startTime" class="placeholder">结束时间-时长自动计算</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                </div>
+                <div class="vehicle-hint" id="startTimeHint" style="display:none;">由结束时间-时长自动计算</div>
+                <div class="error-text" id="startTimeError"></div>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label"><span class="required">*</span>充电度数（度）</label>
                 <div class="input-with-icon">
                     <input type="number" class="form-input" id="chargeDegree" placeholder="OCR识别自动填充" value="" step="0.1" onblur="validateNumber(this, '充电度数')">
@@ -943,12 +953,31 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label"><span class="required">*</span>充电金额（元）</label>
+                <label class="form-label"><span class="required">*</span>充电电费（元）</label>
                 <div class="input-with-icon">
-                    <input type="number" class="form-input" id="chargeAmount" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '金额')">
-                    <svg class="ocr-field-icon success-icon" id="chargeAmountOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-                    <svg class="ocr-field-icon error-icon" id="chargeAmountOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <input type="number" class="form-input" id="electricityFee" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '充电电费')">
+                    <svg class="ocr-field-icon success-icon" id="electricityFeeOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="electricityFeeOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
+                <div class="error-text" id="electricityFeeError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label"><span class="required">*</span>充电服务费（元）</label>
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="serviceFee" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '充电服务费')">
+                    <svg class="ocr-field-icon success-icon" id="serviceFeeOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="serviceFeeOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div class="error-text" id="serviceFeeError"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">充电金额（元）</label>
+                <div class="input-with-icon">
+                    <input type="text" class="form-input" id="chargeAmount" placeholder="电费+服务费自动计算" value="" readonly>
+                </div>
+                <div class="vehicle-hint" id="chargeAmountHint" style="display:none;">由电费+服务费自动计算</div>
                 <div class="error-text" id="chargeAmountError"></div>
             </div>
 
@@ -1006,9 +1035,9 @@
             <div class="photo-guide-body">
                 <div class="photo-guide-card" data-guide="detail" data-title="充电明细示例">
                     <div class="photo-guide-visual guide-charge">
-                        <div class="guide-charge-order"><strong>充电完成</strong><div class="guide-charge-row"><span>开始时间</span><b>07-16 10:20</b></div><div class="guide-charge-row"><span>结束时间</span><b>07-16 12:05</b></div><div class="guide-charge-row"><span>充电度数</span><b>42.6 度</b></div><div class="guide-charge-row"><span>充电金额</span><b>88.60 元</b></div></div>
+                        <div class="guide-charge-order"><strong>充电完成</strong><div class="guide-charge-row"><span>结束时间</span><b>07-16 12:05</b></div><div class="guide-charge-row"><span>充电时长</span><b>105 分钟</b></div><div class="guide-charge-row"><span>充电度数</span><b>42.6 度</b></div><div class="guide-charge-row"><span>充电电费</span><b>73.60 元</b></div><div class="guide-charge-row"><span>充电服务费</span><b>15.00 元</b></div><div class="guide-charge-row"><span>充电金额</span><b>88.60 元</b></div></div>
                     </div>
-                    <p class="photo-guide-copy"><strong>拍摄要点：</strong>订单摘要完整，开始时间、结束时间、充电度数和金额应清晰可辨。</p>
+                    <p class="photo-guide-copy"><strong>拍摄要点：</strong>订单摘要完整，结束时间、充电时长、充电度数、电费、服务费和金额应清晰可辨。</p>
                 </div>
                 <div class="photo-guide-card" data-guide="odometer" data-title="里程照片示例">
                     <div class="photo-guide-visual guide-odometer">
@@ -1076,9 +1105,9 @@
 
         // 模拟 OCR 识别结果池
         const mockDetailOcrResults = [
-            { startTime: '2026-06-25 08:00', endTime: '2026-06-25 10:30', degree: 45.5, amount: 68.25 },
-            { startTime: '2026-06-24 18:00', endTime: '2026-06-24 19:45', degree: 32.0, amount: 48.00 },
-            { startTime: '2026-06-23 12:00', endTime: '2026-06-23 14:20', degree: 58.8, amount: 88.20 }
+            { endTime: '2026-06-25 10:30', degree: 45.5, electricityFee: 54.60, serviceFee: 13.65, duration: 150 },
+            { endTime: '2026-06-24 19:45', degree: 32.0, electricityFee: 38.40, serviceFee: 9.60, duration: 105 },
+            { endTime: '2026-06-23 14:20', degree: 58.8, electricityFee: 70.56, serviceFee: 17.64, duration: 140 }
         ];
         const mockOdometerOcrResults = [12560, 13200, 11800, 14500];
 
@@ -1094,9 +1123,11 @@
 
         // OCR 字段状态：success | error | null
         const ocrFieldStatus = {
-            startTime: null,
             endTime: null,
+            chargeDuration: null,
             chargeDegree: null,
+            electricityFee: null,
+            serviceFee: null,
             chargeAmount: null,
             mileage: null
         };
@@ -1120,11 +1151,19 @@
         }
 
         function bindOcrFieldInputListeners() {
-            ['chargeDegree', 'chargeAmount', 'mileage'].forEach(function(field) {
+            ['chargeDegree', 'electricityFee', 'serviceFee', 'chargeDuration', 'mileage'].forEach(function(field) {
                 const el = document.getElementById(field);
                 if (el) {
                     el.addEventListener('input', function() {
                         clearOcrFieldIcon(field);
+                        // 联动计算：电费或服务费变化 → 重新计算充电金额
+                        if (field === 'electricityFee' || field === 'serviceFee') {
+                            calcChargeAmount();
+                        }
+                        // 联动计算：时长变化 → 重新计算开始/结束
+                        if (field === 'chargeDuration') {
+                            onDurationInput();
+                        }
                     });
                 }
             });
@@ -1441,19 +1480,21 @@
             detailPhoto = null;
             renderDetailPhoto();
             clearDetailOcrStatus();
-            const startEl = document.getElementById('startTime');
-            startEl.textContent = '请选择开始时间';
-            startEl.classList.add('placeholder');
-            startEl.removeAttribute('data-value');
+            // 开始时间由结束时间-时长自动计算,无需单独清空,onDurationInput会处理
             const endEl = document.getElementById('endTime');
             endEl.textContent = '请选择结束时间';
             endEl.classList.add('placeholder');
             endEl.removeAttribute('data-value');
             document.getElementById('chargeDegree').value = '';
+            document.getElementById('electricityFee').value = '';
+            document.getElementById('serviceFee').value = '';
             document.getElementById('chargeAmount').value = '';
-            ['startTime', 'endTime', 'chargeDegree', 'chargeAmount'].forEach(function(key) {
+            document.getElementById('chargeDuration').value = '';
+            ['endTime', 'chargeDuration', 'chargeDegree', 'electricityFee', 'serviceFee', 'chargeAmount'].forEach(function(key) {
                 setOcrFieldIcon(key, null);
             });
+            calcChargeAmount();
+            onDurationInput();
             clearNumberErrors();
         }
 
@@ -1524,7 +1565,7 @@
                     setOcrStatus('detail', 'success');
                 } else {
                     setOcrStatus('detail', 'error');
-                    ['startTime', 'endTime', 'chargeDegree', 'chargeAmount'].forEach(function(key) {
+                    ['endTime', 'chargeDuration', 'chargeDegree', 'electricityFee', 'serviceFee', 'chargeAmount'].forEach(function(key) {
                         setOcrFieldIcon(key, 'error');
                     });
                 }
@@ -1534,13 +1575,7 @@
         }
 
         function fillDetailOcrResult(result) {
-            const startEl = document.getElementById('startTime');
-            if (!startEl.getAttribute('data-value')) {
-                startEl.textContent = result.startTime;
-                startEl.classList.remove('placeholder');
-                startEl.setAttribute('data-value', result.startTime.replace(' ', 'T'));
-                setOcrFieldIcon('startTime', 'success');
-            }
+            // 充电开始时间由结束时间-时长自动计算,不再由OCR直接填
             const endEl = document.getElementById('endTime');
             if (!endEl.getAttribute('data-value')) {
                 endEl.textContent = result.endTime;
@@ -1553,11 +1588,25 @@
                 degreeInput.value = result.degree.toFixed(1);
                 setOcrFieldIcon('chargeDegree', 'success');
             }
-            const amountInput = document.getElementById('chargeAmount');
-            if (!amountInput.value) {
-                amountInput.value = result.amount.toFixed(2);
-                setOcrFieldIcon('chargeAmount', 'success');
+            const electricityFeeInput = document.getElementById('electricityFee');
+            if (!electricityFeeInput.value) {
+                electricityFeeInput.value = result.electricityFee.toFixed(2);
+                setOcrFieldIcon('electricityFee', 'success');
             }
+            const serviceFeeInput = document.getElementById('serviceFee');
+            if (!serviceFeeInput.value) {
+                serviceFeeInput.value = result.serviceFee.toFixed(2);
+                setOcrFieldIcon('serviceFee', 'success');
+            }
+            // 充电金额由电费+服务费自动计算(不再由OCR直接填)
+            calcChargeAmount();
+            const durationInput = document.getElementById('chargeDuration');
+            if (!durationInput.value) {
+                durationInput.value = result.duration;
+                setOcrFieldIcon('chargeDuration', 'success');
+            }
+            // 触发时间联动判断(开始时间自动计算)
+            onDurationInput();
         }
 
         // 模拟里程照片 OCR
@@ -1591,6 +1640,85 @@
             btn.disabled = isDetailOcrRunning || isOdometerOcrRunning;
         }
 
+        // 联动计算:充电金额 = 电费 + 服务费(只读,自动计算)
+        function calcChargeAmount() {
+            const ef = parseFloat(document.getElementById('electricityFee').value) || 0;
+            const sf = parseFloat(document.getElementById('serviceFee').value) || 0;
+            const amountInput = document.getElementById('chargeAmount');
+            const hint = document.getElementById('chargeAmountHint');
+            if (ef > 0 || sf > 0) {
+                amountInput.value = (ef + sf).toFixed(2);
+                if (hint) hint.style.display = 'block';
+            } else {
+                amountInput.value = '';
+                if (hint) hint.style.display = 'none';
+            }
+        }
+
+        // 时长字段校验
+        function validateDuration() {
+            const input = document.getElementById('chargeDuration');
+            const value = parseFloat(input.value);
+            const error = document.getElementById('chargeDurationError');
+            if (input.value && (isNaN(value) || value < 0)) {
+                error.textContent = '时长必须为非负数';
+                error.classList.add('show');
+                input.classList.add('error');
+                return false;
+            } else {
+                error.textContent = '';
+                error.classList.remove('show');
+                input.classList.remove('error');
+                if (!input.readOnly && input.value) {
+                    input.value = Math.floor(value);
+                }
+                return true;
+            }
+        }
+
+        // 时间字段联动:任意两个填了,第三个自动计算并只读
+        function onDurationInput() {
+            const startEl = document.getElementById('startTime');
+            const endEl = document.getElementById('endTime');
+            const durationEl = document.getElementById('chargeDuration');
+            const startTrigger = document.getElementById('startTimeTrigger');
+            const durationHint = document.getElementById('chargeDurationHint');
+            const startHint = document.getElementById('startTimeHint');
+
+            const hasEnd = !!endEl.getAttribute('data-value');
+            const hasDuration = !!durationEl.value;
+
+            // 结束+时长 都填了 → 自动计算开始时间
+            if (hasEnd && hasDuration) {
+                const end = new Date(endEl.getAttribute('data-value'));
+                const minutes = parseInt(durationEl.value, 10);
+                if (!isNaN(end) && !isNaN(minutes) && minutes >= 0) {
+                    const start = new Date(end.getTime() - minutes * 60000);
+                    const pad = n => String(n).padStart(2, '0');
+                    const isoStr = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-' + pad(start.getDate()) + 'T' + pad(start.getHours()) + ':' + pad(start.getMinutes());
+                    startEl.setAttribute('data-value', isoStr);
+                    startEl.textContent = isoStr.replace('T', ' ');
+                    startEl.classList.remove('placeholder');
+                    if (startTrigger) {
+                        startTrigger.style.background = '#f5f5f5';
+                        startTrigger.style.pointerEvents = 'none';
+                    }
+                    if (durationHint) durationHint.style.display = 'block';
+                    if (startHint) startHint.style.display = 'block';
+                }
+            } else {
+                // 结束或时长任一为空 → 清空开始时间,恢复可编辑视觉
+                startEl.removeAttribute('data-value');
+                startEl.textContent = '结束时间-时长自动计算';
+                startEl.classList.add('placeholder');
+                if (startTrigger) {
+                    startTrigger.style.background = '#f5f5f5';
+                    startTrigger.style.pointerEvents = 'none';
+                }
+                if (startHint) startHint.style.display = 'none';
+            }
+        }
+
         // 时间选择器
         function showTimePicker(target) {
             currentTimeTarget = target;
@@ -1618,6 +1746,8 @@
             timeEl.classList.remove('placeholder');
             clearOcrFieldIcon(currentTimeTarget + 'Time');
             closePickerDirect('timePicker');
+            // 触发时间联动
+            onDurationInput();
         }
 
         function closePicker(e, id) {
@@ -1647,7 +1777,7 @@
         }
 
         function clearNumberErrors() {
-            ['chargeDegree', 'chargeAmount'].forEach(id => {
+            ['chargeDegree', 'electricityFee', 'serviceFee', 'chargeAmount', 'chargeDuration'].forEach(id => {
                 document.getElementById(id + 'Error').textContent = '';
                 document.getElementById(id + 'Error').classList.remove('show');
                 document.getElementById(id).classList.remove('error');
@@ -1666,16 +1796,16 @@
             document.getElementById('plateHint').textContent = '';
             document.getElementById('vinHint').textContent = '';
             selectPayment('charge_card');
-            const startEl = document.getElementById('startTime');
-            startEl.textContent = '请选择开始时间';
-            startEl.classList.add('placeholder');
-            startEl.removeAttribute('data-value');
+            // 开始时间由结束时间-时长自动计算,无需单独清空,onDurationInput会处理
             const endEl = document.getElementById('endTime');
             endEl.textContent = '请选择结束时间';
             endEl.classList.add('placeholder');
             endEl.removeAttribute('data-value');
             document.getElementById('chargeDegree').value = '';
+            document.getElementById('electricityFee').value = '';
+            document.getElementById('serviceFee').value = '';
             document.getElementById('chargeAmount').value = '';
+            document.getElementById('chargeDuration').value = '';
             document.getElementById('mileage').value = '';
             document.getElementById('remark').value = '';
             detailPhoto = null;
@@ -1690,6 +1820,8 @@
             Object.keys(ocrFieldStatus).forEach(function(key) {
                 setOcrFieldIcon(key, null);
             });
+            calcChargeAmount();
+            onDurationInput();
             updateUnicornState();
         }
 
@@ -1746,22 +1878,18 @@
                 hasError = true;
             }
 
-            // 充电时间校验
-            const startTime = document.getElementById('startTime').getAttribute('data-value');
+            // 充电时间校验(开始时间由结束时间-时长自动计算,只校验结束时间和时长)
             const endTime = document.getElementById('endTime').getAttribute('data-value');
-            if (!startTime) {
-                document.getElementById('startTimeError').textContent = '请选择充电开始时间';
-                document.getElementById('startTimeError').classList.add('show');
-                hasError = true;
-            }
+            const durationVal = document.getElementById('chargeDuration').value;
             if (!endTime) {
                 document.getElementById('endTimeError').textContent = '请选择充电结束时间';
                 document.getElementById('endTimeError').classList.add('show');
                 hasError = true;
             }
-            if (startTime && endTime && new Date(startTime) > new Date(endTime)) {
-                document.getElementById('endTimeError').textContent = '结束时间不能早于开始时间';
-                document.getElementById('endTimeError').classList.add('show');
+            if (!durationVal) {
+                document.getElementById('chargeDurationError').textContent = '请输入充电时长';
+                document.getElementById('chargeDurationError').classList.add('show');
+                document.getElementById('chargeDuration').classList.add('error');
                 hasError = true;
             }
 
@@ -1776,14 +1904,40 @@
                 hasError = true;
             }
 
-            // 充电金额校验
+            // 充电电费校验
+            const electricityFee = document.getElementById('electricityFee');
+            if (!electricityFee.value) {
+                document.getElementById('electricityFeeError').textContent = '请输入充电电费';
+                document.getElementById('electricityFeeError').classList.add('show');
+                electricityFee.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(electricityFee, '充电电费')) {
+                hasError = true;
+            }
+
+            // 充电服务费校验
+            const serviceFee = document.getElementById('serviceFee');
+            if (!serviceFee.value) {
+                document.getElementById('serviceFeeError').textContent = '请输入充电服务费';
+                document.getElementById('serviceFeeError').classList.add('show');
+                serviceFee.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(serviceFee, '充电服务费')) {
+                hasError = true;
+            }
+
+            // 充电金额由电费+服务费自动计算,无需独立校验(但需检查值是否非空)
             const chargeAmount = document.getElementById('chargeAmount');
             if (!chargeAmount.value) {
-                document.getElementById('chargeAmountError').textContent = '请输入充电金额';
+                document.getElementById('chargeAmountError').textContent = '请先填写电费和服务费';
                 document.getElementById('chargeAmountError').classList.add('show');
                 chargeAmount.classList.add('error');
                 hasError = true;
-            } else if (!validateNumber(chargeAmount, '金额')) {
+            }
+
+            // 充电时长校验
+            const chargeDuration = document.getElementById('chargeDuration');
+            if (chargeDuration.value && !validateDuration()) {
                 hasError = true;
             }
 

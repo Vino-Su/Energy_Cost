@@ -17,380 +17,374 @@
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f5f5;
+            color: #1f2329;
             width: 100%;
             margin: 0;
             min-height: 100vh;
-            padding-bottom: 0;
         }
+        button, input { font: inherit; }
+        button, a { -webkit-tap-highlight-color: transparent; }
         .top-nav {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             margin: 0 auto;
-            width: 100%;
-            max-width: 375px;
+            width: 100%; max-width: 375px;
             height: 44px;
-            background: #ffffff;
-            border-bottom: 1px solid #e8e8e8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 0 16px;
+            background: rgba(255,255,255,0.96);
+            border-bottom: 1px solid #e5e6eb;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 30;
         }
         .top-nav-back {
-            position: absolute;
-            left: 16px;
-            display: flex;
-            align-items: center;
-            color: #000000d9;
-            text-decoration: none;
-            font-size: 14px;
+            position: absolute; left: 8px; width: 36px; height: 36px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #1f2329; text-decoration: none; border-radius: 6px;
         }
-        .top-nav-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #000000d9;
+        .top-nav-back:active { background: #f2f3f5; }
+        .top-nav-back svg { width: 22px; height: 22px; }
+        .top-nav-title { font-size: 16px; line-height: 22px; font-weight: 600; }
+        .page { padding-top: 44px; min-height: 100vh; }
+        /* 工具栏：双胶囊 + 计数 */
+        .toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            min-height: 52px; padding: 8px 16px; background: #ffffff;
+            border-bottom: 1px solid #f0f1f2;
         }
-        .top-nav-right {
-            position: absolute;
-            right: 16px;
-            color: #1677ff;
-            font-size: 14px;
-            cursor: pointer;
+        .toolbar-chips {
+            display: flex; align-items: center; gap: 8px;
+            min-width: 0; flex: 1; overflow-x: auto;
+            scrollbar-width: none;
         }
-        .content-area {
-            padding-top: 44px;
-            padding-bottom: 16px;
-        }
-        .filter-bar {
-            background: #ffffff;
-            padding: 12px 16px;
-            display: flex;
-            gap: 12px;
-            border-bottom: 1px solid #e8e8e8;
-            overflow-x: auto;
-        }
-        .filter-bar::-webkit-scrollbar { display: none; }
-        .filter-btn {
-            padding: 6px 14px;
-            border-radius: 16px;
-            font-size: 13px;
-            border: 1px solid #e8e8e8;
-            background: #ffffff;
-            color: #000000d9;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        .filter-btn.active {
-            background: #e6f4ff;
-            border-color: #1677ff;
-            color: #1677ff;
-        }
-        .date-range-btn {
-            display: flex;
-            align-items: center;
-            border-radius: 8px;
-            padding: 8px 12px;
-            min-width: 180px;
-            color: #00000073;
-        }
-        .date-range-btn svg {
+        .toolbar-chips::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            max-width: 100%; height: 36px; padding: 0 11px;
+            border: 1px solid #e5e6eb; border-radius: 18px;
+            background: #ffffff; color: #4e5969; cursor: pointer;
             flex-shrink: 0;
         }
-        .date-range-btn span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .record-card {
+        .filter-chip:active { background: #f7f8fa; }
+        .filter-chip svg { width: 16px; height: 16px; color: #1677ff; flex-shrink: 0; }
+        .filter-text { overflow: hidden; font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
+        .filter-arrow { color: #86909c; font-size: 11px; }
+        .task-count { color: #86909c; font-size: 12px; line-height: 18px; flex-shrink: 0; margin-left: 12px; }
+        /* 类型筛选单行 */
+        .type-bar {
+            display: flex; gap: 8px; padding: 10px 16px;
             background: #ffffff;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .type-bar::-webkit-scrollbar { display: none; }
+        .type-pill {
+            display: inline-flex; align-items: center; justify-content: center;
+            height: 30px; padding: 0 14px; border-radius: 16px;
+            border: 1px solid #e5e6eb; background: #ffffff;
+            color: #4e5969; font-size: 13px;
+            cursor: pointer; white-space: nowrap; flex-shrink: 0;
+        }
+        .type-pill:active { background: #f7f8fa; }
+        .type-pill.active {
+            background: #e6f4ff; border-color: #1677ff; color: #1677ff; font-weight: 500;
+        }
+        /* 汇总条 */
+        .summary-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; background: #f5f5f5;
+            color: #86909c; font-size: 12px; line-height: 18px;
+            border-bottom: 1px solid #ececec;
+        }
+        .summary-bar .item strong { color: #1f2329; font-weight: 600; margin: 0 2px; }
+        /* 记录卡片 */
+        .list-area { padding: 12px 16px 24px; }
+        .record-list { display: grid; gap: 12px; }
+        .record-card {
+            position: relative;
+            background: #ffffff;
+            border: 1px solid #e5e6eb;
             border-radius: 12px;
-            margin: 12px 16px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 14px 16px;
             text-decoration: none;
             color: inherit;
             display: block;
-            transition: transform 0.15s;
+            box-shadow: 0 2px 8px rgba(31,35,41,0.04);
+            transition: transform 0.15s, border-color 0.15s;
         }
         .record-card:active {
-            transform: scale(0.98);
-            opacity: 0.9;
+            transform: scale(0.99);
+            border-color: #bedaff;
         }
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
+        .card-row1 {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px;
         }
         .tag {
-            padding: 2px 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 22px; padding: 1px 8px;
             border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 12px; line-height: 18px; font-weight: 500;
         }
-        .tag-fuel { background: #fff7e6; color: #fa8c16; }
+        .tag-fuel { background: #fff7e6; color: #d46b08; }
         .tag-water { background: #e6f4ff; color: #1677ff; }
-        .tag-charge { background: #f6ffed; color: #52c41a; }
+        .tag-charge { background: #f6ffed; color: #389e0d; }
         .card-amount {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ff4d4f;
+            font-size: 18px; font-weight: 600; color: #1f2329;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        .card-plate {
-            font-size: 15px;
-            font-weight: 500;
-            color: #000000d9;
-            margin-bottom: 8px;
+        .thumb-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            color: #86909c; flex-shrink: 0;
+        }
+        .thumb-badge svg { width: 14px; height: 14px; }
+        .card-row2 {
+            margin-top: 6px;
+            color: #1f2329; font-size: 16px; line-height: 24px; font-weight: 500;
         }
         .card-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #00000073;
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 8px; padding-top: 8px;
+            border-top: 1px solid #f0f1f2;
+            color: #86909c; font-size: 12px; line-height: 18px;
         }
-        .card-meta span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .card-meta-item {
+            display: inline-flex; align-items: center; gap: 4px;
+            min-width: 0;
         }
-        .load-more {
-            text-align: center;
-            padding: 16px;
-            font-size: 13px;
-            color: #00000073;
-        }
+        .card-meta-item svg { width: 12px; height: 12px; }
+        .card-meta-sep { width: 1px; height: 11px; background: #e5e6eb; flex-shrink: 0; }
+        .card-meta-item.grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* 空状态 */
         .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #00000073;
+            min-height: 320px; padding: 72px 24px 40px; text-align: center;
+            background: #ffffff; border-radius: 12px;
+            margin: 12px 16px;
         }
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 16px;
-            opacity: 0.3;
+        .empty-icon {
+            width: 60px; height: 60px; margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: #f2f3f5; color: #86909c;
         }
-        .picker-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+        .empty-icon svg { width: 28px; height: 28px; }
+        .empty-title { color: #1f2329; font-size: 15px; line-height: 22px; font-weight: 600; }
+        .empty-desc { margin-top: 7px; color: #86909c; font-size: 12px; line-height: 19px; }
+        .empty-action {
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-top: 20px; min-width: 140px; height: 40px;
+            padding: 0 18px; border-radius: 20px;
+            background: #1677ff; color: #ffffff;
+            font-size: 14px; font-weight: 500;
+            text-decoration: none;
+        }
+        .empty-action:active { opacity: 0.85; }
+        /* 加载更多 */
+        .load-more {
+            text-align: center; padding: 16px 0 8px;
+            font-size: 13px; color: #86909c;
+        }
+        .load-more .spinner {
+            display: inline-block; width: 12px; height: 12px; margin-right: 6px;
+            border: 2px solid #d8dadf; border-top-color: #1677ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: -2px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* 底部弹窗（Sheet） */
+        .sheet-overlay {
+            position: fixed; inset: 0; z-index: 50;
+            display: none; align-items: flex-end; justify-content: center;
             background: rgba(0,0,0,0.5);
-            z-index: 2000;
-            max-width: 375px;
-            margin: 0 auto;
         }
-        .picker-panel {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #ffffff;
-            border-radius: 16px 16px 0 0;
+        .sheet-overlay.show { display: flex; }
+        .sheet {
+            width: 100%; max-width: 375px;
+            padding-bottom: env(safe-area-inset-bottom);
+            border-radius: 16px 16px 0 0; background: #ffffff;
+            animation: sheet-in 0.2s ease-out;
         }
-        .picker-header {
-            padding: 16px;
-            border-bottom: 1px solid #e8e8e8;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        @keyframes sheet-in {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        .picker-title {
-            font-size: 16px;
-            font-weight: 600;
+        .sheet-handle {
+            width: 36px; height: 4px; margin: 8px auto;
+            border-radius: 2px; background: #d8dadf;
         }
-        .picker-close {
-            font-size: 14px;
-            color: #1677ff;
+        .sheet-header {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 48px; padding: 0 16px; border-bottom: 1px solid #f0f1f2;
         }
-        .picker-option {
-            padding: 14px 16px;
-            font-size: 14px;
-            color: #000000d9;
-            border-bottom: 1px solid #f5f5f5;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .sheet-title { font-size: 16px; line-height: 24px; font-weight: 600; }
+        .sheet-close {
+            width: 36px; height: 36px; border: 0; border-radius: 6px;
+            background: transparent; color: #4e5969; cursor: pointer;
         }
-        .picker-option.selected {
-            color: #1677ff;
-            background: #e6f4ff;
+        .sheet-close:active { background: #f2f3f5; }
+        .sheet-close svg { width: 20px; height: 20px; }
+        .sheet-item {
+            width: 100%; min-height: 50px; padding: 0 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            border: 0; border-bottom: 1px solid #f5f5f5;
+            background: #ffffff; color: #1f2329;
+            font-size: 14px; cursor: pointer;
         }
-        .form-input {
-            width: 100%;
-            height: 44px;
-            border: 1px solid #e8e8e8;
-            border-radius: 8px;
-            padding: 0 12px;
-            font-size: 14px;
-            color: #000000d9;
-            outline: none;
-            background: #ffffff;
+        .sheet-item:active { background: #fafafa; }
+        .sheet-item.active { color: #1677ff; font-weight: 500; }
+        .sheet-check { visibility: hidden; color: #1677ff; }
+        .sheet-item.active .sheet-check { visibility: visible; }
+        /* 时间自定义面板 */
+        .custom-panel {
+            display: none; padding: 16px;
+            border-top: 1px solid #f0f1f2; background: #fafafa;
         }
-        .form-input:focus {
-            border-color: #1677ff;
-            box-shadow: 0 0 0 2px #e6f4ff;
+        .custom-panel.show { display: block; }
+        .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .date-field label {
+            display: block; margin-bottom: 6px;
+            color: #86909c; font-size: 12px; line-height: 18px;
         }
-        /* 时间预设：行样式（与 driver-task-list.js 的 .sheet-item 保持一致） */
-        .date-presets {
-            padding: 0;
-            background: #ffffff;
+        .date-field input {
+            width: 100%; height: 42px; padding: 0 10px;
+            border: 1px solid #e5e6eb; border-radius: 8px;
+            background: #ffffff; color: #1f2329; outline: none;
         }
-        .date-preset {
-            width: 100%;
-            min-height: 50px;
-            padding: 0 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 0;
-            border-bottom: 1px solid #f5f5f5;
-            background: #ffffff;
-            color: #000000d9;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.15s;
-            -webkit-tap-highlight-color: transparent;
+        .date-field input:focus {
+            border-color: #1677ff; box-shadow: 0 0 0 2px #e8f3ff;
         }
-        .date-preset:last-child {
-            border-bottom: none;
+        .custom-error {
+            min-height: 18px; margin-top: 7px;
+            color: #ff4d4f; font-size: 12px; line-height: 18px;
         }
-        .date-preset:active {
-            background-color: #f5f5f5;
+        .custom-actions {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; margin-top: 8px;
         }
-        .date-preset.active {
-            color: #1677ff;
-            font-weight: 500;
+        .custom-button {
+            height: 40px; border: 0; border-radius: 8px;
+            font-size: 14px; cursor: pointer;
         }
-        .date-preset .preset-check {
-            color: #1677ff;
-            visibility: hidden;
+        .custom-button.secondary { background: #f2f3f5; color: #1f2329; }
+        .custom-button.primary { background: #1677ff; color: #ffffff; }
+        /* Toast */
+        .toast {
+            position: fixed; left: 50%; top: 50%; z-index: 100;
+            max-width: 260px; padding: 10px 14px;
+            border-radius: 8px; background: rgba(31,35,41,0.82);
+            color: #ffffff; font-size: 14px; line-height: 20px;
+            text-align: center; opacity: 0; pointer-events: none;
+            transform: translate(-50%,-50%); transition: opacity 0.2s;
         }
-        .date-preset.active .preset-check {
-            visibility: visible;
+        .toast.show { opacity: 1; }
+        @media (max-width: 340px) {
+            .toolbar, .list-area, .type-bar { padding-left: 12px; padding-right: 12px; }
+            .record-card { padding: 12px; }
         }
-        .date-range-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .date-range-row .form-input {
-            flex: 1;
-        }
-        /* 自定义范围面板：默认隐藏，点击"自定义时间段"后展开（与任务页 customPanel 行为一致） */
-        .custom-range-panel {
-            display: none;
-            padding: 16px;
-            border-top: 1px solid #f5f5f5;
-            background: #fafafa;
-        }
-        .custom-range-panel.show {
-            display: block;
-        }
-        .custom-range-title {
-            font-size: 13px;
-            color: #00000073;
-            margin-bottom: 8px;
-        }
-        .reset-btn, .confirm-btn {
-            flex: 1;
-            height: 40px;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-        }
-        .reset-btn {
-            background: #f5f5f5;
-            color: #000000d9;
-        }
-        .confirm-btn {
-            background: #1677ff;
-            color: #ffffff;
+        @media (prefers-reduced-motion: reduce) {
+            .record-card, .toast, .sheet, .spinner {
+                transition: none; animation: none;
+            }
         }
     </style>
 </head>
 <body data-no-project-switcher="true">
-    <!-- 顶部导航 -->
-    <div class="top-nav">
-        <a href="home.html" class="top-nav-back">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-            <span>返回</span>
+    <header class="top-nav">
+        <a href="home.html" class="top-nav-back" aria-label="返回" id="backLink">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
         </a>
-        <div class="top-nav-title">上报记录</div>
-    </div>
+        <h1 class="top-nav-title">上报记录</h1>
+    </header>
 
-    <div class="content-area">
-        <!-- 筛选栏 -->
-        <div class="filter-bar">
-            <button class="filter-btn active" onclick="filterType(this,'all')">全部</button>
-            <button class="filter-btn" onclick="filterType(this,'fuel')">加油</button>
-            <button class="filter-btn" onclick="filterType(this,'water')">加水</button>
-            <button class="filter-btn" onclick="filterType(this,'charge')">充电</button>
-        </div>
-        <div class="filter-bar" style="border-bottom:none;padding-top:0;">
-            <button class="filter-btn date-range-btn" id="dateRangeBtn" onclick="showDateFilter()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <span id="dateRangeLabel">全部时间</span>
-            </button>
-        </div>
-
-        <!-- 记录列表 -->
-        <div id="recordList"></div>
-
-        <!-- 上拉加载更多 -->
-        <div class="load-more" id="loadMore" onclick="loadMore()">
-            上拉加载更多
-        </div>
-    </div>
-
-    <!-- 时间范围筛选弹窗 -->
-    <div class="picker-overlay" id="dateFilterPicker" onclick="closePicker(event, 'dateFilterPicker')">
-        <div class="picker-panel" onclick="event.stopPropagation()">
-            <div class="picker-header">
-                <span class="picker-title">选择时间范围</span>
-                <span class="picker-close" onclick="closePickerDirect('dateFilterPicker')">关闭</span>
+    <main class="page">
+        <!-- 工具栏：时间 + 车牌 双胶囊 -->
+        <div class="toolbar">
+            <div class="toolbar-chips">
+                <button type="button" class="filter-chip" id="filterChip" aria-label="筛选时间范围">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+                    <span class="filter-text" id="filterLabel">近7天</span>
+                    <span class="filter-arrow">▾</span>
+                </button>
+                <button type="button" class="filter-chip" id="plateChip" aria-label="筛选车牌">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 17h14l-1.6-5.2A2.5 2.5 0 0 0 15 10H9a2.5 2.5 0 0 0-2.4 1.8L5 17Z"/><path d="M7 17v2M17 17v2M8 14h8"/></svg>
+                    <span class="filter-text" id="plateLabel">全部车牌</span>
+                    <span class="filter-arrow">▾</span>
+                </button>
             </div>
-            <div class="date-presets">
-                <button type="button" class="date-preset" data-preset="all" onclick="selectDatePreset('all')"><span>全部</span><span class="preset-check">✓</span></button>
-                <button type="button" class="date-preset" data-preset="7" onclick="selectDatePreset('7')"><span>近7天</span><span class="preset-check">✓</span></button>
-                <button type="button" class="date-preset" data-preset="30" onclick="selectDatePreset('30')"><span>近30天</span><span class="preset-check">✓</span></button>
-                <button type="button" class="date-preset" data-preset="180" onclick="selectDatePreset('180')"><span>近半年</span><span class="preset-check">✓</span></button>
-                <button type="button" class="date-preset" data-preset="custom" onclick="selectDatePreset('custom')"><span>自定义时间段</span><span class="preset-check">✓</span></button>
+        </div>
+
+        <!-- 类型筛选（单行胶囊） -->
+        <div class="type-bar" role="tablist" aria-label="记录类型">
+            <button type="button" class="type-pill active" data-type="all" role="tab" aria-selected="true">全部</button>
+            <button type="button" class="type-pill" data-type="fuel" role="tab" aria-selected="false">加油</button>
+            <button type="button" class="type-pill" data-type="water" role="tab" aria-selected="false">加水</button>
+            <button type="button" class="type-pill" data-type="charge" role="tab" aria-selected="false">充电</button>
+        </div>
+
+        <!-- 汇总条：根据时间筛选动态显示 -->
+        <div class="summary-bar" id="summaryBar">
+            <span class="item" id="summaryRange">近7天 <strong id="sumCount">0</strong> 笔 / 合计 <strong id="sumAmount">¥0.00</strong></span>
+        </div>
+
+        <!-- 列表 -->
+        <div class="list-area">
+            <div class="record-list" id="recordList"></div>
+            <div class="load-more" id="loadMore" onclick="loadMore()">上拉加载更多</div>
+        </div>
+    </main>
+
+    <!-- 时间筛选弹窗 -->
+    <div class="sheet-overlay" id="filterSheet">
+        <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="filterTitle">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+                <h2 class="sheet-title" id="filterTitle">选择时间范围</h2>
+                <button type="button" class="sheet-close" id="sheetClose" aria-label="关闭时间筛选">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
             </div>
-            <div class="custom-range-panel" id="customRangePanel">
-                <div class="custom-range-title">自定义范围</div>
-                <div class="date-range-row">
-                    <input type="date" class="form-input" id="startDate" style="height:36px;">
-                    <span style="color:#00000073;">至</span>
-                    <input type="date" class="form-input" id="endDate" style="height:36px;">
+            <div id="sheetItems"></div>
+            <div class="custom-panel" id="customPanel">
+                <div class="date-grid">
+                    <div class="date-field">
+                        <label for="customStart">起始日期</label>
+                        <input type="date" id="customStart">
+                    </div>
+                    <div class="date-field">
+                        <label for="customEnd">结束日期</label>
+                        <input type="date" id="customEnd">
+                    </div>
                 </div>
-                <div style="padding: 12px 0 0; display:flex; gap:12px;">
-                    <button class="reset-btn" onclick="resetDateFilter()">重置</button>
-                    <button class="confirm-btn" onclick="confirmDateFilter()">确定</button>
+                <div class="custom-error" id="customError"></div>
+                <div class="custom-actions">
+                    <button type="button" class="custom-button secondary" id="customCancel">取消</button>
+                    <button type="button" class="custom-button primary" id="customConfirm">确定</button>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
+
+    <!-- 车牌选择弹窗 -->
+    <div class="sheet-overlay" id="plateSheet">
+        <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="plateSheetTitle">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+                <h2 class="sheet-title" id="plateSheetTitle">选择车牌</h2>
+                <button type="button" class="sheet-close" id="plateSheetClose" aria-label="关闭车牌筛选">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </div>
+            <div id="plateSheetItems"></div>
+        </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
-        // 根据入口来源设置返回地址
+        // ====== 入口来源：动态切换返回地址 ======
         (function() {
             const params = new URLSearchParams(window.location.search);
             const from = params.get('from');
-            const backLink = document.querySelector('.top-nav-back');
+            const backLink = document.getElementById('backLink');
             if (backLink) {
                 if (from === 'ocr') backLink.href = 'home-ocr.html';
                 else if (from === 'vehicle') backLink.href = 'vehicle-management.html?tab=service';
@@ -398,193 +392,333 @@
             }
         })();
 
+        // ====== Mock 数据：14 条，覆盖 5 个车牌 / 4 个时间区间 / 3 个项目 ======
+        // 参考日期 2026-07-11，所有时间围绕该日期分布
         const recordsData = [
-            { id: 1, type: 'fuel', plate: '粤B·12345', amount: 420.00, time: '2026-06-22 09:30', reporter: '张三', project: '深圳南山智慧环卫项目' },
-            { id: 2, type: 'charge', plate: '粤B·67890', amount: 85.50, time: '2026-06-21 18:15', reporter: '张三', project: '深圳南山智慧环卫项目' },
-            { id: 3, type: 'water', plate: '粤B·12345', amount: 35.00, time: '2026-06-21 14:00', reporter: '张三', project: '深圳南山智慧环卫项目' },
-            { id: 4, type: 'fuel', plate: '粤B·54321', amount: 380.00, time: '2026-06-20 08:45', reporter: '李四', project: '广州天河环卫项目' },
-            { id: 5, type: 'charge', plate: '粤B·11111', amount: 120.00, time: '2026-06-19 20:00', reporter: '张三', project: '深圳南山智慧环卫项目' },
-            { id: 6, type: 'water', plate: '粤B·22222', amount: 42.00, time: '2026-06-18 16:30', reporter: '王五', project: '北京朝阳清洁项目' }
+            // 近 7 天（4 条）
+            { id: 1,  type: 'fuel',   plate: '粤B·12345', amount: 420.00, time: '2026-07-10 09:30', reporter: '张三', project: '深圳南山智慧环卫项目', hasPhoto: true },
+            { id: 2,  type: 'charge', plate: '粤B·67890', amount: 85.50,  time: '2026-07-09 18:15', reporter: '张三', project: '深圳南山智慧环卫项目', hasPhoto: true },
+            { id: 3,  type: 'water',  plate: '粤B·12345', amount: 35.00,  time: '2026-07-09 14:00', reporter: '张三', project: '深圳南山智慧环卫项目', hasPhoto: false },
+            { id: 4,  type: 'water',  plate: '粤B·22222', amount: 42.00,  time: '2026-07-08 16:30', reporter: '王五', project: '北京朝阳清洁项目',     hasPhoto: false },
+            // 8~30 天（5 条）
+            { id: 5,  type: 'fuel',   plate: '粤B·54321', amount: 380.00, time: '2026-07-04 08:45', reporter: '李四', project: '广州天河环卫项目',     hasPhoto: true },
+            { id: 6,  type: 'charge', plate: '粤B·11111', amount: 120.00, time: '2026-07-02 20:00', reporter: '张三', project: '深圳南山智慧环卫项目', hasPhoto: false },
+            { id: 7,  type: 'water',  plate: '粤B·67890', amount: 28.00,  time: '2026-06-28 11:20', reporter: '李四', project: '深圳南山智慧环卫项目', hasPhoto: false },
+            { id: 8,  type: 'fuel',   plate: '粤B·12345', amount: 460.00, time: '2026-06-25 07:50', reporter: '张三', project: '深圳南山智慧环卫项目', hasPhoto: true },
+            { id: 9,  type: 'water',  plate: '粤B·54321', amount: 50.00,  time: '2026-06-22 15:10', reporter: '李四', project: '广州天河环卫项目',     hasPhoto: false },
+            // 31~180 天（3 条）
+            { id: 10, type: 'fuel',   plate: '粤B·12345', amount: 395.00, time: '2026-05-20 09:00', reporter: '张三', project: '深圳南山智慧环卫项目', hasPhoto: false },
+            { id: 11, type: 'charge', plate: '粤B·12345', amount: 95.00,  time: '2026-05-30 19:30', reporter: '张三', project: '深圳南山智慧环卫项目', hasPhoto: false },
+            { id: 12, type: 'fuel',   plate: '粤B·11111', amount: 410.00, time: '2026-05-15 10:15', reporter: '王五', project: '深圳南山智慧环卫项目', hasPhoto: true },
+            // 180+ 天（2 条 - 仅全部时间可见）
+            { id: 13, type: 'water',  plate: '粤B·67890', amount: 32.00,  time: '2026-03-15 13:40', reporter: '李四', project: '深圳南山智慧环卫项目', hasPhoto: false },
+            { id: 14, type: 'fuel',   plate: '粤B·22222', amount: 500.00, time: '2026-02-10 08:20', reporter: '王五', project: '北京朝阳清洁项目',     hasPhoto: false }
         ];
-
-        let currentType = 'all';
-        let startDate = null;
-        let endDate = null;
 
         const typeLabels = { fuel: '加油', water: '加水', charge: '充电' };
         const typeClasses = { fuel: 'tag-fuel', water: 'tag-water', charge: 'tag-charge' };
 
-        function getFromParam() {
-            const params = new URLSearchParams(window.location.search);
-            return params.get('from') || '';
-        }
+        // ====== 状态变量 ======
+        const referenceDate = new Date('2026-07-11');
+        let currentType = 'all';
+        let currentPlate = null;          // null = 全部车牌
+        let currentFilter = { type: '7', label: '近7天' };
+        let startDate = null;
+        let endDate = null;
+        let pageNo = 1;
+        const PAGE_SIZE = 20;
 
+        // ====== 时间筛选预设 ======
+        const FILTERS = [
+            { type: 'all',    label: '全部时间', days: null },
+            { type: '7',      label: '近7天',   days: 7 },
+            { type: '30',     label: '近30天',  days: 30 },
+            { type: '180',    label: '近半年',  days: 180 },
+            { type: 'custom', label: '自定义时间段', days: null }
+        ];
+
+        // ====== 工具函数 ======
         function formatDate(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
             const d = String(date.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
         }
-
-        function initDateFilter() {
-            const end = new Date();
-            const start = new Date();
-            start.setDate(start.getDate() - 6);
-            startDate = formatDate(start);
-            endDate = formatDate(end);
-            document.getElementById('startDate').value = startDate;
-            document.getElementById('endDate').value = endDate;
-            document.getElementById('dateRangeLabel').textContent = '近7天';
-            document.querySelectorAll('.date-preset').forEach(p => p.classList.remove('active'));
-            var defaultPreset = document.querySelector('.date-preset[data-preset="7"]');
-            if (defaultPreset) defaultPreset.classList.add('active');
+        function getFromParam() {
+            return new URLSearchParams(window.location.search).get('from') || '';
+        }
+        function getCurrentProjectName() {
+            return (window.CityStewardCommon && window.CityStewardCommon.getCurrentProject)
+                ? window.CityStewardCommon.getCurrentProject().name
+                : '深圳南山智慧环卫项目';
+        }
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2000);
         }
 
-        function getCurrentProjectName() {
-            return window.CityStewardCommon ? window.CityStewardCommon.getCurrentProject().name : '深圳南山智慧环卫项目';
+        // ====== 时间筛选逻辑 ======
+        function rangeFor(type) {
+            const selected = FILTERS.filter(f => f.type === type)[0] || FILTERS[1];
+            if (selected.days === null) return { type: type, label: selected.label, from: null, to: null };
+            const from = new Date(referenceDate);
+            const to = new Date(referenceDate);
+            from.setDate(from.getDate() - (selected.days - 1));
+            return { type: type, label: selected.label, from: formatDate(from), to: formatDate(to) };
+        }
+        function isInDateRange(time) {
+            if (!currentFilter.from || !currentFilter.to) return true;
+            const d = time.slice(0, 10);
+            return d >= currentFilter.from && d <= currentFilter.to;
+        }
+
+        // ====== 列表渲染 ======
+        function applyFilters() {
+            const projectName = getCurrentProjectName();
+            return recordsData.filter(r => {
+                if (currentType !== 'all' && r.type !== currentType) return false;
+                if (currentPlate && r.plate !== currentPlate) return false;
+                if (r.project !== projectName) return false;
+                if (!isInDateRange(r.time)) return false;
+                return true;
+            }).sort((a, b) => b.time.localeCompare(a.time));
+        }
+
+        function renderSummary(filtered) {
+            const rangeLabel = currentFilter.label || '全部时间';
+            const count = filtered.length;
+            const total = filtered.reduce((s, r) => s + r.amount, 0);
+            document.getElementById('summaryRange').innerHTML =
+                `${escapeHtml(rangeLabel)} <strong id="sumCount">${count}</strong> 笔 / 合计 <strong id="sumAmount">¥${total.toFixed(2)}</strong>`;
         }
 
         function renderList() {
             const container = document.getElementById('recordList');
-            const currentProjectName = getCurrentProjectName();
-            const filtered = recordsData.filter(r => {
-                if (currentType !== 'all' && r.type !== currentType) return false;
-                if (r.project !== currentProjectName) return false;
-                if (startDate && r.time < startDate + ' 00:00') return false;
-                if (endDate && r.time > endDate + ' 23:59') return false;
-                return true;
-            });
+            const loadMore = document.getElementById('loadMore');
+            const filtered = applyFilters();
+            renderSummary(filtered);
+
+            const visible = filtered.slice(0, pageNo * PAGE_SIZE);
 
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#00000040" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
-                        </svg>
-                        <div>暂无记录</div>
+                        <div class="empty-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                        </div>
+                        <div class="empty-title">暂无记录</div>
+                        <div class="empty-desc">当前筛选条件下没有数据<br>试试调整时间或车牌</div>
+                        <a href="fuel-report.html" class="empty-action">去上报</a>
                     </div>`;
+                loadMore.style.display = 'none';
                 return;
             }
 
-            container.innerHTML = filtered.map(r => `
+            container.innerHTML = visible.map(r => `
                 <a href="record-detail.html?type=${r.type}&id=${r.id}&from=${getFromParam()}" class="record-card" data-type="${r.type}">
-                    <div class="card-header">
+                    <div class="card-row1">
                         <span class="tag ${typeClasses[r.type]}">${typeLabels[r.type]}</span>
-                        <div class="card-amount">¥${r.amount.toFixed(2)}</div>
+                        <span class="card-amount">¥${r.amount.toFixed(2)}</span>
                     </div>
-                    <div class="card-plate">${r.plate}</div>
+                    <div class="card-row2">${escapeHtml(r.plate)}</div>
                     <div class="card-meta">
-                        <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${r.time}</span>
-                        <span>|</span>
-                        <span>${r.reporter}</span>
-                        <span>|</span>
-                        <span>${r.project}</span>
+                        <span class="card-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            ${escapeHtml(r.time)}
+                        </span>
+                        <span class="card-meta-sep"></span>
+                        <span class="card-meta-item">${escapeHtml(r.reporter)}</span>
+                        <span class="card-meta-sep"></span>
+                        <span class="card-meta-item grow">${escapeHtml(r.project)}</span>
                     </div>
                 </a>
             `).join('');
-        }
 
-        function filterType(btn, type) {
-            document.querySelectorAll('.filter-bar:first-child .filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentType = type;
-            renderList();
-        }
-
-        function showDateFilter() {
-            var p = document.getElementById('dateFilterPicker');
-            p.style.display = 'block';
-            p.classList.add('show');
-        }
-
-        function formatDate(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        function selectDatePreset(days) {
-            document.querySelectorAll('.date-preset').forEach(p => p.classList.remove('active'));
-            var target = (event && event.target) ? event.target.closest('.date-preset') : null;
-            if (!target) {
-                target = document.querySelector('.date-preset[data-preset="' + days + '"]');
-            }
-            if (target) target.classList.add('active');
-
-            // 自定义时间段：展开自定义范围面板，不应用筛选、不关闭弹窗（与任务页一致）
-            if (days === 'custom') {
-                document.getElementById('customRangePanel').classList.add('show');
-                return;
-            }
-            // 其它预设项：收起自定义范围面板，立即应用筛选并关闭弹窗
-            document.getElementById('customRangePanel').classList.remove('show');
-            const end = new Date();
-            const start = new Date();
-            if (days !== 'all') {
-                start.setDate(start.getDate() - parseInt(days));
+            // 加载更多状态
+            if (visible.length >= filtered.length) {
+                loadMore.innerHTML = '没有更多了';
+                loadMore.onclick = null;
+                loadMore.style.cursor = 'default';
             } else {
-                start.setFullYear(2000, 0, 1);
+                loadMore.innerHTML = '上拉加载更多';
+                loadMore.onclick = loadMore;
+                loadMore.style.cursor = 'pointer';
             }
-            startDate = formatDate(start);
-            endDate = formatDate(end);
-            document.getElementById('startDate').value = startDate;
-            document.getElementById('endDate').value = endDate;
+        }
 
-            const labels = { all: '全部时间', '7': '近7天', '30': '近30天', '180': '近半年' };
-            document.getElementById('dateRangeLabel').textContent = labels[days] || '自定义';
-            closePickerDirect('dateFilterPicker');
+        // ====== 类型筛选 ======
+        function bindTypeBar() {
+            document.querySelector('.type-bar').addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-type]');
+                if (!btn) return;
+                document.querySelectorAll('.type-pill').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+                currentType = btn.getAttribute('data-type');
+                pageNo = 1;
+                renderList();
+            });
+        }
+
+        // ====== 时间筛选弹窗 ======
+        function renderFilterSheet() {
+            const container = document.getElementById('sheetItems');
+            container.innerHTML = FILTERS.map(f => {
+                const active = currentFilter.type === f.type ? ' active' : '';
+                return `<button type="button" class="sheet-item${active}" data-filter="${f.type}">
+                    <span>${f.label}</span><span class="sheet-check">✓</span></button>`;
+            }).join('');
+        }
+        function openFilterSheet() {
+            renderFilterSheet();
+            document.getElementById('filterSheet').classList.add('show');
+        }
+        function closeFilterSheet() {
+            document.getElementById('filterSheet').classList.remove('show');
+            document.getElementById('customPanel').classList.remove('show');
+            document.getElementById('customError').textContent = '';
+        }
+        function bindFilterSheet() {
+            const sheet = document.getElementById('filterSheet');
+            document.getElementById('filterChip').addEventListener('click', openFilterSheet);
+            document.getElementById('sheetClose').addEventListener('click', closeFilterSheet);
+            sheet.addEventListener('click', e => { if (e.target === sheet) closeFilterSheet(); });
+            document.getElementById('sheetItems').addEventListener('click', function (e) {
+                const item = e.target.closest('[data-filter]');
+                if (!item) return;
+                const type = item.getAttribute('data-filter');
+                if (type === 'custom') {
+                    document.getElementById('customPanel').classList.add('show');
+                    return;
+                }
+                applyPreset(type);
+                closeFilterSheet();
+            });
+            document.getElementById('customCancel').addEventListener('click', closeFilterSheet);
+            document.getElementById('customConfirm').addEventListener('click', confirmCustomRange);
+        }
+        function applyPreset(type) {
+            const f = FILTERS.filter(x => x.type === type)[0];
+            if (!f) return;
+            if (f.days === null) {
+                currentFilter = { type: type, label: f.label, from: null, to: null };
+            } else {
+                const r = rangeFor(type);
+                currentFilter = r;
+            }
+            document.getElementById('filterLabel').textContent = currentFilter.label;
+            pageNo = 1;
+            renderList();
+        }
+        function confirmCustomRange() {
+            const s = document.getElementById('customStart').value;
+            const e = document.getElementById('customEnd').value;
+            const err = document.getElementById('customError');
+            if (!s || !e) { err.textContent = '请选择起止日期'; return; }
+            if (s > e) { err.textContent = '起始日期不能晚于结束日期'; return; }
+            err.textContent = '';
+            currentFilter = { type: 'custom', label: `${s} 至 ${e}`, from: s, to: e };
+            document.getElementById('filterLabel').textContent = currentFilter.label;
+            closeFilterSheet();
+            pageNo = 1;
             renderList();
         }
 
-        function confirmDateFilter() {
-            startDate = document.getElementById('startDate').value || null;
-            endDate = document.getElementById('endDate').value || null;
-            document.getElementById('dateFilterPicker').style.display = 'none';
-            document.getElementById('customRangePanel').classList.remove('show');
-
-            let label = '自定义';
-            if (!startDate && !endDate) label = '全部时间';
-            else if (startDate && endDate) {
-                const s = new Date(startDate), e = new Date(endDate);
-                const diff = Math.round((e - s) / (1000 * 60 * 60 * 24));
-                if (diff === 6) label = '近7天';
-                else if (diff === 29) label = '近30天';
-                else if (diff === 179) label = '近半年';
-                else label = `${startDate} 至 ${endDate}`;
-            }
-            document.getElementById('dateRangeLabel').textContent = label;
-            renderList();
+        // ====== 车牌筛选弹窗 ======
+        function availablePlates() {
+            const projectName = getCurrentProjectName();
+            const seen = {};
+            const list = [];
+            recordsData.forEach(r => {
+                if (r.project !== projectName) return;
+                if (r.plate && !seen[r.plate]) {
+                    seen[r.plate] = true;
+                    list.push(r.plate);
+                }
+            });
+            return list;
+        }
+        function renderPlateSheet() {
+            const plates = availablePlates();
+            let html = `<button type="button" class="sheet-item${currentPlate == null ? ' active' : ''}" data-plate="">
+                <span>全部车牌</span><span class="sheet-check">✓</span></button>`;
+            plates.forEach(p => {
+                const active = currentPlate === p ? ' active' : '';
+                html += `<button type="button" class="sheet-item${active}" data-plate="${escapeHtml(p)}">
+                    <span>${escapeHtml(p)}</span><span class="sheet-check">✓</span></button>`;
+            });
+            document.getElementById('plateSheetItems').innerHTML = html;
+        }
+        function openPlateSheet() {
+            renderPlateSheet();
+            document.getElementById('plateSheet').classList.add('show');
+        }
+        function closePlateSheet() {
+            document.getElementById('plateSheet').classList.remove('show');
+        }
+        function bindPlateSheet() {
+            const sheet = document.getElementById('plateSheet');
+            document.getElementById('plateChip').addEventListener('click', openPlateSheet);
+            document.getElementById('plateSheetClose').addEventListener('click', closePlateSheet);
+            sheet.addEventListener('click', e => { if (e.target === sheet) closePlateSheet(); });
+            document.getElementById('plateSheetItems').addEventListener('click', function (e) {
+                const item = e.target.closest('[data-plate]');
+                if (!item) return;
+                const value = item.getAttribute('data-plate');
+                currentPlate = value || null;
+                document.getElementById('plateLabel').textContent = currentPlate || '全部车牌';
+                closePlateSheet();
+                pageNo = 1;
+                renderList();
+            });
         }
 
-        function resetDateFilter() {
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-            document.querySelectorAll('.date-preset').forEach(p => p.classList.remove('active'));
-        }
-
-        function closePicker(e, id) {
-            document.getElementById(id).style.display = 'none';
-        }
-        function closePickerDirect(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
+        // ====== 加载更多 ======
         function loadMore() {
-            const loadMore = document.getElementById('loadMore');
-            loadMore.textContent = '加载中...';
+            const lm = document.getElementById('loadMore');
+            lm.innerHTML = '<span class="spinner"></span>加载中…';
             setTimeout(() => {
-                loadMore.textContent = '没有更多了';
-            }, 1000);
+                pageNo += 1;
+                renderList();
+            }, 600);
+        }
+
+        // ====== 初始化 ======
+        function init() {
+            // 默认时间范围：近 7 天
+            currentFilter = rangeFor('7');
+            startDate = currentFilter.from;
+            endDate = currentFilter.to;
+            bindTypeBar();
+            bindFilterSheet();
+            bindPlateSheet();
+            renderList();
+            // URL 参数：自动打开指定弹窗（用于自测截图）
+            const openSheet = new URLSearchParams(location.search).get('openSheet');
+            if (openSheet === 'plate') openPlateSheet();
+            else if (openSheet === 'time') openFilterSheet();
         }
 
         // 监听项目切换事件，刷新记录列表
         document.addEventListener('projectChanged', function () {
+            currentPlate = null;
+            document.getElementById('plateLabel').textContent = '全部车牌';
+            pageNo = 1;
             renderList();
         });
 
-        initDateFilter();
-        renderList();
+        init();
     </script>
     <script src="components/app-common.js"></script>
 </body>

@@ -3,22 +3,22 @@
 
     var commonSegments = {
         south: [
-            { name: '科苑南路南行段', attribute: '城市主干道', mode: '洗扫', count: '2 次', direction: '由北向南', lane: '机动车道 1、2 车道' },
-            { name: '高新南九道东行段', attribute: '城市次干道', mode: '冲洗', count: '1 次', direction: '由西向东', lane: '最右侧机动车道' }
+            { startId: 'SEG-SZ-001', name: '科苑南路南行段', attribute: '城市主干道', mode: '洗扫', count: '2 次', direction: '由北向南', lane: '机动车道 1、2 车道' },
+            { startId: 'SEG-SZ-002', name: '高新南九道东行段', attribute: '城市次干道', mode: '冲洗', count: '1 次', direction: '由西向东', lane: '最右侧机动车道' }
         ],
         west: [
-            { name: '沙河西路北段', attribute: '城市快速路辅路', mode: '高压冲洗', count: '2 次', direction: '由北向南', lane: '辅道及非机动车道' },
-            { name: '沙河西路南段', attribute: '城市主干道', mode: '洗扫', count: '2 次', direction: '由南向北', lane: '机动车道 1、2 车道' }
+            { startId: 'SEG-SZ-101', name: '沙河西路北段', attribute: '城市快速路辅路', mode: '高压冲洗', count: '2 次', direction: '由北向南', lane: '辅道及非机动车道' },
+            { startId: 'SEG-SZ-102', name: '沙河西路南段', attribute: '城市主干道', mode: '洗扫', count: '2 次', direction: '由南向北', lane: '机动车道 1、2 车道' }
         ]
     };
 
     function makeRouteTask(config) {
         return {
             id: config.id,
-            listType: config.listType,
-            type: config.listType === 'emergency' ? '应急任务' : '常规任务',
+            listType: 'schedule',
+            type: config.taskType || '常态任务',
             kind: 'route',
-            tone: config.listType === 'emergency' ? 'emergency' : 'regular',
+            tone: config.taskType === '临时任务' ? 'temporary' : 'regular',
             status: config.status,
             name: config.name,
             workType: config.workType,
@@ -33,7 +33,7 @@
             routeName: config.routeName,
             routePoints: config.routePoints || [[8, 28], [22, 36], [38, 32], [52, 48], [68, 44], [82, 61], [94, 54]],
             segments: config.segments || commonSegments.south,
-            // V1.12 任务完成信息字段（已完成：actualStartTime/actualEndTime/mileage/duration；执行中：actualStartTime/currentMileage/currentDuration）
+            // V1.12 任务完成信息字段（已完成：actualStartTime/actualEndTime/mileage/duration；进行中：actualStartTime/currentMileage/currentDuration）
             actualStartTime: null,
             actualEndTime: null,
             currentMileage: null,
@@ -44,6 +44,7 @@
     }
 
     function makeDynamicTask(config) {
+        var issueNumber = config.issueNumber || String(config.number || '').replace(/^DTRW/, 'WT');
         return {
             id: config.id,
             listType: 'dynamic',
@@ -53,7 +54,8 @@
             status: config.status,
             name: config.name,
             workType: '动态问题处置',
-            number: config.number,
+            number: issueNumber,
+            issueNumber: issueNumber,
             date: config.dispatchedAt.slice(0, 10),
             dispatchedAt: config.dispatchedAt,
             dispatchTime: config.dispatchedAt,
@@ -62,14 +64,14 @@
             vehicle: config.plateNo || '未分配车辆',
             coordinates: config.coordinates,
             location: config.location,
-            issueTypes: config.issueTypes,
+            issueType: config.issueType || '问题类型待确认',
             severity: config.severity,
             evidence: config.evidence || [
                 { label: '现场全景', visual: 'debris' },
                 { label: '问题近照', visual: 'waste' }
             ],
             point: config.point,
-            // V1.12 任务完成信息字段（已完成：actualStartTime/actualEndTime/mileage/duration；执行中：actualStartTime/currentMileage/currentDuration）
+            // V1.12 任务完成信息字段（已完成：actualStartTime/actualEndTime/mileage/duration；进行中：actualStartTime/currentMileage/currentDuration）
             actualStartTime: null,
             actualEndTime: null,
             currentMileage: null,
@@ -81,7 +83,7 @@
 
     global.TASK_DETAIL_DATA = {
         '1': {
-            id: '1', type: '常规任务', kind: 'route', tone: 'regular', status: 'pending',
+            id: '1', listType: 'schedule', type: '常态任务', kind: 'route', tone: 'regular', status: 'pending',
             name: '科技园南区道路清扫', workType: '道路清扫', number: 'CGRW2026042800001', date: '2026-04-28',
             time: '08:30~10:30', driver: '李四', vehicle: '粤 B·D2856',
             routeId: 'route232982', routeName: '科苑南路至高新南九道',
@@ -89,15 +91,15 @@
             segments: commonSegments.south
         },
         '2': {
-            id: '2', type: '应急任务', kind: 'route', tone: 'emergency', status: 'pending',
-            name: '沙河西路应急处置', workType: '应急处置', number: 'YJRW2026042800001', date: '2026-04-28',
+            id: '2', listType: 'schedule', type: '临时任务', kind: 'route', tone: 'temporary', status: 'pending',
+            name: '沙河西路临时处置', workType: '临时处置', number: 'LSRW2026042800001', date: '2026-04-28',
             time: '10:30~11:30', driver: '李四', vehicle: '粤 B·D2856',
             routeId: 'route232986', routeName: '沙河西路全段',
             routePoints: [[8, 66], [22, 59], [35, 62], [48, 49], [63, 52], [76, 34], [94, 27]],
             segments: commonSegments.west
         },
         '3': {
-            id: '3', type: '常规任务', kind: 'route', tone: 'regular', status: 'pending',
+            id: '3', listType: 'schedule', type: '常态任务', kind: 'route', tone: 'regular', status: 'pending',
             name: '滨海大道夜间冲洗', workType: '夜间冲洗', number: 'CGRW2026042800003', date: '2026-04-28',
             time: '22:00~23:30', driver: '李四', vehicle: '粤 B·D2856',
             routeId: 'route232988', routeName: '滨海大道科技园段',
@@ -108,7 +110,7 @@
             ]
         },
         '4': {
-            id: '4', type: '常规任务', kind: 'route', tone: 'regular', status: 'pending',
+            id: '4', listType: 'schedule', type: '常态任务', kind: 'route', tone: 'regular', status: 'pending',
             name: '高新南九道日常巡检', workType: '日常巡检', number: 'CGRW2026042800004', date: '2026-04-28',
             time: '14:00~15:00', driver: '李四', vehicle: '粤 B·D2856',
             routeId: 'route232990', routeName: '高新南九道巡检路线',
@@ -119,7 +121,7 @@
             ]
         },
         '5': {
-            id: '5', type: '常规任务', kind: 'route', tone: 'regular', status: 'pending',
+            id: '5', listType: 'schedule', type: '常态任务', kind: 'route', tone: 'regular', status: 'pending',
             name: '南山垃圾中转站对接', workType: '垃圾中转对接', number: 'CGRW2026042800005', date: '2026-04-28',
             time: '16:00~17:00', driver: '李四', vehicle: '粤 B·D2856',
             routeId: 'route232993', routeName: '科技园至南山中转站',
@@ -130,12 +132,12 @@
             ]
         },
         '6': {
-            id: '6', type: '动态任务', kind: 'issue', tone: 'dynamic', status: 'pending',
-            name: '科技园南门垃圾遗漏复核', workType: '垃圾遗漏复核', dispatchTime: '2026-04-28 10:00:00', number: 'DTRW2026042800001',
+            id: '6', listType: 'dynamic', type: '动态任务', kind: 'issue', tone: 'dynamic', status: 'pending',
+            name: '科技园南门垃圾遗漏复核', workType: '垃圾遗漏复核', dispatchTime: '2026-04-28 10:00:00', issueNumber: 'WT2026042800001', number: 'WT2026042800001',
             driver: '李四', vehicle: '粤 B·D2856',
             coordinates: ['114.38, 22.69', '114.3812, 22.6896'],
             location: '李屋小区内，李屋居民小组党群服务站附近 17 米',
-            issueTypes: ['明显垃圾', '大件垃圾'], severity: '紧急',
+            issueType: '明显垃圾', severity: '紧急',
             evidence: [
                 { label: '现场全景', visual: 'debris' },
                 { label: '问题近照', visual: 'waste' }
@@ -145,11 +147,11 @@
     };
 
     Object.assign(global.TASK_DETAIL_DATA, {
-        // 地图工作台 tasks 数组里的 7、8 号任务（应急/常规 route），用于修复"任务详情显示不存在"bug
+        // 地图工作台 tasks 数组里的 7、8 号任务（临时/常态 route），用于修复"任务详情显示不存在"bug
         '7': makeRouteTask({
-            id: '7', listType: 'emergency', status: 'pending', name: '科技园北门路面冲洗', workType: '路面冲洗',
-            number: 'YJRW2026042800007', date: '2026-04-28', time: '09:00~10:00', plateNo: '粤B·E550F',
-            routeId: 'route232987', routeName: '科技园北门', requirement: '路面油污应急冲洗，要求 30 分钟内到场。'
+            id: '7', listType: 'schedule', taskType: '临时任务', status: 'pending', name: '科技园北门路面冲洗', workType: '路面冲洗',
+            number: 'LSRW2026042800007', date: '2026-04-28', time: '09:00~10:00', plateNo: '粤B·E550F',
+            routeId: 'route232987', routeName: '科技园北门', requirement: '临时派发路面油污冲洗，要求 30 分钟内到场。'
         }),
         '8': makeRouteTask({
             id: '8', listType: 'schedule', status: 'pending', name: '高新南片区巡检', workType: '巡检',
@@ -202,18 +204,18 @@
             routeId: 'route240109', routeName: '深南大道东段至西段', requirement: '主干道机扫，覆盖双方向六个车道。'
         }),
         'D03': makeRouteTask({
-            id: 'D03', listType: 'schedule', status: 'completed', name: '后海片区清扫保洁', workType: '清扫保洁',
-            number: 'CGRW202607100010', date: '2026-07-10', time: '05:30~07:30', plateNo: '粤B·3310G',
+            id: 'D03', listType: 'schedule', status: 'delegated', name: '后海片区清扫保洁', workType: '清扫保洁',
+            number: 'CGRW202607110010', date: '2026-07-11', time: '05:30~07:30', plateNo: '粤B·3310G',
             routeId: 'route240110', routeName: '后海大道至滨海大道', requirement: '片区清扫保洁协同作业。'
         }),
         'D04': makeRouteTask({
-            id: 'D04', listType: 'schedule', status: 'completed', name: '南山科技园晨间机扫', workType: '晨间机扫',
-            number: 'CGRW202607100011', date: '2026-07-10', time: '07:00~08:30', plateNo: '粤B·7791N',
+            id: 'D04', listType: 'schedule', status: 'terminated', name: '南山科技园晨间机扫', workType: '晨间机扫',
+            number: 'CGRW202607110011', date: '2026-07-11', time: '07:00~08:30', plateNo: '粤B·7791N',
             routeId: 'route240111', routeName: '科苑南路至高新南九道', requirement: '晨间机扫避开上班高峰。'
         }),
         'D05': makeRouteTask({
-            id: 'D05', listType: 'schedule', status: 'completed', name: '科苑路夜班洒水', workType: '夜班洒水',
-            number: 'CGRW202607100012', date: '2026-07-10', time: '02:00~04:00', plateNo: '粤B·6082P',
+            id: 'D05', listType: 'schedule', status: 'invalid', name: '科苑路夜班洒水', workType: '夜班洒水',
+            number: 'CGRW202607110012', date: '2026-07-11', time: '02:00~04:00', plateNo: '粤B·6082P',
             routeId: 'route240112', routeName: '科苑路全段', requirement: '夜班洒水降尘。'
         }),
         'D06': makeRouteTask({
@@ -222,68 +224,75 @@
             routeId: 'route240113', routeName: '前海合作区主干道', requirement: '周末机扫加强保洁质量。'
         }),
         'E-P01': makeRouteTask({
-            id: 'E-P01', listType: 'emergency', status: 'pending', name: '沙河西路污染点应急冲洗', workType: '污染点应急处置',
-            number: 'YJRW202607110001', date: '2026-07-11', time: '11:20~12:20', plateNo: '粤B·D620Q',
+            id: 'E-P01', listType: 'schedule', taskType: '临时任务', status: 'pending', name: '沙河西路污染点临时冲洗', workType: '污染点处置',
+            number: 'LSRW202607110001', date: '2026-07-11', time: '11:20~12:20', plateNo: '粤B·D620Q',
             routeId: 'route250201', routeName: '沙河西路北段', requirement: '接令后 30 分钟内到场，优先清除路面油污并设置安全警示。', segments: commonSegments.west
         }),
         'E-P02': makeRouteTask({
-            id: 'E-P02', listType: 'emergency', status: 'pending', name: '前海桂湾路积水应急处置', workType: '道路积水处置',
-            number: 'YJRW202607110002', date: '2026-07-11', time: '15:00~16:00', plateNo: '粤B·E315R',
+            id: 'E-P02', listType: 'schedule', taskType: '临时任务', status: 'pending', name: '前海桂湾路积水临时处置', workType: '道路积水处置',
+            number: 'LSRW202607110002', date: '2026-07-11', time: '15:00~16:00', plateNo: '粤B·E315R',
             routeId: 'route250202', routeName: '前海桂湾路', requirement: '清理雨水口周边杂物，协同排水并反馈现场水位。', segments: commonSegments.west
         }),
         'E-R01': makeRouteTask({
-            id: 'E-R01', listType: 'emergency', status: 'executing', name: '南海大道抛洒物清理', workType: '抛洒物清理',
-            number: 'YJRW202607110003', date: '2026-07-11', time: '09:40~10:40', plateNo: '粤B·F806S',
+            id: 'E-R01', listType: 'schedule', taskType: '临时任务', status: 'executing', name: '南海大道抛洒物清理', workType: '抛洒物清理',
+            number: 'LSRW202607110003', date: '2026-07-11', time: '09:40~10:40', plateNo: '粤B·F806S',
             routeId: 'route250203', routeName: '南海大道南行段', requirement: '封控最右侧车道并快速清除抛洒物，作业全程开启警示灯。', segments: commonSegments.west
         }),
         'E-R02': makeRouteTask({
-            id: 'E-R02', listType: 'emergency', status: 'executing', name: '滨海大道事故路面清洗', workType: '事故路面清洗',
-            number: 'YJRW202607110004', date: '2026-07-11', time: '10:10~11:10', plateNo: '粤B·G972T',
+            id: 'E-R02', listType: 'schedule', taskType: '临时任务', status: 'executing', name: '滨海大道事故路面清洗', workType: '事故路面清洗',
+            number: 'LSRW202607110004', date: '2026-07-11', time: '10:10~11:10', plateNo: '粤B·G972T',
             routeId: 'route250204', routeName: '滨海大道西行段', requirement: '配合现场交警完成路面清洗，确保恢复通行后再撤离。', segments: commonSegments.west
         }),
         'E-D01': makeRouteTask({
-            id: 'E-D01', listType: 'emergency', status: 'completed', name: '科技南十二路树枝清运', workType: '障碍物清运',
-            number: 'YJRW202607110005', date: '2026-07-11', time: '07:10~08:00', plateNo: '粤B·H118U',
+            id: 'E-D01', listType: 'schedule', taskType: '临时任务', status: 'completed', name: '科技南十二路树枝清运', workType: '障碍物清运',
+            number: 'LSRW202607110005', date: '2026-07-11', time: '07:10~08:00', plateNo: '粤B·H118U',
             routeId: 'route250205', routeName: '科技南十二路', requirement: '完成倒伏树枝切割和清运，确认道路恢复通行。'
         }),
         'E-D02': makeRouteTask({
-            id: 'E-D02', listType: 'emergency', status: 'completed', name: '月亮湾大道泥沙清理', workType: '泥沙清理',
-            number: 'YJRW202607100006', date: '2026-07-10', time: '18:20~19:30', plateNo: '',
+            id: 'E-D02', listType: 'schedule', taskType: '临时任务', status: 'completed', name: '月亮湾大道泥沙清理', workType: '泥沙清理',
+            number: 'LSRW202607100006', date: '2026-07-10', time: '18:20~19:30', plateNo: '',
             routeId: 'route250206', routeName: '月亮湾大道辅路', requirement: '清除强降雨后道路泥沙并冲洗路面。'
         }),
         'T-P01': makeDynamicTask({
             id: 'T-P01', status: 'pending', name: '科技园北区垃圾遗漏复核', number: 'DTRW202607110001',
             dispatchedAt: '2026-07-11 09:25:00', plateNo: '粤B·J226V', coordinates: ['113.9462, 22.5371'],
-            location: '科技园北区科丰路公交站南侧 30 米', issueTypes: ['明显垃圾', '垃圾桶满溢'], severity: '紧急', point: [64, 40]
+            location: '科技园北区科丰路公交站南侧 30 米', issueType: '明显垃圾', severity: '紧急', point: [64, 40]
         }),
         'T-P02': makeDynamicTask({
             id: 'T-P02', status: 'pending', name: '后海大道雨水口堵塞复核', number: 'DTRW202607110002',
             dispatchedAt: '2026-07-11 13:05:00', plateNo: '粤B·K337W', coordinates: ['113.9368, 22.5189'],
-            location: '后海大道与海德一道交叉口东北角', issueTypes: ['雨水口堵塞'], severity: '一般', point: [42, 61]
+            location: '后海大道与海德一道交叉口东北角', issueType: '雨水口堵塞', severity: '一般', point: [42, 61]
         }),
         'T-R01': makeDynamicTask({
             id: 'T-R01', status: 'executing', name: '深南大道油污遗撒处置', number: 'DTRW202607110003',
             dispatchedAt: '2026-07-11 10:18:00', plateNo: '粤B·L448X', coordinates: ['113.9531, 22.5405', '113.9538, 22.5402'],
-            location: '深南大道科技园段西行辅路', issueTypes: ['油污遗撒'], severity: '紧急', point: [72, 46]
+            location: '深南大道科技园段西行辅路', issueType: '油污遗撒', severity: '紧急', point: [72, 46]
         }),
         'T-R02': makeDynamicTask({
             id: 'T-R02', status: 'executing', name: '南山书城大件垃圾处置', number: 'DTRW202607110004',
             dispatchedAt: '2026-07-11 11:42:00', plateNo: '粤B·M559Y', coordinates: ['113.9342, 22.5226'],
-            location: '南山书城北侧装卸区入口', issueTypes: ['大件垃圾'], severity: '一般', point: [38, 52]
+            location: '南山书城北侧装卸区入口', issueType: '大件垃圾', severity: '一般', point: [38, 52]
         }),
         'T-D01': makeDynamicTask({
             id: 'T-D01', status: 'completed', name: '科苑路路面垃圾闭环', number: 'DTRW202607110005',
             dispatchedAt: '2026-07-11 07:20:00', plateNo: '粤B·N660Z', coordinates: ['113.9448, 22.5362'],
-            location: '科苑路与高新南九道交叉口西侧', issueTypes: ['明显垃圾'], severity: '一般', point: [58, 49]
+            location: '科苑路与高新南九道交叉口西侧', issueType: '明显垃圾', severity: '一般', point: [58, 49]
         }),
         'T-D02': makeDynamicTask({
             id: 'T-D02', status: 'completed', name: '蛇口工业路垃圾桶满溢闭环', number: 'DTRW202607100006',
             dispatchedAt: '2026-07-10 16:35:00', plateNo: '粤B·P771A', coordinates: ['113.9165, 22.4941'],
-            location: '蛇口工业路四海公园东门', issueTypes: ['垃圾桶满溢', '明显垃圾'], severity: '一般', point: [28, 67]
+            location: '蛇口工业路四海公园东门', issueType: '垃圾桶满溢', severity: '一般', point: [28, 67]
         })
     });
 
-    // V1.12 任务完成信息字段补全（已完成任务：实际开始/结束 + 里程/时长；执行中任务：实际开始 + 当前里程/时长）
+    Object.keys(global.TASK_DETAIL_DATA).forEach(function (taskId) {
+        var task = global.TASK_DETAIL_DATA[taskId];
+        (task.segments || []).forEach(function (segment, index) {
+            if (!segment.startId) segment.startId = 'SEG-' + taskId + '-' + String(index + 1).padStart(2, '0');
+        });
+    });
+
+    // V1.12 任务完成信息字段补全（已完成任务：实际开始/结束 + 里程/时长；进行中任务：实际开始 + 当前里程/时长）
     Object.assign(global.TASK_DETAIL_DATA['D01'], {
         actualStartTime: '2026-07-11 06:02:15', actualEndTime: '2026-07-11 07:35:48',
         mileage: '4.80', duration: 93
@@ -324,7 +333,7 @@
         actualStartTime: '2026-07-10 16:36:18', actualEndTime: '2026-07-10 17:21:42',
         mileage: '2.80', duration: 45
     });
-    // 执行中任务：实际开始 + 当前里程 + 当前时长
+    // 进行中任务：实际开始 + 当前里程 + 当前时长
     Object.assign(global.TASK_DETAIL_DATA['R01'], {
         actualStartTime: '2026-07-11 08:01:30',
         currentMileage: '12.50', currentDuration: 105

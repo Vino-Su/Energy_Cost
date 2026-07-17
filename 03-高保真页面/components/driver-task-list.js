@@ -1,9 +1,20 @@
 (function (global) {
     'use strict';
 
-    var STATUS_ORDER = ['pending', 'executing', 'completed'];
-    var STATUS_TEXT = { pending: '待开始', executing: '执行中', completed: '已完成' };
-    var TYPE_TEXT = { schedule: '常规任务', emergency: '应急任务', dynamic: '动态任务' };
+    var TAB_ORDER = ['pending', 'executing', 'ended'];
+    var STATUS_TEXT = {
+        pending: '待开始', executing: '进行中', completed: '已完成',
+        delegated: '已转派', terminated: '已终止', invalid: '已失效'
+    };
+    var END_STATUSES = ['completed', 'delegated', 'terminated', 'invalid'];
+    var RESULT_OPTIONS = [
+        { value: 'all', label: '全部结果' },
+        { value: 'completed', label: '已完成' },
+        { value: 'delegated', label: '已转派' },
+        { value: 'terminated', label: '已终止' },
+        { value: 'invalid', label: '已失效' }
+    ];
+    var TYPE_TEXT = { schedule: '常规任务', dynamic: '动态任务' };
     // 时间搜索选项：今天、明天、近七天、全部、自定义时间段
     var FILTERS = [
         { type: 'today', label: '今天', days: 0 },
@@ -20,12 +31,14 @@
             return global.TASK_DETAIL_DATA[key];
         });
         var tasks = allTasks.filter(function (task) { return task.listType === listType; });
-        var currentStatus = 'pending';
+        var currentTab = 'pending';
         var referenceDate = parseDate(config.referenceDate || formatDate(new Date()));
         // 默认时间范围：今天
         var currentFilter = rangeFor('today');
         // 车牌筛选：null = 全部车牌（默认值）
         var currentPlate = null;
+        // “已结束”内的细分结果，切换其他阶段时保留选择但不参与过滤。
+        var currentResult = 'all';
 
         document.body.setAttribute('data-list-type', listType);
         document.getElementById('pageTitle').textContent = config.title;
@@ -55,30 +68,39 @@
             return value >= currentFilter.from && value <= currentFilter.to;
         }
 
-        function filteredTasks(status) {
+        function isInTab(task, tab) {
+            return tab === 'ended' ? END_STATUSES.indexOf(task.status) !== -1 : task.status === tab;
+        }
+
+        function filteredTasks(tab, applyResultFilter) {
             return tasks.filter(function (task) {
-                if (task.status !== status) return false;
+                if (!isInTab(task, tab)) return false;
+                if (tab === 'ended' && applyResultFilter !== false && currentResult !== 'all' && task.status !== currentResult) return false;
                 if (!isInRange(task)) return false;
                 if (currentPlate && (task.plateNo || '') !== currentPlate) return false;
                 return true;
             }).sort(function (a, b) {
                 var aTime = taskDate(a) + ' ' + (a.time || a.dispatchedAt || '');
                 var bTime = taskDate(b) + ' ' + (b.time || b.dispatchedAt || '');
-                if (status === 'completed') return bTime.localeCompare(aTime);
+                if (tab === 'ended') return bTime.localeCompare(aTime);
                 return aTime.localeCompare(bTime);
             });
         }
 
         function render() {
-            STATUS_ORDER.forEach(function (status) {
-                document.getElementById('badge-' + status).textContent = filteredTasks(status).length;
+            TAB_ORDER.forEach(function (tab) {
+                var badge = document.getElementById('badge-' + tab);
+                if (badge) badge.textContent = filteredTasks(tab, false).length;
             });
             document.getElementById('filterLabel').textContent = currentFilter.label;
-            var visible = filteredTasks(currentStatus);
+            var resultChip = document.getElementById('resultChip');
+            resultChip.hidden = currentTab !== 'ended';
+            document.getElementById('resultLabel').textContent = resultOption(currentResult).label;
+            var visible = filteredTasks(currentTab);
             document.getElementById('taskCount').textContent = visible.length + ' 项';
             document.getElementById('taskList').innerHTML = visible.length
                 ? visible.map(renderCard).join('')
-                : renderEmpty(currentStatus);
+                : renderEmpty(currentTab);
         }
 
         function renderCard(task) {
@@ -87,7 +109,6 @@
             var plateText = plate || '未分配车辆';
             var title = task.name || '未命名任务';
             var contextClass = TYPE_TEXT[task.listType] ? ' ' + task.listType : '';
-            var typeText = TYPE_TEXT[task.listType] || '任务';
             var href = 'task-detail.html?id=' + encodeURIComponent(task.id) +
                 '&status=' + encodeURIComponent(task.status) +
                 '&source=' + encodeURIComponent(task.listType);
@@ -100,13 +121,14 @@
                         '<span class="plate-tag' + plateClass + '">' + escapeHtml(plateText) + '</span>' +
                     '</span>' +
                 '</span>' +
-                '<span class="status-tag ' + task.status + '">' + STATUS_TEXT[task.status] + '</span>' +
+                '<span class="status-tag ' + task.status + '">' + (STATUS_TEXT[task.status] || '状态未知') + '</span>' +
             '</span>';
 
-            // 第二行：作业类型 + 严重程度（动态任务）
+            // 第二行：任务类型 + 作业类型；动态任务附带问题重要程度
             var secondLine = '';
-            if (task.workType || (task.listType === 'dynamic' && task.severity)) {
+            if (task.type || task.workType || (task.listType === 'dynamic' && task.severity)) {
                 var tagList = [];
+                if (task.type) tagList.push('<span class="work-type">' + escapeHtml(task.type) + '</span>');
                 if (task.workType) tagList.push('<span class="work-type">' + escapeHtml(task.workType) + '</span>');
                 if (task.listType === 'dynamic' && task.severity) {
                     tagList.push('<span class="severity-tag">' + escapeHtml(task.severity) + '</span>');
@@ -139,16 +161,27 @@
 
         function renderSummary(task) {
             if (task.listType === 'dynamic') {
-                var issueText = (task.issueTypes || []).join(' / ') || '问题类型待确认';
+                var issueText = task.issueType || '问题类型待确认';
                 return '<span class="task-summary">问题类型：' + escapeHtml(issueText) + '</span>';
             }
             return '<span class="task-summary">' + escapeHtml(task.requirement || '暂无补充作业要求') + '</span>';
         }
 
-        function renderEmpty(status) {
+        function tabText(tab) {
+            return tab === 'ended' ? '已结束' : STATUS_TEXT[tab];
+        }
+
+        function resultOption(value) {
+            return RESULT_OPTIONS.filter(function (item) { return item.value === value; })[0] || RESULT_OPTIONS[0];
+        }
+
+        function renderEmpty(tab) {
+            var emptyLabel = tab === 'ended' && currentResult !== 'all'
+                ? resultOption(currentResult).label
+                : tabText(tab);
             return '<div class="empty-state"><div class="empty-icon">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M9 3h6l1 2h3v16H5V5h3l1-2z"/><path d="M9 10h6M9 14h6"/></svg>' +
-                '</div><div class="empty-title">暂无' + STATUS_TEXT[status] + '任务</div>' +
+                '</div><div class="empty-title">暂无' + emptyLabel + '任务</div>' +
                 '<div class="empty-desc">当前范围为“' + escapeHtml(currentFilter.label) + '”，可切换时间范围查看其他任务。</div></div>';
         }
 
@@ -161,10 +194,10 @@
         }
 
         document.getElementById('tabBar').addEventListener('click', function (event) {
-            var tab = event.target.closest('[data-status]');
+            var tab = event.target.closest('[data-tab]');
             if (!tab) return;
-            currentStatus = tab.getAttribute('data-status');
-            document.querySelectorAll('[data-status]').forEach(function (item) {
+            currentTab = tab.getAttribute('data-tab');
+            document.querySelectorAll('[data-tab]').forEach(function (item) {
                 item.classList.toggle('active', item === tab);
                 item.setAttribute('aria-selected', item === tab ? 'true' : 'false');
             });
@@ -259,6 +292,32 @@
             currentPlate = value || null;
             document.getElementById('plateLabel').textContent = currentPlate || '全部车牌';
             closePlateSheet();
+            render();
+        });
+
+        function renderResultSheet() {
+            document.getElementById('resultSheetItems').innerHTML = RESULT_OPTIONS.map(function (option) {
+                var active = currentResult === option.value ? ' active' : '';
+                return '<button type="button" class="sheet-item' + active + '" data-result="' + option.value + '">' +
+                    '<span>' + option.label + '</span><span class="sheet-check">✓</span></button>';
+            }).join('');
+        }
+        function closeResultSheet() {
+            document.getElementById('resultSheet').classList.remove('show');
+        }
+        document.getElementById('resultChip').addEventListener('click', function () {
+            renderResultSheet();
+            document.getElementById('resultSheet').classList.add('show');
+        });
+        document.getElementById('resultSheetClose').addEventListener('click', closeResultSheet);
+        document.getElementById('resultSheet').addEventListener('click', function (event) {
+            if (event.target === this) closeResultSheet();
+        });
+        document.getElementById('resultSheetItems').addEventListener('click', function (event) {
+            var item = event.target.closest('[data-result]');
+            if (!item) return;
+            currentResult = item.getAttribute('data-result');
+            closeResultSheet();
             render();
         });
 

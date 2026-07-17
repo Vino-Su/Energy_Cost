@@ -114,10 +114,12 @@
             background: #e6f4ff; color: #1677ff;
         }
         .todo-tag.emergency { background: #fff1f0; color: #ff4d4f; }
-        /* 异常关闭任务标签：错误色浅底，与常规任务待开始/执行中标签区分 */
-        .todo-tag.abnormal { background: #fff1f0; color: #ff4d4f; }
-        /* 执行中任务标签：成功色浅底 */
-        .todo-tag.running { background: #f6ffed; color: #52c41a; }
+        /* 右侧容器:车牌号(上)+任务标签(下),垂直分布 */
+        .todo-right {
+            display: flex; flex-direction: column;
+            align-items: flex-end; justify-content: space-between;
+            flex-shrink: 0; gap: 6px;
+        }
         /* 今日未完成任务分组 */
         .unfinished-group { margin-top: 14px; }
         .unfinished-group:first-child { margin-top: 0; }
@@ -266,17 +268,17 @@
     </div>
 
     <script>
-        // 当前车辆（交车车辆）今日待办演示数据：全部为待开始，匹配 task-detail-demo-data.js 已有任务
+        // 当前车辆（交车车辆）今日待办演示数据：type 标识任务性质（normal/emergency）
         var CURRENT_VEHICLE_TASKS = [
-            { start: '08:30', end: '10:30', name: '科技园南区道路清扫', plate: '粤B·D2856', route: '科苑南路至高新南九道', status: 'pending', tag: '待开始', taskId: '1', detailStatus: 'pending' },
-            { start: '14:00', end: '15:00', name: '高新南九道日常巡检', plate: '粤B·D2856', route: '高新南九道', status: 'pending', tag: '待开始', taskId: '4', detailStatus: 'pending' }
+            { start: '08:30', end: '10:30', name: '科技园南区道路清扫', plate: '粤B·D2856', route: '科苑南路至高新南九道', type: 'normal', tag: '常规', taskId: '1', detailStatus: 'pending' },
+            { start: '14:00', end: '15:00', name: '高新南九道日常巡检', plate: '粤B·D2856', route: '高新南九道', type: 'normal', tag: '常规', taskId: '4', detailStatus: 'pending' }
         ];
 
-        // 其他车辆（同一司机名下其他车）今日待办演示数据：包含执行中+待开始，匹配已有任务
+        // 其他车辆（同一司机名下其他车）今日待办演示数据
         var OTHER_VEHICLE_TASKS = [
-            { start: '08:00', end: '10:00', name: '西丽留仙洞片区道路清扫', plate: '粤B·A778K', route: '西丽留仙洞片区', status: 'running', tag: '执行中', taskId: 'R01', detailStatus: 'executing' },
-            { start: '10:30', end: '12:00', name: '海岸城周边精细化保洁', plate: '粤B·B229L', route: '海岸城片区', status: 'running', tag: '执行中', taskId: 'R02', detailStatus: 'executing' },
-            { start: '16:00', end: '17:00', name: '南山垃圾中转站对接', plate: '粤B·3368F', route: '南山站', status: 'pending', tag: '待开始', taskId: 'P03', detailStatus: 'pending' }
+            { start: '08:00', end: '10:00', name: '西丽留仙洞片区道路清扫', plate: '粤B·A778K', route: '西丽留仙洞片区', type: 'normal', tag: '常规', taskId: 'R01', detailStatus: 'executing' },
+            { start: '10:30', end: '12:00', name: '海岸城周边精细化保洁', plate: '粤B·B229L', route: '海岸城片区', type: 'normal', tag: '常规', taskId: 'R02', detailStatus: 'executing' },
+            { start: '13:00', end: '15:00', name: '沙河西路油污应急处置', plate: '粤B·3368F', route: '沙河西路全段', type: 'emergency', tag: '应急', taskId: 'E-P03', detailStatus: 'pending' }
         ];
 
         // 明日待办任务（演示数据）；置为空数组可查看空态；新增 taskId/detailStatus/source 用于点击跳转任务详情
@@ -286,36 +288,31 @@
             { start: '19:00', end: '22:00', name: '滨海大道夜间冲洗', plate: '粤B·7720A', route: '滨海大道东段', type: 'normal', tag: '常规', taskId: 'P04', detailStatus: 'pending', source: 'schedule' }
         ];
 
-        // 排序：执行中 > 待开始 > 异常关闭；同状态按计划开始时间升序
-        var STATUS_RANK = { running: 0, pending: 1, abnormal: 2 };
+        // 排序：进行中 > 待开始；同状态按计划开始时间升序（基于 detailStatus）
+        var DETAIL_STATUS_RANK = { executing: 0, pending: 1 };
         function sortByStatusAndTime(list) {
             return list.slice().sort(function (a, b) {
-                var ra = STATUS_RANK[a.status] == null ? 99 : STATUS_RANK[a.status];
-                var rb = STATUS_RANK[b.status] == null ? 99 : STATUS_RANK[b.status];
+                var ra = DETAIL_STATUS_RANK[a.detailStatus] == null ? 99 : DETAIL_STATUS_RANK[a.detailStatus];
+                var rb = DETAIL_STATUS_RANK[b.detailStatus] == null ? 99 : DETAIL_STATUS_RANK[b.detailStatus];
                 if (ra !== rb) return ra - rb;
                 return (a.start || '').localeCompare(b.start || '');
             });
         }
 
-        // 状态→标签 class 映射：执行中=running（绿色）、待开始=pending（默认蓝色）、异常关闭=abnormal（红色）
-        function statusClass(status) {
-            if (status === 'abnormal') return 'abnormal';
-            if (status === 'running') return 'running';
-            return '';
-        }
-
         function renderGroup(label, list, kind) {
             var sorted = sortByStatusAndTime(list);
             var itemsHtml = sorted.map(function (t) {
-                return '<div class="todo-item" data-task-id="' + (t.taskId || '') + '" data-detail-status="' + (t.detailStatus || t.status || '') + '">' +
+                return '<div class="todo-item" data-task-id="' + (t.taskId || '') + '" data-detail-status="' + (t.detailStatus || '') + '">' +
                     '<div class="todo-time"><div class="todo-time-start">' + t.start + '</div><div class="todo-time-end">' + t.end + '</div></div>' +
                     '<div class="todo-divider"></div>' +
                     '<div class="todo-main">' +
-                        '<div class="todo-name-row"><div class="todo-name">' + t.name + '</div>' +
-                        '<span class="todo-plate">' + t.plate + '</span></div>' +
+                        '<div class="todo-name-row"><div class="todo-name">' + t.name + '</div></div>' +
                         '<div class="todo-meta">' + t.route + '</div>' +
                     '</div>' +
-                    '<span class="todo-tag ' + statusClass(t.status) + '">' + t.tag + '</span>' +
+                    '<div class="todo-right">' +
+                        (t.plate ? '<span class="todo-plate">' + t.plate + '</span>' : '') +
+                        '<span class="todo-tag ' + (t.type === 'emergency' ? 'emergency' : '') + '">' + t.tag + '</span>' +
+                    '</div>' +
                     '</div>';
             }).join('');
             return '<div class="unfinished-group ' + kind + '">' +
@@ -403,11 +400,13 @@
                     '<div class="todo-time"><div class="todo-time-start">' + t.start + '</div><div class="todo-time-end">' + t.end + '</div></div>' +
                     '<div class="todo-divider"></div>' +
                     '<div class="todo-main">' +
-                        '<div class="todo-name-row"><div class="todo-name">' + t.name + '</div>' +
-                        (t.plate ? '<span class="todo-plate">' + t.plate + '</span>' : '') + '</div>' +
+                        '<div class="todo-name-row"><div class="todo-name">' + t.name + '</div></div>' +
                         '<div class="todo-meta">' + t.route + '</div>' +
                     '</div>' +
-                    '<span class="todo-tag ' + (t.type === 'emergency' ? 'emergency' : '') + '">' + t.tag + '</span>' +
+                    '<div class="todo-right">' +
+                        (t.plate ? '<span class="todo-plate">' + t.plate + '</span>' : '') +
+                        '<span class="todo-tag ' + (t.type === 'emergency' ? 'emergency' : '') + '">' + t.tag + '</span>' +
+                    '</div>' +
                     '</div>';
             }).join('');
 

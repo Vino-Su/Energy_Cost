@@ -141,7 +141,6 @@
             text-align: center;
         }
         .module-icon.schedule { background: #e6f4ff; color: #1677ff; }
-        .module-icon.emergency { background: #fff1f0; color: #ff4d4f; }
         .module-icon.dynamic { background: #f6ffed; color: #52c41a; }
         .module-icon.fuel { background: #fff7e6; color: #fa8c16; }
         .module-icon.water { background: #e6f4ff; color: #1677ff; }
@@ -287,12 +286,6 @@
                         </div>
                         <span class="module-name">常规任务</span>
                     </a>
-                    <a href="emergency-tasks.html" class="module-item">
-                        <div class="module-icon emergency">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        </div>
-                        <span class="module-name">应急任务</span>
-                    </a>
                     <a href="dynamic-tasks.html" class="module-item">
                         <div class="module-icon dynamic">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -385,7 +378,7 @@
             <div class="confirm-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
-            <div class="confirm-title">有任务执行中</div>
+            <div class="confirm-title">有任务进行中</div>
             <div class="confirm-desc">退出后任务仍会在后台记录，确认退出用车管理？</div>
             <div class="confirm-buttons">
                 <button type="button" class="confirm-btn secondary" onclick="closeExitConfirm()">取消</button>
@@ -420,7 +413,7 @@
             }
         }
 
-        /* ===== 退出用车管理（有执行中任务时二次确认） ===== */
+        /* ===== 退出用车管理（有进行中任务时二次确认） ===== */
         var pendingExit = false;
         function requestExit() {
             if (pendingExit) return;
@@ -441,7 +434,7 @@
         function closeExitConfirm() {
             document.getElementById('exitConfirm').classList.remove('show');
         }
-        // 向地图 iframe 查询是否有执行中任务
+        // 向地图 iframe 查询是否有进行中任务
         function askIframeExecuting(callback) {
             var frame = document.getElementById('mapFrame');
             if (!frame || !frame.contentWindow) { callback(false); return; }
@@ -459,7 +452,7 @@
             try {
                 frame.contentWindow.postMessage({ type: 'queryExecuting' }, '*');
             } catch (e) {}
-            // 兜底：300ms 无响应视为无执行中任务
+            // 兜底：300ms 无响应视为无进行中任务
             setTimeout(function () { settle(false); }, 300);
         }
 

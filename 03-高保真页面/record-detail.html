@@ -91,7 +91,7 @@
         .detail-amount {
             font-size: 24px;
             font-weight: 600;
-            color: #ff4d4f;
+            color: #1f2329;
         }
         .detail-row {
             display: flex;
@@ -221,59 +221,6 @@
         .btn-delete:active {
             background: #fff2f0;
         }
-        .confirm-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 3000;
-            max-width: 375px;
-            margin: 0 auto;
-            align-items: center;
-            justify-content: center;
-        }
-        .confirm-box {
-            width: 280px;
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-        }
-        .confirm-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #000000d9;
-            margin-bottom: 8px;
-        }
-        .confirm-text {
-            font-size: 14px;
-            color: #00000073;
-            margin-bottom: 20px;
-        }
-        .confirm-buttons {
-            display: flex;
-            gap: 12px;
-        }
-        .confirm-btn {
-            flex: 1;
-            height: 40px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            border: none;
-        }
-        .confirm-btn.cancel {
-            background: #f5f5f5;
-            color: #000000d9;
-        }
-        .confirm-btn.confirm {
-            background: #ff4d4f;
-            color: #ffffff;
-        }
         .toast {
             position: fixed;
             top: 50%;
@@ -366,9 +313,29 @@
             background: #fff;
             border-radius: 50%;
         }
+        .btn-more-icon {
+            width: 44px;
+            height: 44px;
+            background: #ffffff;
+            color: #00000073;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+        }
+        .btn-more-icon:active {
+            background: #f5f5f5;
+        }
+        .more-menu-item:hover {
+            background: #f5f5f5;
+        }
     </style>
 </head>
-<body>
+<body data-no-project-switcher="true">
     <!-- 顶部导航 -->
     <div class="top-nav">
         <a href="home.html" class="top-nav-back">
@@ -376,21 +343,9 @@
             <span>返回</span>
         </a>
         <div class="top-nav-title">记录详情</div>
-        <div class="top-nav-right" style="color:#ff4d4f;font-size:14px;" role="button" aria-label="删除" onclick="showDeleteConfirm()">删除</div>
     </div>
 
     <div class="content-area" id="contentArea">
-        <!-- 费用概览 -->
-        <div class="detail-card">
-            <div class="detail-header">
-                <div>
-                    <span class="tag tag-fuel" id="typeTag">加油</span>
-                    <div style="font-size:13px;color:#00000073;margin-top:6px;" id="plateDisplay">粤B·12345</div>
-                </div>
-                <div class="detail-amount" id="amountDisplay">¥420.00</div>
-            </div>
-        </div>
-
         <!-- 详细信息 -->
         <div class="detail-card" id="detailInfo">
             <div class="detail-row">
@@ -437,10 +392,25 @@
                 <span class="detail-value" id="qtyDisplay">56.00 L</span>
                 <div class="detail-value-input"><input type="number" class="form-input" id="qtyEdit" value="56.00" step="0.01" style="width:100px;text-align:right;"></div>
             </div>
+            <div class="detail-row" id="oilBalanceRow" style="display:none;">
+                <span class="detail-label">油卡余额</span>
+                <span class="detail-value" id="oilBalanceDisplay">1,288.42 元</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="oilBalanceEdit" value="1288.42" step="0.01" style="width:120px;text-align:right;"></div>
+            </div>
             <div class="detail-row" id="degreeRow" style="display:none;">
                 <span class="detail-label">充电度数</span>
                 <span class="detail-value" id="degreeDisplay">45.50 度</span>
                 <div class="detail-value-input"><input type="number" class="form-input" id="degreeEdit" value="45.50" step="0.1" style="width:100px;text-align:right;"></div>
+            </div>
+            <div class="detail-row" id="electricityFeeRow" style="display:none;">
+                <span class="detail-label">充电电费</span>
+                <span class="detail-value" id="electricityFeeDisplay">54.60 元</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="electricityFeeEdit" value="54.60" step="0.01" style="width:100px;text-align:right;"></div>
+            </div>
+            <div class="detail-row" id="serviceFeeRow" style="display:none;">
+                <span class="detail-label">充电服务费</span>
+                <span class="detail-value" id="serviceFeeDisplay">13.65 元</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="serviceFeeEdit" value="13.65" step="0.01" style="width:100px;text-align:right;"></div>
             </div>
             <div class="detail-row" id="startTimeRow" style="display:none;">
                 <span class="detail-label">充电开始时间</span>
@@ -451,6 +421,11 @@
                 <span class="detail-label">充电结束时间</span>
                 <span class="detail-value" id="endTimeDisplay">2026-06-25 10:30</span>
                 <div class="detail-value-input"><div class="select-trigger" id="endTimeEdit" style="width:160px;" onclick="showTimePicker('end')">2026-06-25 10:30<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            </div>
+            <div class="detail-row" id="chargeDurationRow" style="display:none;">
+                <span class="detail-label">充电时长</span>
+                <span class="detail-value" id="chargeDurationDisplay">150 分钟</span>
+                <div class="detail-value-input"><input type="number" class="form-input" id="chargeDurationEdit" value="150" min="0" step="1" style="width:100px;text-align:right;"></div>
             </div>
             <div class="detail-row" id="remarkRow">
                 <span class="detail-label">备注</span>
@@ -514,6 +489,21 @@
 
     <!-- 底部操作 -->
     <div class="bottom-actions" id="bottomActions">
+        <div class="more-dropdown" style="position:relative;flex:0 0 auto;">
+            <button class="btn-more-icon" onclick="toggleMoreMenu(event)" aria-label="更多">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            </button>
+            <div class="more-menu" id="moreMenu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;background:#fff;border:1px solid #f0f0f0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);min-width:140px;padding:4px 0;z-index:1100;">
+                <div class="more-menu-item" onclick="openDeleteConfirm()" style="padding:12px 16px;font-size:14px;color:#ff4d4f;cursor:pointer;display:flex;align-items:center;gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>
+                    删除
+                </div>
+                <div class="more-menu-item" onclick="openChangeLog()" style="padding:12px 16px;font-size:14px;color:#000000d9;cursor:pointer;display:flex;align-items:center;gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    变更记录
+                </div>
+            </div>
+        </div>
         <button class="btn-edit" onclick="editRecord()">编辑</button>
     </div>
 
@@ -524,13 +514,32 @@
     </div>
 
     <!-- 删除确认弹窗 -->
-    <div class="confirm-modal" id="deleteModal">
-        <div class="confirm-box">
-            <div class="confirm-title">确认删除</div>
-            <div class="confirm-text">确定删除该信息吗？删除后数据不可恢复。</div>
-            <div class="confirm-buttons">
-                <button class="confirm-btn cancel" onclick="hideDeleteConfirm()">取消</button>
-                <button class="confirm-btn confirm" onclick="confirmDelete()">确定</button>
+    <div class="confirm-modal" id="deleteModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:3000;max-width:375px;margin:0 auto;align-items:center;justify-content:center;">
+        <div class="confirm-box" style="width:280px;background:#ffffff;border-radius:16px;padding:24px;text-align:center;">
+            <div class="confirm-icon" style="width:48px;height:48px;border-radius:50%;background:#fff2f0;color:#ff4d4f;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="confirm-title" style="font-size:16px;font-weight:600;color:#000000d9;margin-bottom:8px;">确认删除</div>
+            <div class="confirm-text" style="font-size:14px;color:#00000073;margin-bottom:20px;line-height:22px;">确定删除该信息吗？<br>删除后数据不可恢复。</div>
+            <div class="confirm-buttons" style="display:flex;gap:12px;">
+                <button class="confirm-btn cancel" onclick="closeDeleteConfirm()" style="flex:1;height:40px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:#f5f5f5;color:#000000d9;">取消</button>
+                <button class="confirm-btn confirm" onclick="confirmDelete()" style="flex:1;height:40px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:#ff4d4f;color:#ffffff;">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 变更记录弹窗 -->
+    <div class="change-modal" id="changeModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:3000;max-width:375px;margin:0 auto;align-items:center;justify-content:center;">
+        <div class="change-panel" style="width:340px;max-height:80vh;background:#ffffff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+            <div class="change-header" style="height:48px;padding:0 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+                <span style="font-size:16px;font-weight:600;color:#000000d9;">变更记录</span>
+                <span class="change-close" onclick="closeChangeLog()" style="font-size:22px;color:#00000073;cursor:pointer;line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">×</span>
+            </div>
+            <div class="change-body" id="changeBody" style="padding:12px 16px;overflow-y:auto;flex:1;max-height:60vh;">
+                <div class="change-list" id="changeList"></div>
+            </div>
+            <div class="change-footer" style="padding:12px 16px;border-top:1px solid #f0f0f0;display:flex;justify-content:center;flex-shrink:0;">
+                <button class="change-close-btn" onclick="closeChangeLog()" style="height:36px;padding:0 24px;border-radius:6px;font-size:14px;border:1px solid #d9d9d9;background:#fff;color:#000000d9;cursor:pointer;">关闭</button>
             </div>
         </div>
     </div>
@@ -554,7 +563,6 @@
         let isEditMode = false;
 
         function initDetail() {
-            const tag = document.getElementById('typeTag');
             const typeDisplay = document.getElementById('typeDisplay');
             const priceRow = document.getElementById('priceRow');
             const qtyRow = document.getElementById('qtyRow');
@@ -574,8 +582,6 @@
             const endTimeDisplay = document.getElementById('endTimeDisplay');
             const remarkDisplay = document.getElementById('remarkDisplay');
             const paymentDisplay = document.getElementById('paymentDisplay');
-            const amountDisplay = document.getElementById('amountDisplay');
-            const plateDisplay = document.getElementById('plateDisplay');
             const plateValue = document.getElementById('plateValue');
             const mileageDisplay = document.getElementById('mileageDisplay');
             const priceLabel = document.getElementById('priceLabel');
@@ -584,16 +590,12 @@
             const paymentMethod = document.getElementById('paymentMethod');
 
             if (type === 'fuel') {
-                tag.textContent = '加油';
-                tag.className = 'tag tag-fuel';
                 typeDisplay.textContent = '加油';
                 priceLabel.textContent = '加油单价';
                 qtyLabel.textContent = '加油量';
                 priceDisplay.textContent = '7.50 元/L';
                 qtyDisplay.textContent = '56.00 L';
-                amountDisplay.textContent = '¥420.00';
                 document.getElementById('amountValue').textContent = '¥420.00';
-                plateDisplay.textContent = '粤B·12345';
                 plateValue.textContent = '粤B·12345';
                 mileageDisplay.textContent = '12,580 km';
                 paymentDisplay.textContent = '油卡';
@@ -604,8 +606,12 @@
                 degreeRow.style.display = 'none';
                 startTimeRow.style.display = 'none';
                 endTimeRow.style.display = 'none';
+                document.getElementById('chargeDurationRow').style.display = 'none';
+                document.getElementById('electricityFeeRow').style.display = 'none';
+                document.getElementById('serviceFeeRow').style.display = 'none';
                 priceRow.style.display = 'flex';
                 qtyRow.style.display = 'flex';
+                document.getElementById('oilBalanceRow').style.display = 'flex';
                 paymentRow.style.display = 'none';
                 oilCardRow.style.display = 'flex';
                 remarkRow.style.display = 'flex';
@@ -615,14 +621,10 @@
                 chargeDetailSection.style.display = 'none';
                 paymentSection.style.display = 'none';
             } else if (type === 'water') {
-                tag.textContent = '加水';
-                tag.className = 'tag tag-water';
                 typeDisplay.textContent = '加水';
                 qtyLabel.textContent = '加水量';
                 qtyDisplay.textContent = '5.00 吨';
-                amountDisplay.textContent = '¥35.00';
                 document.getElementById('amountValue').textContent = '¥35.00';
-                plateDisplay.textContent = '粤B·12345';
                 plateValue.textContent = '粤B·12345';
                 mileageDisplay.textContent = '12,580 km';
                 paymentDisplay.textContent = '月付';
@@ -633,8 +635,12 @@
                 degreeRow.style.display = 'none';
                 startTimeRow.style.display = 'none';
                 endTimeRow.style.display = 'none';
+                document.getElementById('chargeDurationRow').style.display = 'none';
+                document.getElementById('electricityFeeRow').style.display = 'none';
+                document.getElementById('serviceFeeRow').style.display = 'none';
                 priceRow.style.display = 'none';
                 qtyRow.style.display = 'flex';
+                document.getElementById('oilBalanceRow').style.display = 'none';
                 paymentRow.style.display = 'flex';
                 oilCardRow.style.display = 'none';
                 remarkRow.style.display = 'flex';
@@ -644,12 +650,8 @@
                 chargeDetailSection.style.display = 'none';
                 paymentSection.style.display = 'none';
             } else if (type === 'charge') {
-                tag.textContent = '充电';
-                tag.className = 'tag tag-charge';
                 typeDisplay.textContent = '充电';
-                amountDisplay.textContent = '¥85.50';
-                document.getElementById('amountValue').textContent = '¥85.50';
-                plateDisplay.textContent = '粤B·67890';
+                document.getElementById('amountValue').textContent = '¥68.25';
                 plateValue.textContent = '粤B·67890';
                 mileageDisplay.textContent = '8,920 km';
                 paymentDisplay.textContent = '充电卡';
@@ -660,12 +662,19 @@
                 degreeDisplay.textContent = '45.50 度';
                 startTimeDisplay.textContent = '2026-06-25 08:00';
                 endTimeDisplay.textContent = '2026-06-25 10:30';
+                document.getElementById('chargeDurationDisplay').textContent = '150 分钟';
+                document.getElementById('electricityFeeDisplay').textContent = '54.60 元';
+                document.getElementById('serviceFeeDisplay').textContent = '13.65 元';
                 remarkDisplay.textContent = '充电备注示例';
                 degreeRow.style.display = 'flex';
                 startTimeRow.style.display = 'flex';
                 endTimeRow.style.display = 'flex';
+                document.getElementById('chargeDurationRow').style.display = 'flex';
+                document.getElementById('electricityFeeRow').style.display = 'flex';
+                document.getElementById('serviceFeeRow').style.display = 'flex';
                 priceRow.style.display = 'none';
                 qtyRow.style.display = 'none';
+                document.getElementById('oilBalanceRow').style.display = 'none';
                 paymentRow.style.display = 'flex';
                 oilCardRow.style.display = 'none';
                 remarkRow.style.display = 'flex';
@@ -686,7 +695,6 @@
             document.getElementById('contentArea').classList.add('edit-mode');
             document.getElementById('bottomActions').style.display = 'none';
             document.getElementById('editActions').style.display = 'flex';
-            document.querySelector('.top-nav-right').style.display = 'none';
         }
 
         function saveEdit() {
@@ -694,7 +702,6 @@
             document.getElementById('contentArea').classList.remove('edit-mode');
             document.getElementById('bottomActions').style.display = 'flex';
             document.getElementById('editActions').style.display = 'none';
-            document.querySelector('.top-nav-right').style.display = 'block';
             showToast('保存成功');
             setTimeout(() => {
                 window.location.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
@@ -706,23 +713,6 @@
             document.getElementById('contentArea').classList.remove('edit-mode');
             document.getElementById('bottomActions').style.display = 'flex';
             document.getElementById('editActions').style.display = 'none';
-            document.querySelector('.top-nav-right').style.display = 'block';
-        }
-
-        function showDeleteConfirm() {
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
-
-        function hideDeleteConfirm() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-
-        function confirmDelete() {
-            hideDeleteConfirm();
-            showToast('删除成功');
-            setTimeout(() => {
-                window.location.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
-            }, 1500);
         }
 
         function showToast(msg) {
@@ -737,12 +727,79 @@
             alert('时间选择器：支持选择日期和时间');
         }
 
-        // 点击遮罩关闭弹窗
-        document.getElementById('deleteModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                hideDeleteConfirm();
-            }
+        // 更多下拉菜单
+        function toggleMoreMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('moreMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+        document.addEventListener('click', function() {
+            const menu = document.getElementById('moreMenu');
+            if (menu) menu.style.display = 'none';
         });
+
+        // 删除二次确认
+        function openDeleteConfirm() {
+            document.getElementById('moreMenu').style.display = 'none';
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        function closeDeleteConfirm() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        function confirmDelete() {
+            closeDeleteConfirm();
+            showToast('删除成功');
+            setTimeout(() => {
+                window.location.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
+            }, 1200);
+        }
+
+        // 变更记录
+        const changeLogData = {
+            fuel: [
+                { field: '加油金额（元）', before: '420.00', after: '450.00', time: '2026-06-24 10:30', user: '张经理' },
+                { field: '当前里程数（km）', before: '12,500', after: '12,580', time: '2026-06-20 14:15', user: '李经理' }
+            ],
+            water: [
+                { field: '加水量（吨）', before: '5.00', after: '6.00', time: '2026-06-24 10:30', user: '张经理' },
+                { field: '加水金额（元）', before: '30.00', after: '35.00', time: '2026-06-20 14:15', user: '李经理' }
+            ],
+            charge: [
+                { field: '充电度数（度）', before: '42.00', after: '45.50', time: '2026-06-24 10:30', user: '张经理' },
+                { field: '充电金额（元）', before: '78.96', after: '85.50', time: '2026-06-24 10:30', user: '张经理' },
+                { field: '当前里程数（km）', before: '8,800', after: '8,920', time: '2026-06-20 14:15', user: '李经理' }
+            ]
+        };
+
+        function openChangeLog() {
+            document.getElementById('moreMenu').style.display = 'none';
+            const list = document.getElementById('changeList');
+            const data = changeLogData[type] || [];
+            if (data.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:40px 0;color:#00000073;font-size:14px;">暂无变更记录</div>';
+            } else {
+                list.innerHTML = data.map(item => `
+                    <div class="change-card" style="padding:12px;border:1px solid #f0f0f0;border-radius:8px;margin-bottom:10px;background:#fafafa;">
+                        <div style="font-size:13px;color:#00000073;margin-bottom:6px;">字段名称</div>
+                        <div style="font-size:14px;font-weight:500;color:#000000d9;margin-bottom:10px;">${item.field}</div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;">
+                            <span style="color:#ff4d4f;background:#fff2f0;padding:2px 8px;border-radius:4px;text-decoration:line-through;">${item.before}</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00000073" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            <span style="color:#52c41a;background:#f6ffed;padding:2px 8px;border-radius:4px;">${item.after}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:#00000073;">
+                            <span>${item.time}</span>
+                            <span>${item.user}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('changeModal').style.display = 'flex';
+        }
+
+        function closeChangeLog() {
+            document.getElementById('changeModal').style.display = 'none';
+        }
 
         initDetail();
     </script>

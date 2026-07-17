@@ -16,9 +16,9 @@
     </header>
     <main class="page">
         <div class="tab-bar" id="tabBar" role="tablist" aria-label="任务状态">
-            <button type="button" class="tab active" data-status="pending" role="tab" aria-selected="true">待开始<span class="tab-badge" id="badge-pending">0</span></button>
-            <button type="button" class="tab" data-status="executing" role="tab" aria-selected="false">执行中<span class="tab-badge" id="badge-executing">0</span></button>
-            <button type="button" class="tab" data-status="completed" role="tab" aria-selected="false">已完成<span class="tab-badge" id="badge-completed">0</span></button>
+            <button type="button" class="tab active" data-tab="pending" role="tab" aria-selected="true">待开始<span class="tab-badge" id="badge-pending">0</span></button>
+            <button type="button" class="tab" data-tab="executing" role="tab" aria-selected="false">进行中<span class="tab-badge" id="badge-executing">0</span></button>
+            <button type="button" class="tab" data-tab="ended" role="tab" aria-selected="false">已结束<span class="tab-badge" id="badge-ended">0</span></button>
         </div>
         <div class="toolbar">
             <div class="toolbar-chips">
@@ -29,6 +29,10 @@
                 <button type="button" class="filter-chip" id="plateChip" aria-label="筛选任务车辆">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 17h14l-1.6-5.2A2.5 2.5 0 0 0 15 10H9a2.5 2.5 0 0 0-2.4 1.8L5 17Z"/><path d="M7 17v2M17 17v2M8 14h8"/></svg>
                     <span class="filter-text" id="plateLabel">全部车牌</span><span class="filter-arrow">▾</span>
+                </button>
+                <button type="button" class="filter-chip" id="resultChip" aria-label="筛选已结束任务状态" hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 7h14M7 12h10M9 17h6"/><circle cx="4" cy="7" r="1" fill="currentColor"/><circle cx="20" cy="12" r="1" fill="currentColor"/><circle cx="8" cy="17" r="1" fill="currentColor"/></svg>
+                    <span class="filter-text" id="resultLabel">全部结果</span><span class="filter-arrow">▾</span>
                 </button>
             </div>
             <span class="task-count" id="taskCount">0 项</span>
@@ -68,6 +72,18 @@
                 </button>
             </div>
             <div id="plateSheetItems"></div>
+        </section>
+    </div>
+    <div class="sheet-overlay" id="resultSheet">
+        <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="resultSheetTitle">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+                <h2 class="sheet-title" id="resultSheetTitle">选择结果状态</h2>
+                <button type="button" class="sheet-close" id="resultSheetClose" aria-label="关闭结果状态筛选">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </div>
+            <div id="resultSheetItems"></div>
         </section>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

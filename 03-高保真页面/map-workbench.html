@@ -564,8 +564,8 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        /* 任务标题右侧的车牌号徽章：紧贴 title 末尾（task-name-area 内层） */
-        .task-name-area .plate-tag {
+        /* 车牌号徽章：第 2 行（任务车牌号 + 任务状态） */
+        .plate-tag {
             flex: none;
             display: inline-flex;
             align-items: center;
@@ -580,8 +580,12 @@
             font-family: "DIN", "SF UI Text", "PingFang SC", "Microsoft YaHei", sans-serif;
             white-space: nowrap;
         }
-        /* 状态标签紧贴 task-name-area 末尾（task-title-wrap 外层） */
-        .task-title-wrap .state-tag { flex: none; }
+        /* 第 2 行：车牌号 + 状态 */
+        .task-line-plate {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .work-type {
             flex: none;
             padding: 4px 8px;
@@ -602,7 +606,7 @@
             font-weight: 700;
             white-space: nowrap;
         }
-        .task-type-tag.emergency { background: #fff2f0; color: #d9363e; }
+        .task-type-tag.temporary { background: #fffbe6; color: #ad6800; }
         .task-type-tag.dynamic { background: #fff7e6; color: #d46b08; }
         .task-head-right {
             flex: none;
@@ -977,7 +981,7 @@
             font-weight: 600;
             white-space: nowrap;
         }
-        .mini-type.emergency { background: #fff2f0; color: #d9363e; }
+        .mini-type.temporary { background: #fffbe6; color: #ad6800; }
         .mini-type.dynamic { background: #fff7e6; color: #d46b08; }
         .mini-work-type {
             flex: 0 0 auto;
@@ -1140,7 +1144,7 @@
             border: 2px solid #ffffff;
             box-shadow: 0 2px 6px rgba(0,0,0,0.18);
         }
-        .all-task-marker.emergency .mt-dot { background: #ff4d4f; }
+        .all-task-marker.temporary .mt-dot { background: #faad14; }
         .all-task-marker.dynamic .mt-dot { background: #fa8c16; }
         .task-group-head {
             display: flex;
@@ -1221,51 +1225,91 @@
         }
         .poi-modal-close:active { background: #f5f5f5; }
         .poi-modal-close svg { width: 20px; height: 20px; }
-        .poi-master-row {
+        .poi-filter-section { margin-bottom: 16px; }
+        .poi-filter-section + .poi-filter-section {
+            margin-top: 12px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .poi-filter-section-title {
+            display: block;
+            margin: 0 0 8px;
+            font-size: 13px;
+            line-height: 20px;
+            color: #00000073;
+        }
+        .poi-range-segment {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 2px;
+            min-height: 36px;
+            padding: 3px;
+            border-radius: 8px;
+            background: #f5f5f5;
+        }
+        .poi-range-row {
+            display: block;
+        }
+        .poi-range-row .poi-filter-section-title { margin: 0 0 8px; }
+        .poi-range-option {
+            min-width: 0;
+            min-height: 30px;
+            padding: 0 4px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: #00000073;
+            font-size: 12px;
+            line-height: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+        }
+        .poi-range-option.active {
+            color: #1677ff;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+        }
+        .poi-range-option:active { opacity: 0.72; }
+        .poi-category-heading {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 14px;
-            margin-bottom: 8px;
-            background: #f5f5f5;
-            border-radius: 8px;
+            min-height: 32px;
+            margin-bottom: 2px;
+        }
+        .poi-category-heading .poi-filter-section-title { margin: 0; }
+        .poi-select-all {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0 4px 8px;
+            border: none;
+            background: transparent;
+            color: #000000d9;
+            font-size: 13px;
+            line-height: 20px;
+            font-weight: 500;
             cursor: pointer;
         }
-        .poi-master-label {
-            font-size: 15px;
-            line-height: 22px;
-            color: #000000d9;
-            font-weight: 600;
-        }
-        .poi-switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-            flex: none;
-        }
-        .poi-switch input { opacity: 0; width: 0; height: 0; }
-        .poi-switch-slider {
-            position: absolute;
-            inset: 0;
-            background: #d9d9d9;
-            border-radius: 999px;
-            transition: background 0.18s ease;
-        }
-        .poi-switch-slider::before {
-            content: "";
-            position: absolute;
-            top: 3px;
-            left: 3px;
+        .poi-select-all .poi-cat-check {
             width: 18px;
             height: 18px;
-            background: #ffffff;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            transition: transform 0.18s ease;
         }
-        .poi-switch input:checked + .poi-switch-slider { background: #1677ff; }
-        .poi-switch input:checked + .poi-switch-slider::before { transform: translateX(20px); }
+        .poi-select-all.on .poi-cat-check,
+        .poi-select-all.partial .poi-cat-check {
+            border-color: #1677ff;
+            background: #1677ff;
+        }
+        .poi-select-all.partial .poi-cat-check svg { display: none; }
+        .poi-select-all.partial .poi-cat-check::after {
+            content: "";
+            width: 8px;
+            height: 2px;
+            border-radius: 1px;
+            background: #ffffff;
+        }
         .poi-cat-list {
             display: flex;
             flex-direction: column;
@@ -1364,6 +1408,24 @@
             z-index: 6;
         }
         .poi-marker svg { width: 18px; height: 18px; }
+        .poi-station-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            color: #ffffff;
+            display: grid;
+            place-items: center;
+            font-size: 9px;
+            line-height: 1;
+            font-weight: 700;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .poi-station-badge.self { background: #1677ff; }
+        .poi-station-badge.agreement { background: #d48806; }
         .poi-marker.water { background: #1677ff; }
         .poi-marker.charge { background: #389e0d; }
         .poi-marker.fuel { background: #d46b08; }
@@ -1440,6 +1502,37 @@
             line-height: 22px;
             font-weight: 700;
             color: #000000d9;
+        }
+        .poi-detail-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+        .poi-detail-name-row .poi-detail-name { min-width: 0; }
+        .poi-station-tag {
+            flex: none;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .poi-station-tag.self {
+            border: 1px solid #91caff;
+            background: #e6f4ff;
+            color: #0958d9;
+        }
+        .poi-station-tag.agreement {
+            border: 1px solid #ffe58f;
+            background: #fffbe6;
+            color: #ad6800;
+        }
+        .poi-station-tag.other {
+            border: 1px solid #d9d9d9;
+            background: #f5f5f5;
+            color: #595959;
         }
         .poi-detail-type {
             font-size: 12px;
@@ -1528,6 +1621,40 @@
             display: flex;
             flex-direction: column;
             margin-bottom: 0;
+        }
+        .poi-detail-images {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            padding: 8px 0 4px;
+        }
+        .poi-site-image {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            padding: 8px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            background: var(--poi-image-bg, #f5f5f5);
+            color: #ffffff;
+        }
+        .poi-site-image svg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 28px;
+            height: 28px;
+            opacity: 0.82;
+            transform: translate(-50%, -62%);
+        }
+        .poi-site-image span {
+            position: relative;
+            font-size: 11px;
+            line-height: 16px;
+            font-weight: 600;
         }
         .poi-field {
             display: flex;
@@ -1732,33 +1859,32 @@
                 </div>
             </div>
 
-            <!-- 第 1 行：任务名 + 车牌号徽章 + 状态 + 任务详情 -->
+            <!-- 第 1 行：路线名称/问题地点 + 任务详情 -->
             <div class="task-line task-line-head">
                 <div class="task-title-wrap">
                     <div class="task-name-area">
-                        <div class="task-name" id="taskTitle">科技园南区道路清扫</div>
-                        <span class="plate-tag" id="taskPlateTag" aria-label="任务车辆">粤B·D2856</span>
+                        <div class="task-name" id="taskTitle">科苑南路至高新南九道</div>
                     </div>
-                    <span class="state-tag pending" id="taskState">待开始</span>
                 </div>
                 <div class="task-head-right">
                     <a class="detail-link" id="detailBtn" href="task-detail.html?id=1">详情</a>
                 </div>
             </div>
 
-            <!-- 副标题行：任务类型 + 作业类型 + 路段名称 - 计划时间 -->
+            <!-- 第 2 行：任务车牌号 + 任务状态 -->
+            <div class="task-line task-line-plate">
+                <span class="plate-tag" id="taskPlateTag" aria-label="任务车辆">粤B·D2856</span>
+                <span class="state-tag pending" id="taskState">待开始</span>
+            </div>
+
+            <!-- 第 3 行：常态=任务类型 + 作业类型 + 路段-计划时间；动态=问题类型 + 重要程度 + 派发时间 -->
             <div class="task-line task-line-subtitle">
-                <span class="task-type-tag normal" id="taskTypeTag">常规任务</span>
+                <span class="task-type-tag normal" id="taskTypeTag">常态任务</span>
                 <span class="work-type" id="taskWorkType">洗扫</span>
                 <span class="route-text" id="taskRoute">科苑南路至高新南九道 - 08:30-10:30</span>
             </div>
 
-            <!-- 第 2 行：作业要求 -->
-            <div class="task-line task-line-requirement">
-                <div class="task-requirement" id="taskRequirement">洗扫车覆盖道路两侧及辅道，作业速度不超过 25km/h。</div>
-            </div>
-
-            <!-- 第 3 行：开始时间 + 作业里程 + 作业时长 -->
+            <!-- 第 2 行：开始时间 + 作业里程 + 作业时长 -->
             <div class="task-line task-line-metrics">
                 <div class="metric">
                     <div class="metric-label">开始时间</div>
@@ -1774,7 +1900,7 @@
                 </div>
             </div>
 
-            <!-- 第 4 行：更多 + 导航 + 主操作 -->
+            <!-- 第 3 行：更多 + 导航 + 主操作 -->
             <div class="task-line task-line-actions">
                 <div class="more-wrap">
                     <button class="icon-action" id="moreBtn" type="button" onclick="toggleMoreMenu(event)" aria-label="更多操作">
@@ -1782,6 +1908,7 @@
                     </button>
                     <div class="more-menu" id="moreMenu" hidden>
                         <div class="more-item" onclick="onMoreAction('pause')">暂停任务</div>
+                        <div class="more-item" onclick="onMoreAction('transfer')">转派任务</div>
                         <div class="more-item danger" onclick="onMoreAction('close')">关闭任务</div>
                     </div>
                 </div>
@@ -1802,7 +1929,7 @@
             <!-- 任务列表：在当前任务卡片下方展开/收起 -->
             <section class="task-list-panel" id="taskSheet" data-testid="task-sheet" aria-label="今日任务列表">
                 <div class="task-list-top">
-                    <div class="task-list-stats" id="taskSheetMeta">待开始 5 · 执行中 1 · 已完成 2</div>
+                    <div class="task-list-stats" id="taskSheetMeta">待开始 5 · 进行中 1 · 已完成 2</div>
                 </div>
                 <div id="taskList"></div>
             </section>
@@ -1851,20 +1978,33 @@
                 <div class="modal-top">
                     <div>
                         <strong class="modal-title" id="poiControlTitle">辅助设施图层</strong>
-                        <span class="modal-subtitle" id="poiControlSubtitle" aria-live="polite">勾选要在地图上显示的设施类型</span>
+                        <span class="modal-subtitle" id="poiControlSubtitle" aria-live="polite">地图点位筛选与设施类型</span>
                     </div>
                     <button class="modal-close poi-modal-close" type="button" onclick="closePoiControl()" aria-label="关闭辅助设施图层">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
                     </button>
                 </div>
-                <label class="poi-master-row" for="poiMasterSwitch">
-                    <span class="poi-master-label">显示辅助设施</span>
-                    <span class="poi-switch">
-                        <input type="checkbox" id="poiMasterSwitch" onchange="onMasterSwitchChange(this.checked)">
-                        <span class="poi-switch-slider" aria-hidden="true"></span>
-                    </span>
-                </label>
-                <div class="poi-cat-list" id="poiCatList"></div>
+                <section class="poi-filter-section" aria-labelledby="poiRangeTitle">
+                    <div class="poi-range-row">
+                        <span class="poi-filter-section-title" id="poiRangeTitle">站点类型</span>
+                        <div class="poi-range-segment" role="radiogroup" aria-label="地图点位站点类型">
+                            <button class="poi-range-option" id="poiRangeAll" type="button" role="radio" aria-checked="true" onclick="setPoiRange('all')">全部站点</button>
+                            <button class="poi-range-option" id="poiRangeSelf" type="button" role="radio" aria-checked="false" onclick="setPoiRange('self')">自营站点</button>
+                            <button class="poi-range-option" id="poiRangeAgreement" type="button" role="radio" aria-checked="false" onclick="setPoiRange('agreement')">协议站点</button>
+                            <button class="poi-range-option" id="poiRangeOther" type="button" role="radio" aria-checked="false" onclick="setPoiRange('other')">其他站点</button>
+                        </div>
+                    </div>
+                </section>
+                <section class="poi-filter-section" aria-labelledby="poiCategoryTitle">
+                    <div class="poi-category-heading">
+                        <span class="poi-filter-section-title" id="poiCategoryTitle">设施类型</span>
+                        <button class="poi-select-all" id="poiMasterToggle" type="button" role="checkbox" aria-checked="true" onclick="onMasterSwitchChange()">
+                            <span>全选</span>
+                            <span class="poi-cat-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 8"/></svg></span>
+                        </button>
+                    </div>
+                    <div class="poi-cat-list" id="poiCatList"></div>
+                </section>
             </div>
         </section>
 
@@ -1875,7 +2015,10 @@
                 <div class="poi-detail-top">
                     <div class="poi-detail-icon" id="poiDetailIcon" aria-hidden="true"></div>
                     <div class="poi-detail-title">
-                        <div class="poi-detail-name" id="poiDetailName">--</div>
+                        <div class="poi-detail-name-row">
+                            <div class="poi-detail-name" id="poiDetailName">--</div>
+                            <span class="poi-station-tag" id="poiDetailStationTag">--</span>
+                        </div>
                         <div class="poi-detail-type" id="poiDetailType">--</div>
                     </div>
                     <button class="poi-detail-close" type="button" onclick="closePoiDetail()" aria-label="关闭辅助设施详情">
@@ -1887,6 +2030,8 @@
                 <div class="poi-detail-metrics" id="poiDetailMetrics"></div>
                 <div class="poi-detail-section-title" id="poiDetailSectionTitle">设施信息</div>
                 <div class="poi-detail-fields" id="poiDetailFields"></div>
+                <div class="poi-detail-section-title" id="poiDetailImagesTitle">现场图片</div>
+                <div class="poi-detail-images" id="poiDetailImages"></div>
             </div>
             <div class="poi-detail-actions" id="poiDetailActions">
                 <button class="modal-btn primary" type="button" onclick="poiNavigate()">
@@ -1951,7 +2096,7 @@
                 id: '1',
                 name: '科技园南区道路清扫',
                 workType: '洗扫',
-                type: '常规任务',
+                type: '常态任务',
                 icon: 'normal',
                 plateNo: '粤B·D2856',
                 status: 'pending',
@@ -1978,9 +2123,10 @@
                 status: 'pending',
                 time: '行驶中派发',
                 routeName: '科技园南门垃圾遗漏点',
-                issueType: '明显垃圾 / 大件垃圾',
+                issueType: '明显垃圾',
                 severity: '紧急',
                 issueLocation: '李屋小区内，李屋居民小组党群服务站附近 17 米',
+                dispatchTime: '09:12',
                 requirement: '系统识别到道路边侧存在垃圾遗漏点，需就近复核并完成现场清理确认。',
                 route: [[22.5352,113.9440],[22.5351,113.9446],[22.5350,113.9452],[22.5349,113.9458],[22.5348,113.9464],[22.5346,113.9470],[22.5344,113.9476],[22.5341,113.9482],[22.5338,113.9488],[22.5335,113.9494],[22.5331,113.9500],[22.5328,113.9505]],
                 actualIndex: 0,
@@ -1996,16 +2142,16 @@
             },
             {
                 id: '2',
-                name: '沙河西路应急处置',
-                workType: '路面冲洗',
-                type: '应急任务',
-                icon: 'emergency',
+                name: '沙河西路临时处置',
+                workType: '临时路面冲洗',
+                type: '临时任务',
+                icon: 'temporary',
                 plateNo: '粤B·D2856',
                 status: 'pending',
                 time: '10:30-11:30',
                 routeName: '沙河西路全段',
-                segmentName: '沙河西路应急作业路段',
-                requirement: '突发污染点清理，要求 30 分钟内到达并完成路面清洗。',
+                segmentName: '沙河西路临时作业路段',
+                requirement: '临时派发污染点清理，要求 30 分钟内到达并完成路面清洗。',
                 route: [[22.5300,113.9300],[22.5301,113.9308],[22.5303,113.9316],[22.5305,113.9324],[22.5307,113.9332],[22.5309,113.9340],[22.5311,113.9350],[22.5313,113.9360],[22.5316,113.9370],[22.5319,113.9380],[22.5323,113.9390],[22.5328,113.9402],[22.5334,113.9412],[22.5340,113.9420]],
                 actualIndex: 0,
                 mileage: 0,
@@ -2018,7 +2164,7 @@
                 id: '3',
                 name: '滨海大道夜间冲洗',
                 workType: '路面冲洗',
-                type: '常规任务',
+                type: '常态任务',
                 icon: 'normal',
                 plateNo: '粤B·D2856',
                 status: 'pending',
@@ -2038,7 +2184,7 @@
                 id: '4',
                 name: '高新南九道日常巡检',
                 workType: '巡检',
-                type: '常规任务',
+                type: '常态任务',
                 icon: 'normal',
                 plateNo: '粤B·D2856',
                 status: 'pending',
@@ -2058,7 +2204,7 @@
                 id: '5',
                 name: '南山垃圾中转站对接',
                 workType: '垃圾收运',
-                type: '常规任务',
+                type: '常态任务',
                 icon: 'normal',
                 plateNo: '粤B·D2856',
                 status: 'pending',
@@ -2077,16 +2223,16 @@
             {
                 id: '7',
                 name: '科技园北门路面冲洗',
-                workType: '路面冲洗',
-                type: '应急任务',
-                icon: 'emergency',
+                workType: '临时路面冲洗',
+                type: '临时任务',
+                icon: 'temporary',
                 plateNo: '粤B·E550F',
                 vehicleType: '高压清洗车',
                 status: 'pending',
                 time: '09:00-10:00',
                 routeName: '科技园北门',
                 segmentName: '科技园北门冲洗路段',
-                requirement: '路面油污应急冲洗，要求 30 分钟内到场。',
+                requirement: '临时派发路面油污冲洗，要求 30 分钟内到场。',
                 route: [[22.5400,113.9440],[22.5396,113.9448],[22.5391,113.9456],[22.5386,113.9464],[22.5380,113.9472],[22.5374,113.9480]],
                 actualIndex: 0,
                 mileage: 0,
@@ -2099,7 +2245,7 @@
                 id: '8',
                 name: '高新南片区巡检',
                 workType: '巡检',
-                type: '常规任务',
+                type: '常态任务',
                 icon: 'normal',
                 plateNo: '粤B·A118G',
                 vehicleType: '扫路车',
@@ -2134,7 +2280,7 @@
                 if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
                 if (aCompleted && bCompleted) return a.originalIndex - b.originalIndex;
 
-                var priority = { executing: 0, emergency: 1, dynamic: 2, normal: 3 };
+                var priority = { executing: 0, temporary: 1, dynamic: 2, normal: 3 };
                 var aRank = a.task.status === 'executing' ? priority.executing : (priority[a.task.icon] || priority.normal);
                 var bRank = b.task.status === 'executing' ? priority.executing : (priority[b.task.icon] || priority.normal);
                 if (aRank !== bRank) return aRank - bRank;
@@ -2148,7 +2294,7 @@
         }
 
         function statusText(status) {
-            if (status === 'executing') return '执行中';
+            if (status === 'executing') return '进行中';
             if (status === 'completed') return '已完成';
             return '待开始';
         }
@@ -2167,7 +2313,7 @@
 
         function taskTypeClass(task) {
             if (task.icon === 'dynamic') return 'dynamic';
-            if (task.icon === 'emergency') return 'emergency';
+            if (task.icon === 'temporary') return 'temporary';
             return 'regular';
         }
 
@@ -2334,7 +2480,7 @@
             if (completedCount) completedCount.textContent = completed;
             if (!vehicleStatus || !vehicleStatusText) return;
 
-            // 车辆状态按 PRD 4.4：离线(设备不在线) > 作业中(在线+执行中) > 在线(在线)
+            // 车辆状态按 PRD 4.4：离线(设备不在线) > 作业中(在线+进行中) > 在线(在线)
             var hasExecuting = visibleTasks.some(function (task) { return task.status === 'executing'; });
             var label = '在线';
             var stateClass = '';
@@ -2394,7 +2540,7 @@
             updateTaskTriggerText();
             var segs = [];
             segs.push('<span class="stat-seg"><span class="stat-dot pending"></span>待开始 ' + pendingCount + '</span>');
-            if (executingCount > 0) segs.push('<span class="stat-seg"><span class="stat-dot executing"></span>执行中 ' + executingCount + '</span>');
+            if (executingCount > 0) segs.push('<span class="stat-seg"><span class="stat-dot executing"></span>进行中 ' + executingCount + '</span>');
             segs.push('<span class="stat-seg"><span class="stat-dot completed"></span>已完成 ' + completedCount + '</span>');
             document.getElementById('taskSheetMeta').innerHTML = segs.join('<span class="stat-sep">·</span>');
             syncTopVehicleStatus();
@@ -2427,24 +2573,36 @@
             var mileage = Math.max(0, Math.min(100, task.mileage || 0));
             var planStart = (task.time || '').split('-')[0] || '--:--';
             var startTime = task.startTime || planStart;
+            var isDynamic = task.icon === 'dynamic';
 
-            document.getElementById('taskTitle').textContent = task.name;
+            // 第 1 行首字段：常态/临时任务=路线名称；动态任务=问题地点
+            document.getElementById('taskTitle').textContent = isDynamic ? (task.issueLocation || task.routeName || '—') : (task.routeName || task.name || '—');
             // 任务标题右侧的车牌号徽章：每个任务自带 plateNo（与任务绑定，与当前绑定车辆无关）
             var plateTag = document.getElementById('taskPlateTag');
             if (plateTag) {
                 plateTag.textContent = task.plateNo || '—';
             }
-            document.getElementById('taskWorkType').textContent = task.workType || '作业';
+            // 副标题行（第 2 行）：常态/临时=任务类型-作业类型-路段-计划时间；动态=问题类型-重要程度-派发时间
             var typeTag = document.getElementById('taskTypeTag');
             typeTag.textContent = task.type || '任务';
             typeTag.className = 'task-type-tag ' + (task.icon || 'normal');
-            document.getElementById('taskRoute').textContent = (task.routeName || '') + ' - ' + (task.time || '');
-            document.getElementById('taskRequirement').textContent = task.requirement || '暂无作业要求';
+            var workTypeEl = document.getElementById('taskWorkType');
+            var routeEl = document.getElementById('taskRoute');
+            if (isDynamic) {
+                workTypeEl.textContent = task.issueType || '—';
+                workTypeEl.className = 'work-type';
+                routeEl.textContent = (task.severity || '—') + ' - 派发 ' + (task.dispatchTime || task.time || '--:--');
+            } else {
+                workTypeEl.textContent = task.workType || '作业';
+                workTypeEl.className = 'work-type';
+                routeEl.textContent = (task.routeName || '') + ' - ' + (task.time || '');
+            }
             document.getElementById('taskState').textContent = statusText(task.status);
             document.getElementById('taskState').className = 'state-tag ' + statusClass(task.status);
             document.getElementById('startTimeValue').textContent = isPending ? '-' : startTime;
-            document.getElementById('mileageValue').textContent = isPending ? '-' : (mileage + ' km');
-            document.getElementById('durationValue').textContent = isPending ? '-' : (task.duration || '0 分钟');
+            document.getElementById('mileageValue').textContent = isPending ? '-' : (Number(mileage).toFixed(2) + ' km');
+            var dur = parseInt(task.duration, 10);
+            document.getElementById('durationValue').textContent = isPending ? '-' : (isNaN(dur) ? '0 分钟' : (dur + ' 分钟'));
             document.getElementById('detailBtn').href = 'task-detail.html?id=' + encodeURIComponent(task.id) + '&status=' + encodeURIComponent(task.status);
             syncTopVehicleStatus();
 
@@ -2666,6 +2824,7 @@
             var menu = document.getElementById('moreMenu');
             if (menu) { menu.hidden = true; }
             if (act === 'pause') { showToast('暂停任务（演示）'); }
+            else if (act === 'transfer') { showToast('转派任务（演示）'); }
             else if (act === 'close') { showToast('关闭任务（演示）'); }
         }
         document.addEventListener('click', function () {
@@ -2816,7 +2975,7 @@
             box.innerHTML = '';
             getVisibleTasks().forEach(function (task) {
                 var proj = projectPoint(task.route[0]);
-                var cls = task.icon === 'emergency' ? 'emergency' : (task.icon === 'dynamic' ? 'dynamic' : '');
+                var cls = task.icon === 'temporary' ? 'temporary' : (task.icon === 'dynamic' ? 'dynamic' : '');
                 var el = document.createElement('div');
                 el.className = 'all-task-marker ' + cls;
                 el.style.left = proj.x + 'px';
@@ -2915,7 +3074,7 @@
         /* =====================================================================
          * F08 辅助设施图层（V1.6）
          * - 8 类 POI：water / charge / fuel / wash / repair / park / transfer / other
-         * - 字段严格按 01-需求文档/酷哇APP-用车管理模块PRD-地图版本.md §6.2.1 第 9 项
+         * - 字段严格按 01-需求文档/酷哇APP-用车管理模块PRD-地图版本.md §6.2.1 第 10 项
          * - 联动：清水→加水 / 加油→加油 / 充电→充电 / 维修→报修
          * ===================================================================== */
 
@@ -2927,51 +3086,67 @@
             repair:   { name: '维修点',     color: '#cf1322', report: { label: '去故障报修', href: 'repair-bottomsheet.html' } },
             park:     { name: '停车点',     color: '#434343', report: null },
             transfer: { name: '中转站',     color: '#722ed1', report: null },
-            other:    { name: '其他',       color: '#8c8c8c', report: null }
+            other:    { name: '其他设施',   color: '#8c8c8c', report: null }
         };
 
-        // 8 类 POI 字段顺序（严格按 PRD §6.2.1 第 9 项）
+        var POI_STATION_TYPE_META = {
+            self:      { name: '自营站点', badge: '自' },
+            agreement: { name: '协议站点', badge: '协' },
+            other:     { name: '其他站点', badge: '' }
+        };
+
+        // 8 类 POI 字段顺序（严格按 PRD §6.2.1 第 10 项）
         var POI_FIELDS = {
             water: [
                 { key: 'location',     label: '位置' },
                 { key: 'subType',      label: '类型' },
                 { key: 'isCommercial', label: '是否商业计费' },
                 { key: 'waterPressure', label: '水压' },
-                { key: 'interfaceSize', label: '接口尺寸' }
+                { key: 'interfaceSize', label: '接口尺寸' },
+                { key: 'applicableModels', label: '适配车型' }
             ],
             charge: [
                 { key: 'location',      label: '位置' },
-                { key: 'fastPileCount', label: '快冲桩数目' },
-                { key: 'slowPileCount', label: '慢冲桩数目' },
+                { key: 'fastPileCount', label: '快充桩数目' },
+                { key: 'slowPileCount', label: '慢充桩数目' },
                 { key: 'totalPower',    label: '接入总功率' },
                 { key: 'haokeSpot',     label: '浩克停车位' },
                 { key: 'qilinSpot',     label: '麒麟停车位' },
-                { key: 'unicornSpot',   label: '独角兽停车位' }
+                { key: 'unicornSpot',   label: '独角兽停车位' },
+                { key: 'applicableModels', label: '适配车型' }
             ],
             park: [
                 { key: 'location',    label: '位置' },
+                { key: 'subType',     label: '类型' },
                 { key: 'haokeSpot',   label: '浩克停车位' },
                 { key: 'qilinSpot',   label: '麒麟停车位' },
-                { key: 'unicornSpot', label: '独角兽停车位' }
+                { key: 'unicornSpot', label: '独角兽停车位' },
+                { key: 'applicableModels', label: '适配车型' }
             ],
             transfer: [
                 { key: 'location', label: '位置' },
-                { key: 'subType',  label: '类型' }
+                { key: 'subType',  label: '类型' },
+                { key: 'applicableModels', label: '适配车型' }
             ],
             wash: [
                 { key: 'location',      label: '位置' },
                 { key: 'opsOwner',      label: '运维负责人' },
                 { key: 'electricPort',  label: '电气接口' },
-                { key: 'drainage',      label: '排水条件' }
+                { key: 'drainage',      label: '排水条件' },
+                { key: 'applicableModels', label: '适配车型' }
             ],
             fuel: [
-                { key: 'location', label: '位置' }
+                { key: 'location', label: '位置' },
+                { key: 'applicableModels', label: '适配车型' }
             ],
             repair: [
-                { key: 'location', label: '位置' }
+                { key: 'location', label: '位置' },
+                { key: 'applicableModels', label: '适配车型' }
             ],
             other: [
-                { key: 'location', label: '位置' }
+                { key: 'location', label: '位置' },
+                { key: 'subType', label: '类型' },
+                { key: 'applicableModels', label: '适配车型' }
             ]
         };
 
@@ -2982,9 +3157,9 @@
                 { key: 'isCommercial', label: '商业计费' }
             ],
             charge: [
-                { key: 'fastPileCount', label: '快充' },
-                { key: 'slowPileCount', label: '慢充' },
-                { key: 'totalPower', label: '总功率' }
+                { key: 'fastPileCount', label: '快充桩数目' },
+                { key: 'slowPileCount', label: '慢充桩数目' },
+                { key: 'totalPower', label: '接入总功率' }
             ],
             park: [
                 { key: 'haokeSpot', label: '浩克车位' },
@@ -2996,113 +3171,130 @@
         // 32 个 mock POI（覆盖地图演示区域：22.524~22.542, 113.930~113.956）
         var POI_DATASET = [
             // 清水补给点 5 个
-            { id: 'W01', type: 'water', name: '科技园南区市政加水点', location: '南山区科技园南区科苑南路 88 号',
+            { id: 'W01', type: 'water', name: '科技园南区市政加水点', stationType: 'self', location: '南山区科技园南区科苑南路 88 号',
               subType: '市政供水', isCommercial: '否', waterPressure: '0.4 MPa', interfaceSize: 'DN50',
               lat: 22.5382, lng: 113.9410 },
-            { id: 'W02', type: 'water', name: '高新南九道加水站', location: '南山区高新南九道 12 号',
+            { id: 'W02', type: 'water', name: '高新南九道加水站', stationType: 'agreement', location: '南山区高新南九道 12 号',
               subType: '商业加水', isCommercial: '是', waterPressure: '0.6 MPa', interfaceSize: 'DN65',
               lat: 22.5348, lng: 113.9510 },
-            { id: 'W03', type: 'water', name: '滨海大道加水点', location: '福田区滨海大道东段辅道',
+            { id: 'W03', type: 'water', name: '滨海大道加水点', stationType: 'self', location: '福田区滨海大道东段辅道',
               subType: '市政供水', isCommercial: '否', waterPressure: '0.5 MPa', interfaceSize: 'DN50',
               lat: 22.5278, lng: 113.9462 },
-            { id: 'W04', type: 'water', name: '沙河西路临时加水点', location: '南山区沙河西路 56 号',
+            { id: 'W04', type: 'water', name: '沙河西路临时加水点', stationType: 'other', location: '南山区沙河西路 56 号',
               subType: '商业加水', isCommercial: '是', waterPressure: '0.5 MPa', interfaceSize: 'DN50',
               lat: 22.5312, lng: 113.9358 },
-            { id: 'W05', type: 'water', name: '科苑南路市政加水点', location: '南山区科苑南路与高新南一道交叉口',
+            { id: 'W05', type: 'water', name: '科苑南路市政加水点', stationType: 'self', location: '南山区科苑南路与高新南一道交叉口',
               subType: '市政供水', isCommercial: '否', waterPressure: '0.45 MPa', interfaceSize: 'DN50',
               lat: 22.5401, lng: 113.9438 },
 
             // 充电点 5 个
-            { id: 'C01', type: 'charge', name: '科技园特来电充电站', location: '南山区科技园南区高新南一道',
+            { id: 'C01', type: 'charge', name: '科技园特来电充电站', stationType: 'agreement', location: '南山区科技园南区高新南一道',
               fastPileCount: '6 个', slowPileCount: '8 个', totalPower: '720 kW',
               haokeSpot: '2 个', qilinSpot: '4 个', unicornSpot: '3 个',
               lat: 22.5372, lng: 113.9452 },
-            { id: 'C02', type: 'charge', name: '滨海大道星星充电站', location: '福田区滨海大道东段 102 号',
+            { id: 'C02', type: 'charge', name: '滨海大道星星充电站', stationType: 'other', location: '福田区滨海大道东段 102 号',
               fastPileCount: '4 个', slowPileCount: '6 个', totalPower: '480 kW',
               haokeSpot: '3 个', qilinSpot: '2 个', unicornSpot: '4 个',
               lat: 22.5286, lng: 113.9382 },
-            { id: 'C03', type: 'charge', name: '科苑南路国家电网充电站', location: '南山区科苑南路 66 号',
+            { id: 'C03', type: 'charge', name: '科苑南路国家电网充电站', stationType: 'self', location: '南山区科苑南路 66 号',
               fastPileCount: '8 个', slowPileCount: '4 个', totalPower: '960 kW',
               haokeSpot: '4 个', qilinSpot: '3 个', unicornSpot: '2 个',
               lat: 22.5395, lng: 113.9478 },
-            { id: 'C04', type: 'charge', name: '高新南九道蔚来换电站', location: '南山区高新南九道 28 号',
+            { id: 'C04', type: 'charge', name: '高新南九道蔚来换电站', stationType: 'other', location: '南山区高新南九道 28 号',
               fastPileCount: '2 个', slowPileCount: '12 个', totalPower: '360 kW',
               haokeSpot: '1 个', qilinSpot: '5 个', unicornSpot: '0 个',
               lat: 22.5331, lng: 113.9486 },
-            { id: 'C05', type: 'charge', name: '沙河西路小桔充电站', location: '南山区沙河西路 88 号',
+            { id: 'C05', type: 'charge', name: '沙河西路小桔充电站', stationType: 'agreement', location: '南山区沙河西路 88 号',
               fastPileCount: '5 个', slowPileCount: '5 个', totalPower: '600 kW',
               haokeSpot: '2 个', qilinSpot: '3 个', unicornSpot: '2 个',
               lat: 22.5320, lng: 113.9318 },
 
             // 加油站 4 个
-            { id: 'F01', type: 'fuel', name: '中国石化科技园加油站', location: '南山区科技园南区高新南一道 1 号',
+            { id: 'F01', type: 'fuel', name: '中国石化科技园加油站', stationType: 'agreement', location: '南山区科技园南区高新南一道 1 号',
               lat: 22.5365, lng: 113.9422 },
-            { id: 'F02', type: 'fuel', name: '中国石油滨海加油站', location: '福田区滨海大道东段 200 号',
+            { id: 'F02', type: 'fuel', name: '中国石油滨海加油站', stationType: 'other', location: '福田区滨海大道东段 200 号',
               lat: 22.5270, lng: 113.9408 },
-            { id: 'F03', type: 'fuel', name: '中海油科苑南路加油站', location: '南山区科苑南路 108 号',
+            { id: 'F03', type: 'fuel', name: '中海油科苑南路加油站', stationType: 'agreement', location: '南山区科苑南路 108 号',
               lat: 22.5395, lng: 113.9490 },
-            { id: 'F04', type: 'fuel', name: '中石化沙河西路加油站', location: '南山区沙河西路 102 号',
+            { id: 'F04', type: 'fuel', name: '中石化沙河西路加油站', stationType: 'self', location: '南山区沙河西路 102 号',
               lat: 22.5315, lng: 113.9325 },
 
             // 清洗点 4 个
-            { id: 'WA01', type: 'wash', name: '科技园南区车辆清洗点', location: '南山区科技园南区科苑南路 100 号',
+            { id: 'WA01', type: 'wash', name: '科技园南区车辆清洗点', stationType: 'self', location: '南山区科技园南区科苑南路 100 号',
               opsOwner: '张工 / 138-0000-0001', electricPort: '380V / 32A', drainage: '市政污水接入',
               lat: 22.5390, lng: 113.9395 },
-            { id: 'WA02', type: 'wash', name: '滨海大道清洗站', location: '福田区滨海大道东段 88 号',
+            { id: 'WA02', type: 'wash', name: '滨海大道清洗站', stationType: 'other', location: '福田区滨海大道东段 88 号',
               opsOwner: '李工 / 138-0000-0002', electricPort: '380V / 63A', drainage: '独立沉淀池',
               lat: 22.5265, lng: 113.9450 },
-            { id: 'WA03', type: 'wash', name: '高新南九道快速清洗点', location: '南山区高新南九道 8 号',
+            { id: 'WA03', type: 'wash', name: '高新南九道快速清洗点', stationType: 'self', location: '南山区高新南九道 8 号',
               opsOwner: '王工 / 138-0000-0003', electricPort: '220V / 16A', drainage: '市政污水接入',
               lat: 22.5362, lng: 113.9528 },
-            { id: 'WA04', type: 'wash', name: '沙河西路清洗合作点', location: '南山区沙河西路 70 号',
+            { id: 'WA04', type: 'wash', name: '沙河西路清洗合作点', stationType: 'agreement', location: '南山区沙河西路 70 号',
               opsOwner: '赵工 / 138-0000-0004', electricPort: '380V / 32A', drainage: '市政污水接入',
               lat: 22.5308, lng: 113.9345 },
 
             // 维修点 4 个
-            { id: 'R01', type: 'repair', name: '酷哇合作维修中心 - 科技园店', location: '南山区科技园南区高新南一道 28 号',
+            { id: 'R01', type: 'repair', name: '酷哇合作维修中心 - 科技园店', stationType: 'agreement', location: '南山区科技园南区高新南一道 28 号',
               lat: 22.5358, lng: 113.9468 },
-            { id: 'R02', type: 'repair', name: '滨海大道维修点', location: '福田区滨海大道东段 120 号',
+            { id: 'R02', type: 'repair', name: '滨海大道维修点', stationType: 'other', location: '福田区滨海大道东段 120 号',
               lat: 22.5292, lng: 113.9372 },
-            { id: 'R03', type: 'repair', name: '沙河西路快修点', location: '南山区沙河西路 90 号',
+            { id: 'R03', type: 'repair', name: '沙河西路快修点', stationType: 'self', location: '南山区沙河西路 90 号',
               lat: 22.5325, lng: 113.9308 },
-            { id: 'R04', type: 'repair', name: '科苑南路合作维修站', location: '南山区科苑南路 200 号',
+            { id: 'R04', type: 'repair', name: '科苑南路合作维修站', stationType: 'agreement', location: '南山区科苑南路 200 号',
               lat: 22.5408, lng: 113.9525 },
 
             // 停车点 4 个
-            { id: 'P01', type: 'park', name: '科技园南区停车场', location: '南山区科技园南区科苑南路 12 号',
-              haokeSpot: '5 个', qilinSpot: '8 个', unicornSpot: '6 个',
+            { id: 'P01', type: 'park', name: '科技园南区停车场', stationType: 'self', location: '南山区科技园南区科苑南路 12 号',
+              subType: '停车场', haokeSpot: '5 个', qilinSpot: '8 个', unicornSpot: '6 个',
               lat: 22.5378, lng: 113.9402 },
-            { id: 'P02', type: 'park', name: '滨海大道停车场', location: '福田区滨海大道东段 50 号',
-              haokeSpot: '3 个', qilinSpot: '5 个', unicornSpot: '4 个',
+            { id: 'P02', type: 'park', name: '滨海大道停车场', stationType: 'other', location: '福田区滨海大道东段 50 号',
+              subType: '独角兽之家', haokeSpot: '3 个', qilinSpot: '5 个', unicornSpot: '4 个',
               lat: 22.5260, lng: 113.9430 },
-            { id: 'P03', type: 'park', name: '高新南九道临时停车点', location: '南山区高新南九道 36 号',
-              haokeSpot: '2 个', qilinSpot: '4 个', unicornSpot: '3 个',
+            { id: 'P03', type: 'park', name: '高新南九道临时停车点', stationType: 'self', location: '南山区高新南九道 36 号',
+              subType: '停车点', haokeSpot: '2 个', qilinSpot: '4 个', unicornSpot: '3 个',
               lat: 22.5342, lng: 113.9505 },
-            { id: 'P04', type: 'park', name: '沙河西路停车场', location: '南山区沙河西路 18 号',
-              haokeSpot: '4 个', qilinSpot: '6 个', unicornSpot: '2 个',
+            { id: 'P04', type: 'park', name: '沙河西路停车场', stationType: 'agreement', location: '南山区沙河西路 18 号',
+              subType: '停车场', haokeSpot: '4 个', qilinSpot: '6 个', unicornSpot: '2 个',
               lat: 22.5302, lng: 113.9335 },
 
             // 中转站 3 个
-            { id: 'T01', type: 'transfer', name: '科技园垃圾中转站', location: '南山区科技园南区科苑南路 200 号',
-              subType: '垃圾中转', lat: 22.5410, lng: 113.9455 },
-            { id: 'T02', type: 'transfer', name: '滨海大道物料中转站', location: '福田区滨海大道东段 180 号',
-              subType: '物料中转', lat: 22.5295, lng: 113.9420 },
-            { id: 'T03', type: 'transfer', name: '沙河西路中转站', location: '南山区沙河西路 130 号',
-              subType: '综合中转', lat: 22.5328, lng: 113.9368 },
+            { id: 'T01', type: 'transfer', name: '科技园垃圾中转站', stationType: 'self', location: '南山区科技园南区科苑南路 200 号',
+              subType: '压缩式中转站', lat: 22.5410, lng: 113.9455 },
+            { id: 'T02', type: 'transfer', name: '滨海大道物料中转站', stationType: 'other', location: '福田区滨海大道东段 180 号',
+              subType: '移动式中转站', lat: 22.5295, lng: 113.9420 },
+            { id: 'T03', type: 'transfer', name: '沙河西路中转站', stationType: 'agreement', location: '南山区沙河西路 130 号',
+              subType: '地埋式中转站', lat: 22.5328, lng: 113.9368 },
 
-            // 其他 3 个
-            { id: 'O01', type: 'other', name: '科技园综合服务点', location: '南山区科技园南区科苑南路 76 号',
-              lat: 22.5388, lng: 113.9440 },
-            { id: 'O02', type: 'other', name: '滨海大道司机驿站', location: '福田区滨海大道东段 60 号',
-              lat: 22.5272, lng: 113.9395 },
-            { id: 'O03', type: 'other', name: '沙河西路休息点', location: '南山区沙河西路 24 号',
-              lat: 22.5310, lng: 113.9342 }
+            // 其他设施 3 个
+            { id: 'O01', type: 'other', name: '科技园综合服务点', stationType: 'self', location: '南山区科技园南区科苑南路 76 号',
+              subType: '综合服务点', lat: 22.5388, lng: 113.9440 },
+            { id: 'O02', type: 'other', name: '滨海大道司机驿站', stationType: 'other', location: '福田区滨海大道东段 60 号',
+              subType: '司机驿站', lat: 22.5272, lng: 113.9395 },
+            { id: 'O03', type: 'other', name: '沙河西路休息点', stationType: 'agreement', location: '南山区沙河西路 24 号',
+              subType: '休息服务点', lat: 22.5310, lng: 113.9342 }
         ];
+
+        var POI_COMMON_FIELDS_BY_TYPE = {
+            water:    { applicableModels: '浩克、麒麟、独角兽', siteImages: ['入口全景', '补水接口'] },
+            charge:   { applicableModels: '麒麟、独角兽', siteImages: ['站点全景', '充电桩区'] },
+            fuel:     { applicableModels: '浩克、麒麟', siteImages: ['站点全景', '加油作业区'] },
+            wash:     { applicableModels: '浩克、麒麟、独角兽', siteImages: ['入口全景', '清洗作业区'] },
+            repair:   { applicableModels: '浩克、麒麟、独角兽', siteImages: ['门店全景', '维修工位'] },
+            park:     { applicableModels: '浩克、麒麟、独角兽', siteImages: ['入口全景', '停车区域'] },
+            transfer: { applicableModels: '浩克、麒麟', siteImages: ['站点全景', '作业区域'] },
+            other:    { applicableModels: '浩克、麒麟、独角兽', siteImages: ['设施全景', '服务区域'] }
+        };
+        POI_DATASET.forEach(function (poi) {
+            var commonFields = POI_COMMON_FIELDS_BY_TYPE[poi.type];
+            poi.applicableModels = commonFields.applicableModels;
+            poi.siteImages = commonFields.siteImages.slice();
+        });
 
         // POI 状态管理
         var poiState = {
             layerOn: false,
             enabledTypes: { water: true, charge: true, fuel: true, wash: true, repair: true, park: true, transfer: true, other: true },
+            stationType: 'all',
             selectedId: null,
             beforeFocus: null
         };
@@ -3118,11 +3310,17 @@
                         if (k in poiState.enabledTypes) poiState.enabledTypes[k] = !!saved.enabledTypes[k];
                     });
                 }
+                if (saved && ['all', 'self', 'agreement', 'other'].indexOf(saved.stationType) !== -1) {
+                    poiState.stationType = saved.stationType;
+                } else if (saved && saved.agreementOnly === true) {
+                    poiState.stationType = 'agreement';
+                }
+                if (saved && typeof saved.layerOn === 'boolean') poiState.layerOn = saved.layerOn;
             } catch (e) { /* 静默 */ }
         }
         function savePoiState() {
             try {
-                localStorage.setItem(POI_STORAGE_KEY, JSON.stringify({ enabledTypes: poiState.enabledTypes }));
+                localStorage.setItem(POI_STORAGE_KEY, JSON.stringify({ enabledTypes: poiState.enabledTypes, stationType: poiState.stationType, layerOn: poiState.layerOn }));
             } catch (e) { /* 静默 */ }
         }
 
@@ -3136,7 +3334,9 @@
             };
         }
 
-        // 更新 8 类复选数量（在 renderPoiCatList 内联处理，无需独立函数）
+        function isPoiVisible(poi) {
+            return !!poiState.enabledTypes[poi.type] && (poiState.stationType === 'all' || poi.stationType === poiState.stationType);
+        }
 
         // 渲染 POI 标记
         function renderPoiMarkers() {
@@ -3144,16 +3344,19 @@
             if (!layer) return;
             layer.innerHTML = '';
             POI_DATASET.forEach(function (poi) {
-                if (!poiState.enabledTypes[poi.type]) return;
+                if (!isPoiVisible(poi)) return;
                 var pos = geoToPixel(poi.lat, poi.lng);
                 var meta = POI_TYPE_META[poi.type];
+                var stationMeta = POI_STATION_TYPE_META[poi.stationType];
                 var marker = document.createElement('div');
-                marker.className = 'poi-marker ' + poi.type;
+                marker.className = 'poi-marker ' + poi.type + ' station-' + poi.stationType;
                 marker.setAttribute('data-poi-id', poi.id);
+                marker.setAttribute('data-station-type', poi.stationType);
                 marker.style.left = pos.left + 'px';
                 marker.style.top = pos.top + 'px';
-                marker.setAttribute('title', poi.name);
-                marker.innerHTML = poiIconSvg(poi.type);
+                marker.setAttribute('title', poi.name + '（' + stationMeta.name + '）');
+                marker.setAttribute('aria-label', poi.name + '，' + stationMeta.name);
+                marker.innerHTML = poiIconSvg(poi.type) + (stationMeta.badge ? '<span class="poi-station-badge ' + poi.stationType + '" aria-hidden="true">' + stationMeta.badge + '</span>' : '');
                 marker.addEventListener('click', function (e) {
                     e.stopPropagation();
                     onPoiMarkerClick(poi.id);
@@ -3260,6 +3463,7 @@
             closePoiDetail();
             renderPoiCatList();
             syncPoiMasterSwitch();
+            syncPoiRangeSelector();
             var modal = document.getElementById('poiControlModal');
             modal.classList.add('show');
             syncPoiSurfaceState();
@@ -3309,31 +3513,55 @@
             });
         }
 
-        // 同步主开关状态：8 类全部启用时主开关才为"开"（取消任一项即自动取消全选）
+        // 同步全选状态：全部选中 / 部分选中 / 全部未选
         function syncPoiMasterSwitch() {
-            var sw = document.getElementById('poiMasterSwitch');
-            if (!sw) return;
+            var toggle = document.getElementById('poiMasterToggle');
+            if (!toggle) return;
             var allOn = Object.keys(poiState.enabledTypes).every(function (k) { return poiState.enabledTypes[k]; });
-            sw.checked = allOn;
+            var anyOn = Object.keys(poiState.enabledTypes).some(function (k) { return poiState.enabledTypes[k]; });
+            toggle.classList.toggle('on', allOn);
+            toggle.classList.toggle('partial', anyOn && !allOn);
+            toggle.setAttribute('aria-checked', allOn ? 'true' : (anyOn ? 'mixed' : 'false'));
         }
 
-        // 主开关变化：一键全选/全不选（即时生效）
-        function onMasterSwitchChange(checked) {
-            var list = document.getElementById('poiCatList');
-            list.querySelectorAll('.poi-cat-item').forEach(function (el) {
-                var t = el.getAttribute('data-type');
-                el.classList.toggle('on', checked);
-                el.setAttribute('aria-checked', checked ? 'true' : 'false');
-                poiState.enabledTypes[t] = checked;
+        function syncPoiRangeSelector() {
+            var stationOptions = {
+                all: document.getElementById('poiRangeAll'),
+                self: document.getElementById('poiRangeSelf'),
+                agreement: document.getElementById('poiRangeAgreement'),
+                other: document.getElementById('poiRangeOther')
+            };
+            Object.keys(stationOptions).forEach(function (stationType) {
+                var button = stationOptions[stationType];
+                if (!button) return;
+                var active = poiState.stationType === stationType;
+                button.classList.toggle('active', active);
+                button.setAttribute('aria-checked', active ? 'true' : 'false');
             });
+        }
+
+        // 全选仅控制 8 类设施类型；部分选中时点击恢复为全选
+        function onMasterSwitchChange() {
+            var shouldSelectAll = !Object.keys(poiState.enabledTypes).every(function (k) { return poiState.enabledTypes[k]; });
+            Object.keys(poiState.enabledTypes).forEach(function (k) {
+                poiState.enabledTypes[k] = shouldSelectAll;
+            });
+            renderPoiCatList();
+            commitPoiChange();
+        }
+
+        // 站点类型筛选：与当前已选设施分类取交集，不改变分类选择
+        function setPoiRange(range) {
+            if (['all', 'self', 'agreement', 'other'].indexOf(range) === -1) return;
+            poiState.stationType = range;
             commitPoiChange();
         }
 
         // 勾选即生效：立即同步图层、保存状态、更新工具按钮与主开关
         function commitPoiChange() {
-            savePoiState();
             var anyOn = Object.keys(poiState.enabledTypes).some(function (k) { return poiState.enabledTypes[k]; });
             poiState.layerOn = anyOn;
+            savePoiState();
             var btn = document.getElementById('poiLayerBtn');
             if (btn) btn.classList.toggle('active', anyOn);
             if (anyOn) {
@@ -3342,8 +3570,11 @@
                 document.getElementById('poiLayer').innerHTML = '';
                 closePoiDetail();
             }
+            var selectedPoi = POI_DATASET.find(function (poi) { return poi.id === poiState.selectedId; });
+            if (selectedPoi && !isPoiVisible(selectedPoi)) closePoiDetail();
             // 同步主开关视觉（避免与单类切换不同步）
             syncPoiMasterSwitch();
+            syncPoiRangeSelector();
         }
 
         // 点击 POI 标记
@@ -3370,6 +3601,10 @@
             iconEl.style.background = meta.color;
             iconEl.innerHTML = poiIconSvg(poi.type);
             document.getElementById('poiDetailName').textContent = poi.name;
+            var stationMeta = POI_STATION_TYPE_META[poi.stationType];
+            var stationTag = document.getElementById('poiDetailStationTag');
+            stationTag.textContent = stationMeta.name;
+            stationTag.className = 'poi-station-tag ' + poi.stationType;
             document.getElementById('poiDetailType').textContent = meta.name;
             document.getElementById('poiDetailDistance').textContent = poiDistanceText(poi);
             document.getElementById('poiDetailLocation').textContent = poi.location || '暂无位置信息';
@@ -3389,6 +3624,14 @@
             });
             document.getElementById('poiDetailFields').innerHTML = fieldsHtml;
             document.getElementById('poiDetailSectionTitle').style.display = fieldsHtml ? 'block' : 'none';
+
+            var siteImages = poi.siteImages || [];
+            document.getElementById('poiDetailImages').innerHTML = siteImages.map(function (imageLabel) {
+                return '<div class="poi-site-image" style="--poi-image-bg:' + meta.color + '" role="img" aria-label="' + escapeHtml(poi.name + imageLabel) + '">' +
+                    poiIconSvg(poi.type) + '<span>' + escapeHtml(imageLabel) + '</span></div>';
+            }).join('');
+            document.getElementById('poiDetailImagesTitle').style.display = siteImages.length ? 'block' : 'none';
+            document.getElementById('poiDetailImages').style.display = siteImages.length ? 'grid' : 'none';
 
             // 联动按钮（导航=主按钮；上报=次按钮，按 POI 类型动态显示）
             var reportBtn = document.getElementById('poiDetailReportBtn');
@@ -3442,6 +3685,10 @@
 
         // 初始化
         loadPoiState();
+        if (poiState.layerOn) {
+            document.getElementById('poiLayerBtn').classList.add('active');
+            renderPoiMarkers();
+        }
 
         // 调试入口：URL ?poi=1 自动打开弹窗；?poiDetail=W01 自动开启+弹出详情
         (function () {

@@ -864,6 +864,16 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label"><span class="required">*</span>油卡余额（元）</label>
+                <div class="input-with-icon">
+                    <input type="number" class="form-input" id="oilBalance" placeholder="OCR识别自动填充" value="" step="0.01" onblur="validateNumber(this, '油卡余额')">
+                    <svg class="ocr-field-icon success-icon" id="oilBalanceOcrSuccessIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg class="ocr-field-icon error-icon" id="oilBalanceOcrErrorIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div class="error-text" id="oilBalanceError"></div>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label"><span class="required">*</span>当前里程数（km）</label>
                 <div class="input-with-icon">
                     <input type="number" class="form-input" id="mileage" placeholder="OCR识别自动填充" value="" onblur="checkMileage()">
@@ -916,9 +926,9 @@
             <div class="photo-guide-body">
                 <div class="photo-guide-card" data-guide="receipt" data-title="交易凭证示例">
                     <div class="photo-guide-visual guide-receipt">
-                        <div class="guide-receipt-paper"><strong>加油交易凭证</strong><span>2026-07-16  14:35</span><span class="receipt-focus">油品：柴油</span><span class="receipt-focus">单价：7.28 元/L</span><span class="receipt-focus">油量：42.80 L</span><span class="receipt-focus">金额：311.58 元</span></div>
+                        <div class="guide-receipt-paper"><strong>加油交易凭证</strong><span>2026-07-16  14:35</span><span class="receipt-focus">油品：柴油</span><span class="receipt-focus">单价：7.28 元/L</span><span class="receipt-focus">油量：42.80 L</span><span class="receipt-focus">金额：311.58 元</span><span class="receipt-focus">余额：1,288.42 元</span></div>
                     </div>
-                    <p class="photo-guide-copy"><strong>拍摄要点：</strong>小票完整入镜，油品、单价、油量、金额和时间应清晰可辨。</p>
+                    <p class="photo-guide-copy"><strong>拍摄要点：</strong>小票完整入镜，油品、单价、油量、金额、余额和时间应清晰可辨。</p>
                 </div>
                 <div class="photo-guide-card" data-guide="odometer" data-title="里程照片示例">
                     <div class="photo-guide-visual guide-odometer">
@@ -980,9 +990,9 @@
 
         // 模拟 OCR 识别结果池
         const mockReceiptOcrResults = [
-            { oilCard: 'CARD001', time: '2026-06-25 09:30', unitPrice: 7.85, quantity: 45.12, amount: 354.19 },
-            { oilCard: 'CARD002', time: '2026-06-24 18:15', unitPrice: 7.92, quantity: 38.50, amount: 304.92 },
-            { oilCard: 'CARD003', time: '2026-06-23 12:00', unitPrice: 7.80, quantity: 50.00, amount: 390.00 }
+            { oilCard: 'CARD001', time: '2026-06-25 09:30', unitPrice: 7.85, quantity: 45.12, amount: 354.19, oilBalance: 1288.42 },
+            { oilCard: 'CARD002', time: '2026-06-24 18:15', unitPrice: 7.92, quantity: 38.50, amount: 304.92, oilBalance: 1642.86 },
+            { oilCard: 'CARD003', time: '2026-06-23 12:00', unitPrice: 7.80, quantity: 50.00, amount: 390.00, oilBalance: 756.50 }
         ];
         const mockOdometerOcrResults = [12560, 13200, 11800, 14500];
 
@@ -1000,6 +1010,7 @@
             unitPrice: null,
             quantity: null,
             totalAmount: null,
+            oilBalance: null,
             mileage: null
         };
 
@@ -1025,7 +1036,7 @@
 
         // 绑定 OCR 字段输入监听，用户修改后移除图标
         function bindOcrFieldInputListeners() {
-            ['oilCard', 'unitPrice', 'quantity', 'totalAmount', 'mileage'].forEach(function(field) {
+            ['oilCard', 'unitPrice', 'quantity', 'totalAmount', 'oilBalance', 'mileage'].forEach(function(field) {
                 const el = document.getElementById(field);
                 if (el) {
                     el.addEventListener('input', function() {
@@ -1320,7 +1331,7 @@
             renderReceiptPhoto();
             clearReceiptOcrStatus();
             document.getElementById('oilCard').value = '';
-            ['oilCard', 'fuelTime', 'unitPrice', 'quantity', 'totalAmount'].forEach(function(key) {
+            ['oilCard', 'fuelTime', 'unitPrice', 'quantity', 'totalAmount', 'oilBalance'].forEach(function(key) {
                 setOcrFieldIcon(key, null);
             });
             const timeEl = document.getElementById('fuelTime');
@@ -1330,6 +1341,7 @@
             document.getElementById('unitPrice').value = '';
             document.getElementById('quantity').value = '';
             document.getElementById('totalAmount').value = '';
+            document.getElementById('oilBalance').value = '';
             clearOilCardError();
             clearNumberErrors();
         }
@@ -1394,7 +1406,7 @@
                     setOcrStatus('receipt', 'success');
                 } else {
                     setOcrStatus('receipt', 'error');
-                    ['oilCard', 'fuelTime', 'unitPrice', 'quantity', 'totalAmount'].forEach(function(key) {
+                    ['oilCard', 'fuelTime', 'unitPrice', 'quantity', 'totalAmount', 'oilBalance'].forEach(function(key) {
                         setOcrFieldIcon(key, 'error');
                     });
                 }
@@ -1430,6 +1442,11 @@
             if (!totalAmountInput.value) {
                 totalAmountInput.value = result.amount.toFixed(2);
                 setOcrFieldIcon('totalAmount', 'success');
+            }
+            const oilBalanceInput = document.getElementById('oilBalance');
+            if (!oilBalanceInput.value) {
+                oilBalanceInput.value = result.oilBalance.toFixed(2);
+                setOcrFieldIcon('oilBalance', 'success');
             }
             checkOilCard();
         }
@@ -1526,7 +1543,7 @@
         }
 
         function clearNumberErrors() {
-            ['unitPrice', 'quantity', 'totalAmount'].forEach(id => {
+            ['unitPrice', 'quantity', 'totalAmount', 'oilBalance'].forEach(id => {
                 document.getElementById(id + 'Error').textContent = '';
                 document.getElementById(id + 'Error').classList.remove('show');
                 document.getElementById(id).classList.remove('error');
@@ -1552,6 +1569,7 @@
             document.getElementById('unitPrice').value = '';
             document.getElementById('quantity').value = '';
             document.getElementById('totalAmount').value = '';
+            document.getElementById('oilBalance').value = '';
             document.getElementById('mileage').value = '';
             document.getElementById('remark').value = '';
             receiptPhoto = null;
@@ -1663,6 +1681,17 @@
                 totalAmount.classList.add('error');
                 hasError = true;
             } else if (!validateNumber(totalAmount, '金额')) {
+                hasError = true;
+            }
+
+            // 油卡余额校验（必填 + 非负数）
+            const oilBalance = document.getElementById('oilBalance');
+            if (!oilBalance.value) {
+                document.getElementById('oilBalanceError').textContent = '请输入油卡余额';
+                document.getElementById('oilBalanceError').classList.add('show');
+                oilBalance.classList.add('error');
+                hasError = true;
+            } else if (!validateNumber(oilBalance, '油卡余额')) {
                 hasError = true;
             }
 
