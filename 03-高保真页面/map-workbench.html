@@ -170,6 +170,61 @@
             border: 1px solid rgba(22,119,255,0.35);
             animation: vehiclePulse 1.8s ease-out infinite;
         }
+        .dynamic-task-marker {
+            position: absolute;
+            z-index: 10;
+            width: 38px;
+            height: 46px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #fa8c16;
+            cursor: pointer;
+            transform: translate(-50%, -100%);
+            filter: drop-shadow(0 3px 7px rgba(212,107,8,0.28));
+        }
+        .dynamic-task-marker:active { transform: translate(-50%, -100%) scale(0.92); }
+        .dynamic-marker-pin {
+            position: relative;
+            width: 30px;
+            height: 30px;
+            margin: 0 auto;
+            border: 2px solid #ffffff;
+            border-radius: 50% 50% 50% 4px;
+            background: #fa8c16;
+            box-shadow: 0 0 0 5px rgba(250,140,22,0.16);
+            transform: rotate(-45deg);
+            display: grid;
+            place-items: center;
+        }
+        .dynamic-marker-pin svg { width: 17px; height: 17px; transform: rotate(45deg); }
+        .dynamic-task-marker::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 1px;
+            width: 22px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(212,107,8,0.24);
+            transform: translateX(-50%);
+        }
+        .dynamic-task-marker.active .dynamic-marker-pin {
+            background: #d46b08;
+            box-shadow: 0 0 0 7px rgba(250,140,22,0.23);
+        }
+        .dynamic-task-marker.active .dynamic-marker-pin::after {
+            content: "";
+            position: absolute;
+            inset: -7px;
+            border: 1px solid rgba(250,140,22,0.7);
+            border-radius: inherit;
+            animation: dynamicMarkerPulse 1.6s ease-out infinite;
+        }
+        @keyframes dynamicMarkerPulse {
+            0% { transform: scale(0.7); opacity: 0.7; }
+            100% { transform: scale(1.22); opacity: 0; }
+        }
         .workbench.sheet-open .marker.vehicle {
             z-index: 7;
         }
@@ -366,6 +421,17 @@
         .legend-line.actual {
             border-top: 2px solid #ff4d4f;
         }
+        .legend-dynamic-icon {
+            width: 14px;
+            height: 14px;
+            display: grid;
+            place-items: center;
+            border-radius: 50% 50% 50% 3px;
+            background: #fa8c16;
+            color: #ffffff;
+            transform: rotate(-45deg);
+        }
+        .legend-dynamic-icon svg { width: 9px; height: 9px; transform: rotate(45deg); }
         .tool-btn {
             width: 46px;
             height: 46px;
@@ -1126,7 +1192,8 @@
         .top-card.is-unbound .bind-btn:active { opacity: 0.85; }
         .workbench.is-unbound .marker,
         .workbench.is-unbound .route-layer,
-        .workbench.is-unbound .map-legend { display: none; }
+        .workbench.is-unbound .map-legend,
+        .workbench.is-unbound .dynamic-task-markers { display: none; }
         .workbench.is-unbound .tool-btn.handover { display: none; }
         .all-task-marker {
             position: absolute;
@@ -1756,7 +1823,6 @@
                     <path d="M11 12l3 3 7-7" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <!-- 异常事件和动态任务图标已移除（仅保留起点、终点、车辆） -->
             <div class="marker vehicle" id="vehicleMarker" data-testid="vehicle-marker" aria-hidden="true">
                 <svg viewBox="0 0 32 32" width="31" height="31">
                     <rect x="6" y="11" width="20" height="11" rx="3" fill="#1677ff"/>
@@ -1766,6 +1832,7 @@
                     <path d="M7 8h8M5 15H2M5 19H2" stroke="#52c41a" stroke-width="2" stroke-linecap="round"/>
                 </svg>
             </div>
+            <div class="dynamic-task-markers" id="dynamicTaskMarkers" aria-label="动态任务点位"></div>
             <div class="all-task-markers" id="allTaskMarkers" aria-hidden="true"></div>
         </section>
 
@@ -1834,6 +1901,10 @@
                 <span class="legend-line actual" aria-hidden="true"></span>
                 <span>实际轨迹</span>
             </div>
+            <div class="legend-item">
+                <span class="legend-dynamic-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M12 7v6M12 17.2v.1"/></svg></span>
+                <span>动态任务</span>
+            </div>
             <div class="legend-poi-row" id="legendPoiRow" style="display:none;">
                 <span>辅助设施</span>
                 <span class="legend-poi-dots" aria-hidden="true">
@@ -1859,29 +1930,25 @@
                 </div>
             </div>
 
-            <!-- 第 1 行：路线名称/问题地点 + 任务详情 -->
+            <!-- 第 1 行：路线名称/问题地点 + 任务状态 + 任务详情 -->
             <div class="task-line task-line-head">
                 <div class="task-title-wrap">
                     <div class="task-name-area">
                         <div class="task-name" id="taskTitle">科苑南路至高新南九道</div>
                     </div>
+                    <span class="state-tag pending" id="taskState">待开始</span>
                 </div>
                 <div class="task-head-right">
                     <a class="detail-link" id="detailBtn" href="task-detail.html?id=1">详情</a>
                 </div>
             </div>
 
-            <!-- 第 2 行：任务车牌号 + 任务状态 -->
-            <div class="task-line task-line-plate">
-                <span class="plate-tag" id="taskPlateTag" aria-label="任务车辆">粤B·D2856</span>
-                <span class="state-tag pending" id="taskState">待开始</span>
-            </div>
-
-            <!-- 第 3 行：常态=任务类型 + 作业类型 + 路段-计划时间；动态=问题类型 + 重要程度 + 派发时间 -->
+            <!-- 第 2 行：任务车牌号 + 任务类型 + 作业类型 + 时间段 -->
             <div class="task-line task-line-subtitle">
+                <span class="plate-tag" id="taskPlateTag" aria-label="任务车辆">粤B·D2856</span>
                 <span class="task-type-tag normal" id="taskTypeTag">常态任务</span>
                 <span class="work-type" id="taskWorkType">洗扫</span>
-                <span class="route-text" id="taskRoute">科苑南路至高新南九道 - 08:30-10:30</span>
+                <span class="route-text" id="taskRoute">08:30-10:30</span>
             </div>
 
             <!-- 第 2 行：开始时间 + 作业里程 + 作业时长 -->
@@ -2582,7 +2649,7 @@
             if (plateTag) {
                 plateTag.textContent = task.plateNo || '—';
             }
-            // 副标题行（第 2 行）：常态/临时=任务类型-作业类型-路段-计划时间；动态=问题类型-重要程度-派发时间
+            // 副标题行（第 3 行）：常态/临时=任务类型-作业类型-计划时间段；动态=问题类型-重要程度-派发时间
             var typeTag = document.getElementById('taskTypeTag');
             typeTag.textContent = task.type || '任务';
             typeTag.className = 'task-type-tag ' + (task.icon || 'normal');
@@ -2595,7 +2662,7 @@
             } else {
                 workTypeEl.textContent = task.workType || '作业';
                 workTypeEl.className = 'work-type';
-                routeEl.textContent = (task.routeName || '') + ' - ' + (task.time || '');
+                routeEl.textContent = task.time || '--:--';
             }
             document.getElementById('taskState').textContent = statusText(task.status);
             document.getElementById('taskState').className = 'state-tag ' + statusClass(task.status);
@@ -2683,6 +2750,7 @@
             renderTaskDrawer();
             renderConsole();
             drawSelectedTask();
+            renderDynamicTaskMarkers();
         }
 
         function startTask(id) {
@@ -2805,6 +2873,7 @@
                 banner.setAttribute('aria-hidden', 'false');
             }
             renderTaskDrawer();
+            renderDynamicTaskMarkers();
         }
 
         function openAmapNavigation(id) {
@@ -2880,10 +2949,13 @@
             }, 80);
         }
 
-        function openDynamicTask() {
-            var dynamicTask = tasks.find(function (task) {
+        function openDynamicTask(taskId) {
+            var dynamicTask = taskId ? getTask(taskId) : tasks.find(function (task) {
                 return task.icon === 'dynamic' && task.status === 'pending' && (!task.hiddenUntilDispatch || task.dispatched);
             });
+            if (dynamicTask && (dynamicTask.icon !== 'dynamic' || (dynamicTask.hiddenUntilDispatch && !dynamicTask.dispatched))) {
+                dynamicTask = null;
+            }
             if (!dynamicTask) {
                 showToast('暂无新的动态任务');
                 return;
@@ -2894,6 +2966,9 @@
             drawSelectedTask();
             setTaskList(true);
             highlightTask(dynamicTask.id);
+        }
+        function selectDynamicTaskFromMap(taskId) {
+            openDynamicTask(taskId);
         }
 
         function openModal(id) {
@@ -2984,6 +3059,29 @@
                 box.appendChild(el);
             });
         }
+        function renderDynamicTaskMarkers() {
+            var box = document.getElementById('dynamicTaskMarkers');
+            if (!box) return;
+            box.innerHTML = '';
+            if (!isBound) return;
+            getVisibleTasks().filter(function (task) {
+                return task.icon === 'dynamic' && task.route && task.route.length;
+            }).forEach(function (task) {
+                var point = task.route[task.route.length - 1];
+                var proj = projectPoint(point);
+                var marker = document.createElement('button');
+                marker.type = 'button';
+                marker.className = 'dynamic-task-marker' + (String(task.id) === selectedTaskId ? ' active' : '');
+                marker.style.left = proj.x + 'px';
+                marker.style.top = proj.y + 'px';
+                marker.setAttribute('aria-label', '查看动态任务：' + (task.issueLocation || task.name));
+                marker.setAttribute('title', '查看动态任务');
+                marker.setAttribute('data-task-id', task.id);
+                marker.onclick = function () { selectDynamicTaskFromMap(task.id); };
+                marker.innerHTML = '<span class="dynamic-marker-pin" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M12 7v6M12 17.2v.1"/></svg></span>';
+                box.appendChild(marker);
+            });
+        }
         function applyBoundState() {
             var workbenchEl = document.getElementById('workbench');
             var topCard = document.getElementById('topCard');
@@ -3027,6 +3125,7 @@
         renderTaskDrawer();
         renderConsole();
         drawSelectedTask();
+        renderDynamicTaskMarkers();
         if (!isBound) renderAllTaskMarkers();
         if (executingTaskId) {
             startVehicleMotion(getTask(executingTaskId));

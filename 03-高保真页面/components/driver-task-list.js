@@ -15,6 +15,12 @@
         { value: 'invalid', label: '已失效' }
     ];
     var TYPE_TEXT = { schedule: '常规任务', dynamic: '动态任务' };
+    // 常规任务类型筛选枚举（仅常规任务列表使用）
+    var TASK_TYPE_OPTIONS = [
+        { value: 'all', label: '全部类型' },
+        { value: 'regular', label: '常态任务' },
+        { value: 'temporary', label: '临时任务' }
+    ];
     // 时间搜索选项：今天、明天、近七天、全部、自定义时间段
     var FILTERS = [
         { type: 'today', label: '今天', days: 0 },
@@ -37,6 +43,8 @@
         var currentFilter = rangeFor('today');
         // 车牌筛选：null = 全部车牌（默认值）
         var currentPlate = null;
+        // 常规任务类型筛选：all/regular/temporary（默认全部；仅常规任务列表生效）
+        var currentTaskType = 'all';
         // “已结束”内的细分结果，切换其他阶段时保留选择但不参与过滤。
         var currentResult = 'all';
 
@@ -68,6 +76,16 @@
             return value >= currentFilter.from && value <= currentFilter.to;
         }
 
+        // 判断任务是否为临时任务（兼容 type/taskType/tone 三种数据形态）
+        function isTemporaryTask(task) {
+            return task.tone === 'temporary' || task.type === '临时任务' || task.taskType === '临时任务';
+        }
+
+        function isInTaskType(task) {
+            if (currentTaskType === 'all') return true;
+            return currentTaskType === 'temporary' ? isTemporaryTask(task) : !isTemporaryTask(task);
+        }
+
         function isInTab(task, tab) {
             return tab === 'ended' ? END_STATUSES.indexOf(task.status) !== -1 : task.status === tab;
         }
@@ -78,6 +96,7 @@
                 if (tab === 'ended' && applyResultFilter !== false && currentResult !== 'all' && task.status !== currentResult) return false;
                 if (!isInRange(task)) return false;
                 if (currentPlate && (task.plateNo || '') !== currentPlate) return false;
+                if (listType === 'schedule' && !isInTaskType(task)) return false;
                 return true;
             }).sort(function (a, b) {
                 var aTime = taskDate(a) + ' ' + (a.time || a.dispatchedAt || '');
@@ -96,8 +115,14 @@
             var resultChip = document.getElementById('resultChip');
             resultChip.hidden = currentTab !== 'ended';
             document.getElementById('resultLabel').textContent = resultOption(currentResult).label;
+            var typeLabelEl = document.getElementById('typeLabel');
+            if (typeLabelEl) {
+                var typeOpt = TASK_TYPE_OPTIONS.filter(function (item) { return item.value === currentTaskType; })[0] || TASK_TYPE_OPTIONS[0];
+                typeLabelEl.textContent = typeOpt.label;
+            }
             var visible = filteredTasks(currentTab);
-            document.getElementById('taskCount').textContent = visible.length + ' 项';
+            var taskCountEl = document.getElementById('taskCount');
+            if (taskCountEl) taskCountEl.textContent = visible.length + ' 项';
             document.getElementById('taskList').innerHTML = visible.length
                 ? visible.map(renderCard).join('')
                 : renderEmpty(currentTab);
@@ -107,64 +132,49 @@
             var plate = task.plateNo || task.vehicle || '';
             var plateClass = plate ? '' : ' unassigned';
             var plateText = plate || '未分配车辆';
-            var title = task.name || '未命名任务';
+            var isDynamic = task.listType === 'dynamic';
+            var title = isDynamic
+                ? (task.location || '问题地点待确认')
+                : (task.routeName || '路线待确认');
             var contextClass = TYPE_TEXT[task.listType] ? ' ' + task.listType : '';
             var href = 'task-detail.html?id=' + encodeURIComponent(task.id) +
                 '&status=' + encodeURIComponent(task.status) +
                 '&source=' + encodeURIComponent(task.listType);
 
-            // 第一行：任务标题 + 车牌号 + 任务状态
+            // 第一行：路线名称/问题地点 + 任务状态
             var firstLine = '<span class="task-card-head">' +
-                '<span class="task-card-title-wrap">' +
-                    '<span class="task-card-title-row">' +
-                        '<span class="task-card-title">' + escapeHtml(title) + '</span>' +
-                        '<span class="plate-tag' + plateClass + '">' + escapeHtml(plateText) + '</span>' +
-                    '</span>' +
-                '</span>' +
+                '<span class="task-card-title-wrap"><span class="task-card-title">' + escapeHtml(title) + '</span></span>' +
                 '<span class="status-tag ' + task.status + '">' + (STATUS_TEXT[task.status] || '状态未知') + '</span>' +
             '</span>';
 
-            // 第二行：任务类型 + 作业类型；动态任务附带问题重要程度
-            var secondLine = '';
-            if (task.type || task.workType || (task.listType === 'dynamic' && task.severity)) {
-                var tagList = [];
-                if (task.type) tagList.push('<span class="work-type">' + escapeHtml(task.type) + '</span>');
-                if (task.workType) tagList.push('<span class="work-type">' + escapeHtml(task.workType) + '</span>');
-                if (task.listType === 'dynamic' && task.severity) {
-                    tagList.push('<span class="severity-tag">' + escapeHtml(task.severity) + '</span>');
-                }
-                secondLine = '<span class="task-card-tags">' + tagList.join('') + '</span>';
+            // 第二行：常态/临时任务展示车牌、任务类型、作业类型；动态任务展示车牌、问题类型、重要程度。
+            var tagList = ['<span class="plate-tag' + plateClass + '">' + escapeHtml(plateText) + '</span>'];
+            if (isDynamic) {
+                tagList.push('<span class="work-type">' + escapeHtml(task.issueType || '问题类型待确认') + '</span>');
+                tagList.push('<span class="severity-tag">' + escapeHtml(task.severity || '一般') + '</span>');
+            } else {
+                var typeText = task.type || task.taskType || '常态任务';
+                var typeClass = (task.tone === 'temporary' || task.taskType === '临时任务') ? 'temporary' : 'schedule';
+                tagList.push('<span class="type-tag ' + typeClass + '">' + escapeHtml(typeText) + '</span>');
+                tagList.push('<span class="work-type">' + escapeHtml(task.workType || '作业类型待确认') + '</span>');
             }
+            var secondLine = '<span class="task-card-tags">' + tagList.join('') + '</span>';
 
             return '<button type="button" class="task-card' + contextClass + '" data-detail-href="' + href + '" aria-label="查看' + escapeHtml(title) + '详情">' +
-                firstLine + secondLine +
-                renderMeta(task) + renderSummary(task) +
+                firstLine + secondLine + renderMeta(task) +
             '</button>';
         }
 
         function renderMeta(task) {
             if (task.listType === 'dynamic') {
-                return '<span class="task-meta">' +
-                    '<span class="task-meta-item">' + escapeHtml(task.dispatchedAt || '派发时间待确认') + '</span>' +
-                    '<span class="task-meta-sep"></span>' +
-                    '<span class="task-meta-item grow">' + escapeHtml(task.location || '问题地点待确认') + '</span>' +
-                '</span>';
+                return '<span class="task-meta"><span class="task-meta-item">任务派发时间：' +
+                    escapeHtml(task.dispatchedAt || '待确认') + '</span></span>';
             }
             return '<span class="task-meta">' +
-                '<span class="task-meta-item">' + escapeHtml(task.date || '日期待确认') + '</span>' +
+                '<span class="task-meta-item">计划日期：' + escapeHtml(task.date || '待确认') + '</span>' +
                 '<span class="task-meta-sep"></span>' +
                 '<span class="task-meta-item">' + escapeHtml(task.time || '时间待确认') + '</span>' +
-                '<span class="task-meta-sep"></span>' +
-                '<span class="task-meta-item grow">' + escapeHtml(task.routeName || '路线待确认') + '</span>' +
             '</span>';
-        }
-
-        function renderSummary(task) {
-            if (task.listType === 'dynamic') {
-                var issueText = task.issueType || '问题类型待确认';
-                return '<span class="task-summary">问题类型：' + escapeHtml(issueText) + '</span>';
-            }
-            return '<span class="task-summary">' + escapeHtml(task.requirement || '暂无补充作业要求') + '</span>';
         }
 
         function tabText(tab) {
@@ -325,6 +335,37 @@
             document.getElementById('filterSheet').classList.remove('show');
             document.getElementById('customPanel').classList.remove('show');
             document.getElementById('customError').textContent = '';
+        }
+
+        // 任务类型筛选（仅常规任务列表，元素存在时才绑定）
+        var typeChip = document.getElementById('typeChip');
+        if (typeChip) {
+            function renderTypeSheet() {
+                document.getElementById('typeSheetItems').innerHTML = TASK_TYPE_OPTIONS.map(function (option) {
+                    var active = currentTaskType === option.value ? ' active' : '';
+                    return '<button type="button" class="sheet-item' + active + '" data-task-type="' + option.value + '">' +
+                        '<span>' + option.label + '</span><span class="sheet-check">✓</span></button>';
+                }).join('');
+            }
+            function openTypeSheet() {
+                renderTypeSheet();
+                document.getElementById('typeSheet').classList.add('show');
+            }
+            function closeTypeSheet() {
+                document.getElementById('typeSheet').classList.remove('show');
+            }
+            typeChip.addEventListener('click', openTypeSheet);
+            document.getElementById('typeSheetClose').addEventListener('click', closeTypeSheet);
+            document.getElementById('typeSheet').addEventListener('click', function (event) {
+                if (event.target === this) closeTypeSheet();
+            });
+            document.getElementById('typeSheetItems').addEventListener('click', function (event) {
+                var item = event.target.closest('[data-task-type]');
+                if (!item) return;
+                currentTaskType = item.getAttribute('data-task-type');
+                closeTypeSheet();
+                render();
+            });
         }
 
         render();

@@ -59,6 +59,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     background: #ffffff; color: #4e5969; cursor: pointer;
 }
 .filter-chip:active { background: #f7f8fa; }
+.filter-chip[hidden] { display: none !important; }
 .filter-chip svg { width: 16px; height: 16px; color: #1677ff; }
 .filter-text { overflow: hidden; font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
 .filter-arrow { color: #86909c; font-size: 11px; }
@@ -76,16 +77,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .task-card.dynamic { border-left: 3px solid #73d13d; padding-left: 14px; }
 .task-card-head { display: flex; align-items: flex-start; gap: 8px; }
 .task-card-title-wrap { min-width: 0; flex: 1; }
-.task-card-title-row {
-    display: flex; align-items: center; gap: 6px;
-}
 .task-card-title {
     flex: 1; min-width: 0; color: #1f2329; font-size: 16px; line-height: 24px; font-weight: 600;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
-/* 第一行内的车牌号徽章：紧贴 title 末尾 */
-.task-card-title-row .plate-tag { flex: none; }
-/* 第二行：作业类型 + 紧急程度（与原 .task-card-identifiers 视觉一致） */
+/* 第二行：车牌、任务/问题类型与作业/重要程度。 */
 .task-card-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .plate-tag {
     display: inline-flex; align-items: center; min-height: 22px; padding: 1px 7px;
@@ -98,6 +94,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     border-radius: 4px; font-size: 11px; line-height: 18px; font-weight: 500;
 }
 .type-tag.schedule { color: #0958d9; background: #e6f4ff; }
+.type-tag.temporary { color: #ad6800; background: #fffbe6; }
 .type-tag.emergency { color: #c93638; background: #fff1f0; }
 .type-tag.dynamic { color: #237804; background: #f6ffed; }
 .work-type {
@@ -127,12 +124,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     color: #86909c; font-size: 12px; line-height: 18px;
 }
 .task-meta-item { flex: 0 0 auto; white-space: nowrap; }
-.task-meta-item.grow { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .task-meta-sep { width: 1px; height: 11px; background: #e5e6eb; flex: 0 0 auto; }
-.task-summary {
-    display: -webkit-box; margin-top: 8px; overflow: hidden; color: #4e5969;
-    font-size: 12px; line-height: 18px; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-}
 .empty-state {
     min-height: 320px; padding: 72px 24px 40px; text-align: center;
     background: #ffffff; border-radius: 8px;

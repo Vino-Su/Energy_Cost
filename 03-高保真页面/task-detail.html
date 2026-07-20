@@ -333,7 +333,7 @@
             statusEl.textContent = status.text;
             statusEl.className = 'task-status ' + status.tone;
             var headingText = isDynamicTask
-                ? ((task.issueType || '问题类型待确认') + ' - ' + (task.severity || '一般'))
+                ? ((task.location || '问题地点待确认') + ' - ' + (task.severity || '一般'))
                 : (task.routeName ? (task.routeName + ' - ' + task.workType) : task.name);
             document.getElementById('taskName').textContent = headingText;
 
@@ -413,6 +413,7 @@
                         infoRow('作业资源', renderResources(item, true)) +
                         infoRow('问题经纬度', '<span class="coordinate-list">' + coordinates + '</span>', 'issue-coordinate') +
                         infoRow('问题地点', escapeHtml(item.location), 'issue-location') +
+                        infoRow('详细地点', escapeHtml(item.detailedLocation || '—'), 'detailed-location') +
                         infoRow('问题类型', '<span class="issue-tags">' + escapeHtml(item.issueType || '问题类型待确认') + '</span>') +
                         infoRow('问题重要程度', '<span class="severity">' + escapeHtml(item.severity) + '</span>') +
                         '</div>' +

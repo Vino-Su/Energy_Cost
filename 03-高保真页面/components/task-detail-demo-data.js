@@ -64,6 +64,7 @@
             vehicle: config.plateNo || '未分配车辆',
             coordinates: config.coordinates,
             location: config.location,
+            detailedLocation: config.detailedLocation || '',
             issueType: config.issueType || '问题类型待确认',
             severity: config.severity,
             evidence: config.evidence || [
@@ -137,6 +138,7 @@
             driver: '李四', vehicle: '粤 B·D2856',
             coordinates: ['114.38, 22.69', '114.3812, 22.6896'],
             location: '李屋小区内，李屋居民小组党群服务站附近 17 米',
+            detailedLocation: '深圳市南山区西丽街道李屋小区 3 栋东侧辅道，靠近党群服务站出入口',
             issueType: '明显垃圾', severity: '紧急',
             evidence: [
                 { label: '现场全景', visual: 'debris' },
@@ -256,32 +258,38 @@
         'T-P01': makeDynamicTask({
             id: 'T-P01', status: 'pending', name: '科技园北区垃圾遗漏复核', number: 'DTRW202607110001',
             dispatchedAt: '2026-07-11 09:25:00', plateNo: '粤B·J226V', coordinates: ['113.9462, 22.5371'],
-            location: '科技园北区科丰路公交站南侧 30 米', issueType: '明显垃圾', severity: '紧急', point: [64, 40]
+            location: '科技园北区科丰路公交站南侧 30 米', issueType: '明显垃圾', severity: '紧急', point: [64, 40],
+            detailedLocation: '深圳市南山区科技园北区科丰路西侧，B666 路公交站往南 30 米辅道树池旁'
         }),
         'T-P02': makeDynamicTask({
             id: 'T-P02', status: 'pending', name: '后海大道雨水口堵塞复核', number: 'DTRW202607110002',
             dispatchedAt: '2026-07-11 13:05:00', plateNo: '粤B·K337W', coordinates: ['113.9368, 22.5189'],
-            location: '后海大道与海德一道交叉口东北角', issueType: '雨水口堵塞', severity: '一般', point: [42, 61]
+            location: '后海大道与海德一道交叉口东北角', issueType: '雨水口堵塞', severity: '一般', point: [42, 61],
+            detailedLocation: '深圳市南山区后海大道与海德一道交叉口东北角，人行道雨水箅子位置，靠近海印小区出入口'
         }),
         'T-R01': makeDynamicTask({
             id: 'T-R01', status: 'executing', name: '深南大道油污遗撒处置', number: 'DTRW202607110003',
             dispatchedAt: '2026-07-11 10:18:00', plateNo: '粤B·L448X', coordinates: ['113.9531, 22.5405', '113.9538, 22.5402'],
-            location: '深南大道科技园段西行辅路', issueType: '油污遗撒', severity: '紧急', point: [72, 46]
+            location: '深南大道科技园段西行辅路', issueType: '油污遗撒', severity: '紧急', point: [72, 46],
+            detailedLocation: '深圳市南山区深南大道科技园段西行辅路 K12+800 处，科苑天桥下方右侧车道'
         }),
         'T-R02': makeDynamicTask({
             id: 'T-R02', status: 'executing', name: '南山书城大件垃圾处置', number: 'DTRW202607110004',
             dispatchedAt: '2026-07-11 11:42:00', plateNo: '粤B·M559Y', coordinates: ['113.9342, 22.5226'],
-            location: '南山书城北侧装卸区入口', issueType: '大件垃圾', severity: '一般', point: [38, 52]
+            location: '南山书城北侧装卸区入口', issueType: '大件垃圾', severity: '一般', point: [38, 52],
+            detailedLocation: '深圳市南山区南海大道南山书城北侧装卸区入口 2 号闸门内右侧堆放点'
         }),
         'T-D01': makeDynamicTask({
             id: 'T-D01', status: 'completed', name: '科苑路路面垃圾闭环', number: 'DTRW202607110005',
             dispatchedAt: '2026-07-11 07:20:00', plateNo: '粤B·N660Z', coordinates: ['113.9448, 22.5362'],
-            location: '科苑路与高新南九道交叉口西侧', issueType: '明显垃圾', severity: '一般', point: [58, 49]
+            location: '科苑路与高新南九道交叉口西侧', issueType: '明显垃圾', severity: '一般', point: [58, 49],
+            detailedLocation: '深圳市南山区科苑路与高新南九道交叉口西侧，地铁 9 号线高新南站 C 出口外辅道'
         }),
         'T-D02': makeDynamicTask({
             id: 'T-D02', status: 'completed', name: '蛇口工业路垃圾桶满溢闭环', number: 'DTRW202607100006',
             dispatchedAt: '2026-07-10 16:35:00', plateNo: '粤B·P771A', coordinates: ['113.9165, 22.4941'],
-            location: '蛇口工业路四海公园东门', issueType: '垃圾桶满溢', severity: '一般', point: [28, 67]
+            location: '蛇口工业路四海公园东门', issueType: '垃圾桶满溢', severity: '一般', point: [28, 67],
+            detailedLocation: '深圳市南山区蛇口工业路四海公园东门北侧 20 米，3 号垃圾分类投放点'
         })
     });
 
