@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1677ff">
+  <title>城市管家 - 角色权限演示</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --blue: #1677ff;
+      --blue-soft: #e6f4ff;
+      --ink: #000000d9;
+      --muted: #00000073;
+      --line: #e8e8e8;
+      --canvas: #f5f5f5;
+      --surface: #ffffff;
+      --mint: #52c41a;
+      --mint-soft: #f6ffed;
+      --amber: #fa8c16;
+      --amber-soft: #fff7e6;
+      --coral: #ff4d4f;
+      --coral-soft: #fff2f0;
+      --violet: #722ed1;
+      --violet-soft: #f2f0ff;
+      --shadow: 0 2px 8px rgba(0, 0, 0, .04);
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: #e8eef5; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background: #e8eef5;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--canvas);
+      box-shadow: 0 0 0 1px rgba(24, 52, 77, .06), 0 12px 38px rgba(24, 52, 77, .14);
+    }
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(100%, 430px);
+      height: 56px;
+      padding: 0 16px;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, .96);
+      border-bottom: 1px solid var(--line);
+      z-index: 20;
+      backdrop-filter: blur(12px);
+    }
+    .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      color: #fff;
+      background: var(--blue);
+      border-radius: 8px;
+    }
+    .brand-mark i { width: 17px; height: 17px; }
+    .brand-title { font-size: 16px; font-weight: 700; line-height: 1; }
+    .brand-project { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1; }
+    .role-trigger {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      max-width: 170px;
+      min-height: 32px;
+      padding: 0 9px 0 8px;
+      overflow: hidden;
+      color: var(--blue);
+      background: var(--blue-soft);
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .role-trigger i { width: 14px; height: 14px; flex: 0 0 auto; }
+    .role-trigger span { overflow: hidden; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .page { min-height: 100vh; padding: 56px 0 72px; }
+    .view { display: none; }
+    .view.active { display: block; animation: enter .22s ease-out both; }
+    @keyframes enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .section { padding: 18px 16px 0; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-heading h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0; }
+    .section-heading span { color: var(--muted); font-size: 12px; }
+    /* ===== 首页数据驾驶舱 ===== */
+    .home-banner {
+      position: relative;
+      padding: 22px 18px 64px;
+      overflow: hidden;
+      color: #fff;
+      background: linear-gradient(135deg, #1677ff 0%, #2f7df0 55%, #4096ff 100%);
+    }
+    .home-banner::before {
+      position: absolute;
+      top: -40px;
+      right: -50px;
+      width: 180px;
+      height: 180px;
+      content: "";
+      background: radial-gradient(circle, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .home-banner::after {
+      position: absolute;
+      right: -30px;
+      bottom: -30px;
+      width: 140px;
+      height: 140px;
+      content: "";
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      box-shadow: 0 0 0 18px rgba(255,255,255,.06);
+      pointer-events: none;
+    }
+    .eyebrow { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,.78); font-size: 12px; }
+    .eyebrow i { width: 14px; height: 14px; }
+    .welcome { position: relative; z-index: 1; margin: 9px 0 0; font-size: 22px; font-weight: 700; line-height: 1.2; }
+    .banner-note { position: relative; z-index: 1; margin: 6px 0 0; color: rgba(255,255,255,.82); font-size: 12px; }
+    .banner-meta { position: relative; z-index: 1; display: flex; gap: 16px; margin-top: 12px; }
+    .banner-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: rgba(255,255,255,.92); }
+    .banner-meta-item b { display: block; width: 6px; height: 6px; border-radius: 50%; background: #8be5a9; box-shadow: 0 0 0 4px rgba(139,229,169,.2); }
+    .banner-meta-item.warn b { background: #ffd666; box-shadow: 0 0 0 4px rgba(255,214,102,.22); }
+    .banner-meta-item strong { font-weight: 600; }
+    /* 指标卡（悬浮于 banner 底部） */
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      position: relative;
+      z-index: 2;
+      margin: -44px 16px 0;
+    }
+    .metric { position: relative; min-width: 0; padding: 13px 11px 12px; background: var(--surface); border: 1px solid #eef2f7; border-radius: 12px; box-shadow: 0 4px 16px rgba(21,50,77,.07); }
+    .metric-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .metric-ico { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; }
+    .metric-ico svg, .metric-ico i { width: 14px; height: 14px; }
+    .metric-ico.sky { color: #1677ff; background: #e6f4ff; }
+    .metric-ico.amber { color: #fa8c16; background: #fff7e6; }
+    .metric-ico.red { color: #ff4d4f; background: #fff1f0; }
+    .metric-trend { display: inline-flex; align-items: center; gap: 1px; font-size: 10px; font-weight: 600; }
+    .metric-trend svg, .metric-trend i { width: 11px; height: 11px; }
+    .metric-trend.up { color: #52c41a; }
+    .metric-trend.down { color: #ff4d4f; }
+    .metric-value { color: var(--ink); font-family: "SF UI Text", "PingFang SC", sans-serif; font-size: 22px; font-weight: 700; line-height: 1; }
+    .metric-unit { margin-left: 2px; color: var(--muted); font-family: "PingFang SC", sans-serif; font-size: 11px; font-weight: 400; }
+    .metric-label { margin-top: 6px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .metric-ring { position: absolute; top: 11px; right: 11px; width: 30px; height: 30px; }
+    .metric-ring circle { fill: none; stroke-width: 3; }
+    .metric-ring .track { stroke: #f0f2f5; }
+    .metric-ring .val { stroke: #1677ff; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+    .metric-ring .pct { position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-weight: 700; color: #1677ff; }
+    /* 快捷功能 */
+    .quick-wrap { background: var(--surface); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.04); padding: 4px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px; padding: 2px 2px 4px; }
+    .quick-action { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; padding: 8px 0 6px; color: var(--ink); background: transparent; border: 0; cursor: pointer; transition: transform .12s; }
+    .quick-action:active { transform: scale(.94); opacity: .85; }
+    .quick-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; }
+    .quick-icon svg, .quick-icon i { width: 21px; height: 21px; }
+    .quick-action span { width: 100%; overflow: hidden; font-size: 11px; font-weight: 500; line-height: 14px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+    .sky { color: #1677ff; background: #e6f4ff; }
+    .green { color: #52c41a; background: #f6ffed; }
+    .yellow { color: #fa8c16; background: #fff7e6; }
+    .red { color: #ff4d4f; background: #fff1f0; }
+    .purple { color: #722ed1; background: #f2f0ff; }
+    /* 待办卡片 */
+    .task-list { display: flex; flex-direction: column; gap: 8px; background: transparent; border: 0; padding-top: 4px; }
+    .task-row { position: relative; display: flex; align-items: center; gap: 11px; width: 100%; min-height: 64px; padding: 0 14px 0 16px; color: var(--ink); text-align: left; background: var(--surface); border: 0; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.05); appearance: none; -webkit-appearance: none; cursor: pointer; overflow: hidden; transition: transform .12s; }
+    .task-row:active { transform: scale(.985); }
+    .task-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+    .task-row.yellow::before { background: #fa8c16; }
+    .task-row.red::before { background: #ff4d4f; }
+    .task-row.sky::before { background: #1677ff; }
+    .task-mark { display: grid; place-items: center; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px; }
+    .task-mark svg, .task-mark i { width: 19px; height: 19px; }
+    .task-copy { flex: 1; min-width: 0; }
+    .task-title { overflow: hidden; color: var(--ink); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .task-sub { margin-top: 4px; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .badge { flex: 0 0 auto; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+    .badge.orange { color: #d46b08; background: #fff7e6; }
+    .badge.yellow { color: #d48806; background: #fffbe6; }
+    .badge.blue { color: #1677ff; background: #e6f4ff; }
+    .badge.red { color: #ff4d4f; background: #fff1f0; }
+    .map-page { min-height: calc(100vh - 128px); background: #edf3f5; }
+    .map-toolbar { display: flex; align-items: center; gap: 8px; padding: 14px 16px 12px; overflow-x: auto; background: var(--surface); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+    .map-toolbar::-webkit-scrollbar { display: none; }
+    .topic-chip { flex: 0 0 auto; min-height: 30px; padding: 0 11px; color: var(--muted); background: #f5f8fb; border: 1px solid #e9eff5; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .topic-chip.active { color: var(--blue); background: var(--blue-soft); border-color: #c8e4ff; font-weight: 600; }
+    .map-stage { position: relative; height: min(540px, calc(100vh - 193px)); min-height: 470px; overflow: hidden; background: #dbe9df; }
+    .map-stage::before {
+      position: absolute;
+      inset: -15px;
+      content: "";
+      opacity: .85;
+      background-image:
+        linear-gradient(34deg, transparent 45%, rgba(255,255,255,.84) 46%, rgba(255,255,255,.84) 48%, transparent 49%),
+        linear-gradient(119deg, transparent 45%, rgba(255,255,255,.8) 46%, rgba(255,255,255,.8) 48%, transparent 49%),
+        linear-gradient(0deg, rgba(147,183,159,.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(147,183,159,.18) 1px, transparent 1px);
+      background-size: 150px 112px, 192px 154px, 20px 20px, 20px 20px;
+      transform: rotate(-2deg) scale(1.05);
+    }
+    .river { position: absolute; z-index: 1; top: -20px; left: 42%; width: 55px; height: 680px; background: #a6d8e4; border-right: 4px solid rgba(255,255,255,.6); border-left: 3px solid rgba(255,255,255,.58); transform: rotate(20deg); }
+    .park { position: absolute; z-index: 1; width: 145px; height: 104px; border: 2px solid rgba(255,255,255,.6); border-radius: 38% 62% 48% 52%; background: rgba(114, 181, 113, .43); transform: rotate(-16deg); }
+    .park.one { top: 60px; left: -38px; }
+    .park.two { right: -32px; bottom: 88px; width: 164px; height: 128px; }
+    .route { position: absolute; z-index: 3; top: 37%; left: 10%; width: 73%; height: 34%; border: 3px dashed var(--blue); border-color: var(--blue) transparent transparent transparent; border-radius: 50%; transform: rotate(22deg); }
+    .map-pin { position: absolute; z-index: 5; display: grid; place-items: center; width: 30px; height: 30px; color: #fff; border: 3px solid rgba(255,255,255,.9); border-radius: 50% 50% 50% 4px; box-shadow: 0 4px 11px rgba(20,55,72,.25); transform: rotate(-45deg); }
+    .map-pin i { width: 14px; height: 14px; transform: rotate(45deg); }
+    .map-pin.blue { background: var(--blue); }
+    .map-pin.green { background: var(--mint); }
+    .map-pin.orange { background: var(--amber); }
+    .map-pin.red { background: var(--coral); }
+    .map-label { position: absolute; z-index: 6; padding: 5px 7px; color: var(--ink); background: rgba(255,255,255,.92); border-radius: 4px; box-shadow: 0 2px 8px rgba(20,55,72,.12); font-size: 10px; font-weight: 600; }
+    .map-legend { position: absolute; z-index: 7; right: 12px; bottom: 16px; padding: 9px 10px; color: var(--muted); background: rgba(255,255,255,.94); border: 1px solid rgba(255,255,255,.8); border-radius: 6px; box-shadow: 0 3px 12px rgba(20,55,72,.13); font-size: 10px; line-height: 1.75; }
+    .map-legend strong { display: block; color: var(--ink); font-size: 11px; }
+    .legend-dot { display: inline-block; width: 6px; height: 6px; margin-right: 4px; border-radius: 50%; vertical-align: 1px; }
+    .floating-map-control { position: absolute; z-index: 7; bottom: 16px; left: 12px; display: grid; overflow: hidden; background: #fff; border: 1px solid #fff; border-radius: 6px; box-shadow: 0 3px 12px rgba(20,55,72,.13); }
+    .floating-map-control button { display: grid; place-items: center; width: 32px; height: 32px; color: var(--ink); background: #fff; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+    .floating-map-control button:last-child { border-bottom: 0; }
+    .floating-map-control i { width: 16px; height: 16px; }
+    .service-intro { padding: 19px 16px 13px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .service-intro-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .service-intro h1 { margin: 0; font-size: 20px; line-height: 1.15; }
+    .count-stamp { flex: 0 0 auto; padding: 5px 8px; color: var(--blue); background: var(--blue-soft); border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .service-intro p { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+    .services { padding: 12px 0 6px; }
+    .service-group { margin-bottom: 10px; background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .group-title { display: flex; align-items: center; gap: 7px; min-height: 42px; padding: 0 16px; color: var(--ink); font-size: 13px; font-weight: 700; }
+    .group-title::before { width: 3px; height: 14px; content: ""; background: var(--blue); border-radius: 3px; }
+    .service-item { display: flex; align-items: center; width: 100%; min-height: 54px; padding: 0 16px; color: var(--ink); text-align: left; background: var(--surface); border: 0; border-top: 1px solid var(--line); cursor: pointer; }
+    .service-item:active, .quick-action:active { opacity: .72; }
+    .service-item i:first-child { width: 18px; height: 18px; margin-right: 10px; color: var(--blue); }
+    .service-item span { flex: 1; font-size: 14px; }
+    .service-item i:last-child { width: 16px; height: 16px; color: #9aaaba; }
+    .bottom-nav { position: fixed; z-index: 20; bottom: 0; left: 50%; display: flex; justify-content: center; width: min(100%, 430px); min-height: 64px; padding: 7px 16px 8px; transform: translateX(-50%); background: rgba(255,255,255,.96); border-top: 1px solid var(--line); backdrop-filter: blur(12px); }
+    .tab-button { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 3px; max-width: 92px; min-height: 47px; padding: 0; color: #7a8d9f; background: transparent; border: 0; cursor: pointer; }
+    .tab-button i { width: 21px; height: 21px; }
+    .tab-button span { font-size: 10px; font-weight: 500; }
+    .tab-button.active { color: var(--blue); }
+    .feature-view { position: absolute; z-index: 25; inset: 0; display: none; min-height: 100vh; background: var(--canvas); }
+    .feature-view.show { display: block; animation: feature-in .24s ease-out both; }
+    @keyframes feature-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    .feature-bar { position: fixed; z-index: 26; top: 0; left: 50%; display: flex; align-items: center; width: min(100%, 430px); height: 56px; padding: 0 16px; transform: translateX(-50%); background: #fff; border-bottom: 1px solid var(--line); }
+    .icon-button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; color: var(--ink); background: transparent; border: 0; border-radius: 5px; cursor: pointer; }
+    .icon-button:active { background: var(--blue-soft); }
+    .icon-button i { width: 20px; height: 20px; }
+    .feature-title { flex: 1; padding-right: 32px; overflow: hidden; font-size: 16px; font-weight: 700; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+    .feature-content { padding: 56px 0 28px; }
+    .feature-hero { padding: 20px 16px 17px; color: #fff; background: #1677ff; }
+    .feature-hero-label { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,.75); font-size: 12px; }
+    .feature-hero-label i { width: 14px; height: 14px; }
+    .feature-hero h2 { margin: 8px 0 0; font-size: 21px; }
+    .feature-hero p { margin: 6px 0 0; color: rgba(255,255,255,.82); font-size: 12px; line-height: 1.55; }
+    .feature-tabs { display: flex; gap: 20px; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--line); }
+    .feature-tab { position: relative; min-height: 46px; padding: 0; color: var(--muted); background: transparent; border: 0; font-size: 13px; cursor: pointer; }
+    .feature-tab.active { color: var(--blue); font-weight: 700; }
+    .feature-tab.active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; content: ""; background: var(--blue); }
+    .demo-list { margin-top: 11px; background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .demo-row { display: flex; gap: 10px; align-items: center; min-height: 76px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+    .demo-row:last-child { border-bottom: 0; }
+    .demo-row-icon { display: grid; place-items: center; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 8px; }
+    .demo-row-icon i { width: 19px; height: 19px; }
+    .demo-row-copy { flex: 1; min-width: 0; }
+    .demo-row-title { overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .demo-row-sub { margin-top: 5px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .form-sheet { margin-top: 12px; padding: 18px 16px 16px; background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .form-sheet h3 { margin: 0 0 15px; font-size: 16px; }
+    .form-field { margin-bottom: 15px; }
+    .form-field label { display: block; margin-bottom: 7px; color: var(--ink); font-size: 13px; }
+    .form-field label em { margin-right: 3px; color: var(--coral); font-style: normal; }
+    .fake-input { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 12px; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+    .fake-input i { width: 16px; height: 16px; color: #a5b5c5; }
+    .submit-button { width: 100%; height: 44px; color: #fff; background: var(--blue); border: 0; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .submit-button:active { background: #4096ff; }
+    .role-overlay { position: fixed; z-index: 40; inset: 0; display: none; background: rgba(12, 31, 48, .42); }
+    .role-overlay.show { display: block; }
+    .role-sheet { position: absolute; right: 0; bottom: 0; left: 0; padding: 0 0 max(12px, env(safe-area-inset-bottom)); overflow: hidden; background: #fff; border-radius: 12px 12px 0 0; transform: translateY(102%); transition: transform .24s ease; }
+    .role-overlay.show .role-sheet { transform: translateY(0); }
+    .sheet-handle { width: 30px; height: 4px; margin: 9px auto 4px; background: #d8e1ea; border-radius: 4px; }
+    .sheet-title { padding: 6px 16px 12px; font-size: 16px; font-weight: 700; }
+    .role-option { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 57px; padding: 0 16px; color: var(--ink); text-align: left; background: #fff; border: 0; border-top: 1px solid var(--line); cursor: pointer; }
+    .role-option > i { width: 20px; height: 20px; color: var(--blue); }
+    .role-option-copy { flex: 1; }
+    .role-option-title { font-size: 14px; font-weight: 600; }
+    .role-option-sub { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .role-option .check { width: 18px; height: 18px; color: var(--blue); opacity: 0; }
+    .role-option.selected { background: #f7fbff; }
+    .role-option.selected .check { opacity: 1; }
+    .toast { position: fixed; z-index: 50; bottom: 82px; left: 50%; display: flex; align-items: center; gap: 7px; max-width: calc(100% - 48px); padding: 10px 13px; color: #fff; background: rgba(16,42,67,.92); border-radius: 7px; box-shadow: 0 6px 18px rgba(16,42,67,.2); font-size: 13px; opacity: 0; pointer-events: none; transform: translate(-50%, 14px); transition: opacity .18s, transform .18s; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast i { width: 17px; height: 17px; color: #8be5a9; }
+    @media (min-width: 431px) { .phone { min-height: 812px; } }
+
+    /* Align the standalone demo with the existing vehicle-management APP shell. */
+    html, body { background: #f5f5f5; }
+    .phone { max-width: 375px; min-height: 100vh; background: #f5f5f5; box-shadow: none; }
+    button { appearance: none; -webkit-appearance: none; }
+    .topbar {
+      width: min(100%, 375px);
+      height: 44px;
+      justify-content: center;
+      padding: 0 16px;
+      background: #ffffff;
+      border-bottom-color: #e8e8e8;
+      backdrop-filter: none;
+    }
+    .brand { position: absolute; left: 50%; gap: 0; transform: translateX(-50%); }
+    .brand-mark, .brand-project { display: none; }
+    .brand-title { color: #000000d9; font-size: 16px; font-weight: 600; }
+    .role-trigger {
+      position: absolute;
+      left: 12px;
+      max-width: 130px;
+      min-height: 28px;
+      padding: 0 4px;
+      color: #1677ff;
+      background: transparent;
+      border-radius: 4px;
+    }
+    .role-trigger span { font-size: 12px; font-weight: 500; }
+    .role-trigger i { width: 13px; height: 13px; }
+    .page { min-height: 100vh; padding: 44px 0 56px; }
+    .section { padding: 18px 16px 0; }
+    .metric-strip + .section { padding-top: 20px; }
+    .section-heading { margin-bottom: 10px; }
+    .section-heading h2 { color: #000000d9; font-size: 16px; font-weight: 600; }
+    .section-heading span { color: #00000073; font-size: 12px; }
+    .home-banner { padding: 22px 18px 64px; color: #ffffff; background: linear-gradient(135deg, #1677ff 0%, #2f7df0 55%, #4096ff 100%); }
+    .home-banner::before { top: -40px; right: -50px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 70%); }
+    .home-banner::after { display: block; right: -30px; bottom: -30px; width: 140px; height: 140px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; box-shadow: 0 0 0 18px rgba(255,255,255,.06); }
+    .eyebrow { color: rgba(255,255,255,.78); font-size: 12px; }
+    .eyebrow i { color: rgba(255,255,255,.85); }
+    .welcome { margin-top: 9px; color: #ffffff; font-size: 22px; font-weight: 700; line-height: 1.2; }
+    .banner-note { margin-top: 6px; color: rgba(255,255,255,.82); font-size: 12px; line-height: 18px; }
+    .banner-meta-item { color: rgba(255,255,255,.92); font-size: 12px; }
+    .metric-strip { margin: -44px 16px 0; gap: 8px; }
+    .metric { padding: 16px 14px 14px; background: #ffffff; border: 1px solid #eef2f7; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .metric-value { color: #000000d9; font-family: "SF UI Text", "PingFang SC", sans-serif; font-size: 22px; font-weight: 700; }
+    .metric-unit { color: #00000073; font-size: 11px; }
+    .metric-label { margin-top: 6px; color: #00000073; font-size: 11px; }
+    .quick-wrap { background: #ffffff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.04); padding: 4px; }
+    .quick-grid { gap: 4px 2px; padding: 2px 2px 4px; }
+    .quick-action { gap: 6px; padding: 8px 0 6px; }
+    .quick-icon { width: 40px; height: 40px; border-radius: 11px; }
+    .quick-icon svg, .quick-icon i { width: 21px; height: 21px; }
+    .quick-action span { color: #000000d9; font-size: 11px; font-weight: 500; line-height: 14px; }
+    .sky { color: #1677ff; background: #e6f4ff; }
+    .green { color: #52c41a; background: #f6ffed; }
+    .yellow { color: #fa8c16; background: #fff7e6; }
+    .red { color: #ff4d4f; background: #fff1f0; }
+    .purple { color: #722ed1; background: #f2f0ff; }
+    .task-list { background: transparent; border: 0; gap: 8px; }
+    .task-row { min-height: 64px; padding: 0 14px 0 16px; background: #ffffff; border: 0; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+    .task-mark { width: 38px; height: 38px; border-radius: 10px; }
+    .task-title { color: #000000d9; font-size: 14px; font-weight: 600; }
+    .task-sub { color: #00000073; font-size: 12px; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+    .badge.orange { color: #d46b08; background: #fff7e6; }
+    .badge.yellow { color: #d48806; background: #fffbe6; }
+    .badge.blue { color: #1677ff; background: #e6f4ff; }
+    .badge.red { color: #ff4d4f; background: #fff1f0; }
+    .map-page { min-height: calc(100vh - 100px); background: #eef2f5; }
+    .map-toolbar { min-height: 44px; padding: 7px 12px; background: #ffffff; border-bottom-color: #e8e8e8; }
+    .topic-chip { min-height: 28px; padding: 0 10px; color: #00000073; background: #ffffff; border: 1px solid #e8e8e8; border-radius: 4px; }
+    .topic-chip.active { color: #1677ff; background: #e6f4ff; border-color: #91caff; }
+    .map-stage { height: min(540px, calc(100vh - 156px)); min-height: 440px; }
+    .map-legend, .floating-map-control { border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .service-intro { padding: 16px; background: #ffffff; border-bottom-color: #e8e8e8; }
+    .service-intro h1 { color: #000000d9; font-size: 20px; font-weight: 600; }
+    .count-stamp { padding: 3px 7px; color: #1677ff; background: #e6f4ff; border-radius: 4px; font-size: 11px; font-weight: 400; }
+    .service-intro p { color: #00000073; font-size: 13px; }
+    .services { padding: 0 0 8px; }
+    .service-group { margin: 8px 0 0; border-color: #e8e8e8; }
+    .group-title { min-height: 44px; padding: 0 16px; color: #00000073; font-size: 14px; font-weight: 400; }
+    .group-title::before { display: none; }
+    .service-item { min-height: 52px; color: #000000d9; border-top-color: #f0f0f0; }
+    .service-item i:first-child { width: 20px; height: 20px; margin-right: 10px; color: #1677ff; }
+    .service-item span { font-size: 14px; }
+    .service-item i:last-child { color: #00000040; }
+    .bottom-nav { width: min(100%, 375px); min-height: 56px; padding: 0; background: #ffffff; border-top-color: #e8e8e8; backdrop-filter: none; }
+    .tab-button { min-height: 56px; max-width: none; color: #00000073; }
+    .tab-button i { width: 24px; height: 24px; }
+    .tab-button span { font-size: 10px; font-weight: 400; }
+    .tab-button.active { color: #1677ff; }
+    .feature-view { background: #f5f5f5; }
+    .feature-bar { width: min(100%, 375px); height: 44px; background: #ffffff; border-bottom-color: #e8e8e8; }
+    .feature-title { color: #000000d9; font-size: 16px; font-weight: 600; }
+    .feature-content { padding-top: 44px; }
+    .feature-hero { padding: 20px 16px 16px; color: #000000d9; background: #ffffff; border-bottom: 1px solid #e8e8e8; }
+    .feature-hero-label { color: #1677ff; }
+    .feature-hero h2 { margin-top: 8px; color: #000000d9; font-size: 20px; font-weight: 600; }
+    .feature-hero p { color: #00000073; font-size: 13px; }
+    .feature-tabs { background: #ffffff; border-bottom-color: #e8e8e8; }
+    .feature-tab { color: #00000073; }
+    .feature-tab.active { color: #1677ff; }
+    .demo-list { margin-top: 8px; border-color: #e8e8e8; }
+    .demo-row { min-height: 68px; border-bottom-color: #f0f0f0; }
+    .demo-row-title { color: #000000d9; font-size: 14px; font-weight: 500; }
+    .demo-row-sub { color: #00000073; font-size: 12px; }
+    .form-sheet { margin-top: 8px; padding: 16px; border-color: #e8e8e8; }
+    .form-sheet h3 { color: #000000d9; font-size: 16px; font-weight: 600; }
+    .form-field label { color: #000000d9; font-size: 14px; }
+    .fake-input { min-height: 44px; color: #00000040; border-color: #e8e8e8; border-radius: 8px; }
+    .submit-button { height: 44px; border-radius: 8px; }
+    .role-overlay { max-width: 375px; margin: 0 auto; background: rgba(0,0,0,.5); }
+    .role-sheet { background: #f5f5f5; border-radius: 16px 16px 0 0; }
+    .sheet-title { padding: 14px 16px; color: #000000d9; background: #ffffff; font-size: 16px; font-weight: 600; }
+    .role-option { min-height: 52px; background: #ffffff; border-top-color: #f0f0f0; }
+    .role-option > i { color: #1677ff; }
+    .role-option-title { color: #000000d9; font-size: 14px; font-weight: 500; }
+    .role-option-sub { color: #00000073; font-size: 12px; }
+    .role-option.selected { background: #f7fbff; }
+    .toast { bottom: 72px; border-radius: 8px; font-size: 14px; }
+    .service-group { margin: 0 0 12px; background: #ffffff; border: 0; }
+    .group-title { display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 12px 16px 4px; color: #00000073; background: #ffffff; font-size: 14px; line-height: 20px; font-weight: 500; }
+    .group-title::before { content: ""; width: 3px; height: 14px; background: #1677ff; border-radius: 3px; flex: 0 0 auto; }
+    .service-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 4px 16px 12px; background: #ffffff; }
+    .service-item { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-height: 80px; padding: 8px 0 12px; color: #000000d9; text-align: center; background: transparent; border: 0; }
+    .service-item > span { flex: none; min-width: 0; width: 100%; overflow: hidden; font-size: 13px; font-weight: 500; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
+    .service-item .service-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 10px; }
+    .service-item .service-icon i { width: 22px; height: 22px; margin: 0; color: inherit; }
+    .service-icon.tone-blue { color: #1677ff; background: #e6f4ff; }
+    .service-icon.tone-green { color: #52c41a; background: #f6ffed; }
+    .service-icon.tone-orange { color: #fa8c16; background: #fff7e6; }
+    .service-icon.tone-red { color: #ff4d4f; background: #fff1f0; }
+    .service-icon.tone-purple { color: #722ed1; background: #f2f0ff; }
+    .service-icon.tone-cyan { color: #13c2c2; background: #e6fffb; }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="城市管家角色权限演示">
+    <header class="topbar">
+      <button class="role-trigger" id="roleTrigger" type="button" aria-label="切换演示角色">
+        <span id="roleTriggerText">项目经理</span><i data-lucide="chevron-down"></i>
+      </button>
+      <div class="brand">
+        <span class="brand-mark"><i data-lucide="building-2"></i></span>
+        <div>
+          <div class="brand-title">城市管家</div>
+          <div class="brand-project">晴川城区服务项目</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page">
+      <section class="view active" id="homeView" aria-label="首页"></section>
+      <section class="view" id="mapView" aria-label="地图"></section>
+      <section class="view" id="servicesView" aria-label="服务"></section>
+    </div>
+
+    <nav class="bottom-nav" id="bottomNav" aria-label="主导航"></nav>
+
+    <section class="feature-view" id="featureView" aria-label="功能演示详情">
+      <div class="feature-bar">
+        <button type="button" class="icon-button" id="featureBack" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+        <div class="feature-title" id="featureTitle">功能详情</div>
+      </div>
+      <div class="feature-content" id="featureContent"></div>
+    </section>
+
+    <div class="role-overlay" id="roleOverlay" aria-hidden="true">
+      <div class="role-sheet" role="dialog" aria-modal="true" aria-label="选择演示角色">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">选择演示角色</div>
+        <div id="roleOptions"></div>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"><i data-lucide="circle-check"></i><span id="toastText"></span></div>
+  </main>
+
+  <script>
+    const roleData = {
+      manager: {
+        name: '项目经理', icon: 'briefcase-business', tabs: ['home', 'map', 'services'],
+        desc: '统筹项目运营、质量与资源', person: '周明远', mapTopics: ['作业监控', '人员监控', '车辆监控'],
+        greeting: '早上好，周明远', note: '今日项目运行平稳，3 项待办需要跟进。',
+        metrics: [['86', '%', '作业完成率'], ['12', '项', '待处理事项'], ['2', '个', '异常预警']],
+        quick: [['clipboard-list', '任务总览', 'sky', '常规任务'], ['map-pinned', '作业监控', 'green', '作业监控'], ['circle-alert', '异常记录', 'red', '异常记录'], ['chart-no-axes-combined', '成本分析', 'yellow', '费用分析'], ['file-check', '费用审批', 'purple', '费用审批'], ['badge-check', '巡查任务', 'sky', '巡查任务'], ['users-round', '人员监控', 'green', '人员监控'], ['bell-ring', '机器人告警', 'red', '告警信息']],
+        tasks: [['动态调度任务待确认', '南区 07:30 - 指派 2 人', 'orange', '待确认'], ['机器人低电量预警', 'CW-RB-021 · 余量 18%', 'red', '紧急'], ['本周费用审批', '待审批 5 笔报销单', 'blue', '待处理']],
+        groups: [
+          ['作业与任务', ['常规任务', '动态任务']], ['事件管理', ['事件记录', '异常记录']], ['品质管理', ['巡查任务', '巡查问题']],
+          ['车辆管理', ['车辆台账', '水电油记录', '维修记录']], ['机器人管理', ['机器人台账', '告警信息', '应急工单', '维修记录']],
+          ['费用成本', ['费用记录', '费用审批', '报销记录']], ['数据统计', ['考勤统计', '任务统计', '费用分析', '油耗分析', '电耗分析', '异常记录统计']],
+          ['人员与考勤', ['人员台账', '人员排班', '考勤记录', '考勤打卡']], ['培训教育', ['员工培训', '作业规范']]
+        ]
+      },
+      clerk: {
+        name: '项目文员', icon: 'notebook-pen', tabs: ['services'], desc: '维护项目台账与费用资料', person: '陈静', mapTopics: [],
+        groups: [
+          ['车辆管理', ['车辆台账', '水电油记录', '维修记录']], ['机器人管理', ['机器人台账', '维修记录']], ['费用成本', ['费用记录', '费用审批', '报销记录']],
+          ['数据统计', ['考勤统计', '任务统计', '费用分析', '油耗分析', '电耗分析', '异常记录统计']], ['人员与考勤', ['人员台账', '人员排班', '考勤记录', '考勤打卡']], ['培训教育', ['员工培训', '作业规范']]
+        ]
+      },
+      driver: {
+        name: '驾驶员', icon: 'truck', tabs: ['map', 'services'], desc: '执行车辆作业与能耗上报', person: '李强', mapTopics: ['任务执行'],
+        groups: [
+          ['作业与任务', ['常规任务', '动态任务']], ['车辆管理', ['加油上报', '加水上报', '充电上报', '水电油记录', '故障报修', '维修记录']],
+          ['费用成本', ['费用上报', '费用记录', '费用报销', '报销记录']], ['数据统计', ['考勤统计', '任务统计', '出车统计', '工作日报']],
+          ['人员与考勤', ['个人信息', '个人排班', '考勤记录', '考勤打卡']], ['培训教育', ['员工培训', '作业规范']]
+        ]
+      },
+      sanitation: {
+        name: '环卫工', icon: 'sparkles', tabs: ['map', 'services'], desc: '执行现场保洁与事件上报', person: '王雪', mapTopics: ['任务执行'],
+        groups: [
+          ['作业与任务', ['常规任务', '动态任务']], ['事件管理', ['事件上报', '事件记录']], ['费用成本', ['费用上报', '费用记录', '费用报销', '报销记录']],
+          ['数据统计', ['考勤统计', '任务统计', '工作日报']], ['人员与考勤', ['个人信息', '个人排班', '考勤记录', '考勤打卡']], ['培训教育', ['员工培训', '作业规范']]
+        ]
+      },
+      inspector: {
+        name: '品质巡查', icon: 'search-check', tabs: ['map', 'services'], desc: '开展巡查整改与车辆保障', person: '赵航', mapTopics: ['任务执行'],
+        groups: [
+          ['品质管理', ['巡查任务', '巡查问题']], ['车辆管理', ['加油上报', '加水上报', '充电上报', '水电油记录', '故障报修', '维修记录']],
+          ['费用成本', ['费用上报', '费用记录', '费用报销', '报销记录']], ['数据统计', ['考勤统计', '任务统计', '出车统计', '工作日报']],
+          ['人员与考勤', ['个人信息', '个人排班', '考勤记录', '考勤打卡']], ['培训教育', ['员工培训', '作业规范']]
+        ]
+      },
+      safety: {
+        name: '安全员', icon: 'shield-alert', tabs: ['map', 'services'], desc: '监控机器人运行与安全告警', person: '孙毅', mapTopics: ['机器人监控地图'],
+        groups: [
+          ['机器人管理', ['机器人台账', '告警信息', '应急工单', '故障报修', '维修记录']], ['费用成本', ['费用上报', '费用记录', '费用报销', '报销记录']],
+          ['数据统计', ['考勤统计', '任务统计', '出车统计', '工作日报']], ['人员与考勤', ['个人信息', '个人排班', '考勤记录', '考勤打卡']], ['培训教育', ['员工培训', '作业规范']]
+        ]
+      }
+    };
+
+    const tabMeta = { home: ['house', '首页'], map: ['map', '地图'], services: ['layout-grid', '服务'] };
+    // 分组级图标：用于分组标题前的小标识
+    const serviceIcons = {
+      '作业与任务': 'clipboard-list', '事件管理': 'circle-alert', '品质管理': 'badge-check', '车辆管理': 'truck', '机器人管理': 'bot',
+      '费用成本': 'wallet-cards', '数据统计': 'chart-no-axes-combined', '人员与考勤': 'users-round', '培训教育': 'graduation-cap'
+    };
+    const serviceGroupTones = {
+      '作业与任务': 'tone-blue', '事件管理': 'tone-red', '品质管理': 'tone-green', '车辆管理': 'tone-orange', '机器人管理': 'tone-purple',
+      '费用成本': 'tone-orange', '数据统计': 'tone-cyan', '人员与考勤': 'tone-blue', '培训教育': 'tone-purple'
+    };
+    // 功能项级图标：每个功能独立图标，语义对齐用车管理 APP
+    const serviceItemIcons = {
+      '常规任务': 'calendar-clock', '动态任务': 'zap',
+      '事件上报': 'megaphone', '事件记录': 'file-text', '异常记录': 'triangle-alert',
+      '巡查任务': 'clipboard-check', '巡查问题': 'search-check',
+      '车辆台账': 'truck', '加油上报': 'fuel', '加水上报': 'droplets', '充电上报': 'battery-charging', '水电油记录': 'gauge', '故障报修': 'wrench', '维修记录': 'file-cog',
+      '机器人台账': 'bot', '告警信息': 'bell-ring', '应急工单': 'siren',
+      '费用记录': 'receipt', '费用审批': 'file-check', '报销记录': 'wallet', '费用上报': 'hand-coins', '费用报销': 'banknote',
+      '考勤统计': 'fingerprint', '任务统计': 'list-checks', '费用分析': 'pie-chart', '油耗分析': 'fuel', '电耗分析': 'battery-charging', '异常记录统计': 'chart-scatter', '出车统计': 'bar-chart-3', '工作日报': 'file-bar-chart',
+      '人员台账': 'users-round', '人员排班': 'calendar-days', '考勤记录': 'history', '考勤打卡': 'map-pin-check', '个人信息': 'user-round', '个人排班': 'calendar-range',
+      '员工培训': 'graduation-cap', '作业规范': 'book-open'
+    };
+    // 功能项级配色：细化到功能，语义对齐用车管理 APP（蓝=常规/计划 绿=完成/充电 橙=加油/维保 紫=记录/费用 青=统计 红=异常/故障）
+    const serviceItemTones = {
+      '常规任务': 'tone-blue', '动态任务': 'tone-green',
+      '事件上报': 'tone-orange', '事件记录': 'tone-blue', '异常记录': 'tone-red',
+      '巡查任务': 'tone-blue', '巡查问题': 'tone-purple',
+      '车辆台账': 'tone-blue', '加油上报': 'tone-orange', '加水上报': 'tone-blue', '充电上报': 'tone-green', '水电油记录': 'tone-purple', '故障报修': 'tone-red', '维修记录': 'tone-orange',
+      '机器人台账': 'tone-purple', '告警信息': 'tone-red', '应急工单': 'tone-orange',
+      '费用记录': 'tone-purple', '费用审批': 'tone-blue', '报销记录': 'tone-purple', '费用上报': 'tone-orange', '费用报销': 'tone-green',
+      '考勤统计': 'tone-cyan', '任务统计': 'tone-purple', '费用分析': 'tone-purple', '油耗分析': 'tone-orange', '电耗分析': 'tone-green', '异常记录统计': 'tone-red', '出车统计': 'tone-cyan', '工作日报': 'tone-blue',
+      '人员台账': 'tone-blue', '人员排班': 'tone-blue', '考勤记录': 'tone-cyan', '考勤打卡': 'tone-green', '个人信息': 'tone-blue', '个人排班': 'tone-blue',
+      '员工培训': 'tone-purple', '作业规范': 'tone-cyan'
+    };
+    let activeRole = 'manager';
+    let activeTab = 'home';
+    let activeTopic = 0;
+    let toastTimer;
+
+    function icon(name) { return `<i data-lucide="${name}"></i>`; }
+    function refreshIcons() { if (window.lucide) lucide.createIcons(); }
+    function current() { return roleData[activeRole]; }
+    function totalServices(role) { return role.groups.reduce((sum, group) => sum + group[1].length, 0); }
+
+    function renderHome() {
+      const role = current();
+      const host = document.getElementById('homeView');
+      if (!role.tabs.includes('home')) { host.innerHTML = ''; return; }
+      // 指标可视化配置：图标 / 配色 / 趋势
+      const metricVisual = [
+        { ico: 'gauge', tone: 'sky', ring: 86, trend: 'up', trendText: '4.2%' },
+        { ico: 'list-checks', tone: 'amber', trend: 'down', trendText: '3' },
+        { ico: 'triangle-alert', tone: 'red', trend: 'up', trendText: '1' }
+      ];
+      const taskMark = (c) => c === 'red' ? 'red' : c === 'blue' ? 'sky' : 'yellow';
+      const badgeClass = (c) => c === 'red' ? 'red' : c === 'blue' ? 'blue' : 'yellow';
+      const taskIcon = (c) => c === 'red' ? 'triangle-alert' : c === 'blue' ? 'file-clock' : 'calendar-clock';
+      host.innerHTML = `
+        <div class="home-banner">
+          <div class="eyebrow">${icon('cloud-sun')} <span>2026 年 7 月 25 日 · 星期六</span></div>
+          <h1 class="welcome">${role.greeting}</h1>
+          <p class="banner-note">${role.note}</p>
+          <div class="banner-meta">
+            <span class="banner-meta-item"><b></b>项目运行正常</span>
+            <span class="banner-meta-item warn"><b></b>${role.tasks.length} 项待办</span>
+          </div>
+        </div>
+        <div class="metric-strip">${role.metrics.map((metric, i) => {
+          const v = metricVisual[i] || {};
+          const ring = v.ring;
+          const ringSvg = ring ? `<svg class="metric-ring" viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15"></circle><circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${2*Math.PI*15}" stroke-dashoffset="${2*Math.PI*15*(1-ring/100)}"></circle></svg><span class="pct" style="display:none">${ring}%</span>` : '';
+          const trend = v.trend ? `<span class="metric-trend ${v.trend}">${icon(v.trend === 'up' ? 'trending-up' : 'trending-down')}<span>${v.trendText}</span></span>` : '';
+          return `<div class="metric"><div class="metric-head"><span class="metric-ico ${v.tone || 'sky'}">${icon(v.ico || 'circle-dot')}</span>${trend}</div><div class="metric-value">${metric[0]}<span class="metric-unit">${metric[1]}</span></div><div class="metric-label">${metric[2]}</div>${ringSvg}</div>`;
+        }).join('')}</div>
+        <section class="section"><div class="section-heading"><h2>快捷功能</h2><span>高频工作入口</span></div>
+          <div class="quick-wrap"><div class="quick-grid">${role.quick.map(item => `<button class="quick-action" type="button" data-open-feature="${item[3]}"><span class="quick-icon ${item[2]}">${icon(item[0])}</span><span>${item[1]}</span></button>`).join('')}</div></div>
+        </section>
+        <section class="section"><div class="section-heading"><h2>待办事项</h2><span>${role.tasks.length} 项待处理</span></div></section>
+        <div class="task-list">${role.tasks.map((task, index) => `<button class="task-row ${taskMark(task[2])}" type="button" data-open-feature="${index === 1 ? '异常记录' : '常规任务'}"><span class="task-mark ${taskMark(task[2])}">${icon(taskIcon(task[2]))}</span><span class="task-copy"><span class="task-title">${task[0]}</span><span class="task-sub">${task[1]}</span></span><span class="badge ${badgeClass(task[2])}">${task[3]}</span></button>`).join('')}</div>`;
+    }
+
+    function mapContent(role) {
+      const topic = role.mapTopics[activeTopic] || '任务执行';
+      const isSafety = topic === '机器人监控地图';
+      const isPeople = topic === '人员监控';
+      const isVehicle = topic === '车辆监控';
+      const label = isSafety ? '机器人在线 18 / 20' : isPeople ? '作业人员在线 62 人' : isVehicle ? '作业车辆在线 24 台' : '今日任务执行中 8 项';
+      return `
+        <div class="map-stage" id="mapStage"><div class="river"></div><div class="park one"></div><div class="park two"></div><div class="route"></div>
+          <span class="map-pin blue" style="left:21%;top:25%">${icon(isSafety ? 'bot' : isPeople ? 'user-round' : 'truck')}</span><span class="map-label" style="left:27%;top:22%">${isSafety ? 'RB-021' : isPeople ? '保洁组 A' : '作业点 01'}</span>
+          <span class="map-pin green" style="left:61%;top:37%">${icon(isSafety ? 'bot' : 'map-pin')}</span><span class="map-label" style="left:67%;top:35%">${isSafety ? 'RB-035' : '中央广场'}</span>
+          <span class="map-pin orange" style="left:38%;top:66%">${icon(isPeople ? 'user-round' : 'circle-dot')}</span><span class="map-label" style="left:44%;top:64%">${isPeople ? '巡查组 B' : '作业点 03'}</span>
+          <span class="map-pin red" style="left:76%;top:71%">${icon('triangle-alert')}</span><span class="map-label" style="left:64%;top:77%">${isSafety ? '低电量预警' : '待处理事件'}</span>
+          <div class="floating-map-control"><button type="button" aria-label="放大地图">${icon('plus')}</button><button type="button" aria-label="缩小地图">${icon('minus')}</button></div>
+          <div class="map-legend"><strong>${label}</strong><span><b class="legend-dot" style="background:#1677ff"></b>运行中</span><br><span><b class="legend-dot" style="background:#18a87a"></b>已完成</span><br><span><b class="legend-dot" style="background:#e65b56"></b>需处理</span></div>
+        </div>`;
+    }
+
+    function renderMap() {
+      const role = current();
+      const host = document.getElementById('mapView');
+      if (!role.tabs.includes('map')) { host.innerHTML = ''; return; }
+      if (activeTopic >= role.mapTopics.length) activeTopic = 0;
+      host.innerHTML = `<div class="map-page"><div class="map-toolbar">${role.mapTopics.map((topic, index) => `<button class="topic-chip ${index === activeTopic ? 'active' : ''}" type="button" data-topic="${index}">${topic}</button>`).join('')}</div>${mapContent(role)}</div>`;
+    }
+
+    function renderServices() {
+      const role = current();
+      const host = document.getElementById('servicesView');
+      host.innerHTML = `
+        <div class="services">${role.groups.map(group => `<section class="service-group"><div class="group-title">${group[0]}</div><div class="service-grid">${group[1].map(item => `<button class="service-item" type="button" data-open-feature="${item}"><span class="service-icon ${serviceItemTones[item] || 'tone-blue'}">${icon(serviceItemIcons[item] || 'circle-dot')}</span><span>${item}</span></button>`).join('')}</div></section>`).join('')}</div>`;
+    }
+
+    function renderNav() {
+      const role = current();
+      if (!role.tabs.includes(activeTab)) activeTab = role.tabs[0];
+      const nav = document.getElementById('bottomNav');
+      // 单 Tab 角色不渲染底部导航，内容区自动填满；多 Tab 时正常显示导航。
+      if (role.tabs.length < 2) {
+        nav.innerHTML = '';
+        nav.style.display = 'none';
+        document.querySelector('.page').style.paddingBottom = '0';
+      } else {
+        nav.style.display = '';
+        document.querySelector('.page').style.paddingBottom = '';
+        nav.innerHTML = role.tabs.map(tab => `<button class="tab-button ${tab === activeTab ? 'active' : ''}" type="button" data-tab="${tab}" aria-label="切换到${tabMeta[tab][1]}">${icon(tabMeta[tab][0])}<span>${tabMeta[tab][1]}</span></button>`).join('');
+      }
+      document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+      document.getElementById(`${activeTab}View`).classList.add('active');
+    }
+
+    function renderRoleOptions() {
+      document.getElementById('roleOptions').innerHTML = Object.entries(roleData).map(([key, role]) => `<button class="role-option ${key === activeRole ? 'selected' : ''}" type="button" data-role="${key}"><i data-lucide="${role.icon}"></i><span class="role-option-copy"><span class="role-option-title">${role.name}</span><span class="role-option-sub">${role.desc}</span></span><i class="check" data-lucide="check"></i></button>`).join('');
+    }
+
+    function bindPageActions() {
+      // 使用事件委托：所有动态渲染的容器只绑定一次监听器，
+      // 避免因 innerHTML 重建（renderNav/renderMap/renderServices 等）导致按钮监听器丢失、点击失效。
+      document.getElementById('bottomNav').addEventListener('click', event => {
+        const button = event.target.closest('[data-tab]');
+        if (!button) return;
+        activeTab = button.dataset.tab; renderNav(); refreshIcons();
+      });
+      document.getElementById('mapView').addEventListener('click', event => {
+        const topicBtn = event.target.closest('[data-topic]');
+        if (topicBtn) { activeTopic = Number(topicBtn.dataset.topic); renderMap(); refreshIcons(); return; }
+        const mapCtrl = event.target.closest('.floating-map-control button');
+        if (mapCtrl) { showToast(mapCtrl.getAttribute('aria-label') + '（演示）'); }
+      });
+      document.getElementById('homeView').addEventListener('click', event => {
+        const btn = event.target.closest('[data-open-feature]');
+        if (btn) openFeature(btn.dataset.openFeature);
+      });
+      document.getElementById('servicesView').addEventListener('click', event => {
+        const btn = event.target.closest('[data-open-feature]');
+        if (btn) openFeature(btn.dataset.openFeature);
+      });
+      document.getElementById('roleOptions').addEventListener('click', event => {
+        const btn = event.target.closest('[data-role]');
+        if (btn) selectRole(btn.dataset.role);
+      });
+    }
+
+    function renderApp() {
+      renderHome(); renderMap(); renderServices(); renderNav(); renderRoleOptions();
+      document.getElementById('roleTriggerText').textContent = current().name;
+      refreshIcons();
+    }
+
+    function selectRole(roleKey) {
+      activeRole = roleKey; activeTopic = 0; activeTab = current().tabs[0];
+      closeRoleSheet(); renderApp(); showToast(`已切换为${current().name}`);
+    }
+
+    function openFeature(name) {
+      const isForm = /上报|报修|报销|打卡/.test(name);
+      const isTask = /任务|工单|问题|告警|异常/.test(name);
+      const type = isForm ? '表单演示' : isTask ? '待办与处置' : '数据记录';
+      const subtitle = isForm ? '填写必要信息后提交，演示状态反馈。' : isTask ? '展示处理中的业务事项与状态。' : '按角色权限展示可访问的数据记录。';
+      const records = isTask ? [
+        ['待处理事项', '今日 09:20 · 晴川城区南区', 'clock-3', 'yellow'], ['已分派事项', '负责人：' + current().person + ' · 截止 16:30', 'user-round-check', 'sky'], ['历史处理记录', '昨日已完成 · 处理结果正常', 'circle-check', 'green']
+      ] : [
+        ['晴川城区服务项目', '2026-07-25 · 数据已同步', 'file-text', 'sky'], ['本周累计记录', '本角色可查看的有效业务数据', 'database', 'purple'], ['最近更新', '10 分钟前 · 状态正常', 'refresh-cw', 'green']
+      ];
+      document.getElementById('featureTitle').textContent = name;
+      document.getElementById('featureContent').innerHTML = `
+        <div class="feature-hero"><div class="feature-hero-label">${icon(isForm ? 'file-pen-line' : isTask ? 'list-todo' : 'folder-open')} ${type}</div><h2>${name}</h2><p>${subtitle}</p></div>
+        ${isTask ? '<div class="feature-tabs"><button class="feature-tab active" type="button">待处理</button><button class="feature-tab" type="button">进行中</button><button class="feature-tab" type="button">已完成</button></div>' : ''}
+        ${isForm ? formTemplate(name) : `<div class="demo-list">${records.map(record => `<div class="demo-row"><span class="demo-row-icon ${record[3]}">${icon(record[2])}</span><span class="demo-row-copy"><span class="demo-row-title">${record[0]}</span><span class="demo-row-sub">${record[1]}</span></span>${icon('chevron-right')}</div>`).join('')}</div>`}`;
+      document.getElementById('featureView').classList.add('show');
+      refreshIcons();
+      document.querySelectorAll('.feature-tab').forEach(tab => tab.addEventListener('click', () => { document.querySelectorAll('.feature-tab').forEach(item => item.classList.remove('active')); tab.classList.add('active'); showToast(`已查看${tab.textContent}事项`); }));
+      const submit = document.getElementById('demoSubmit');
+      if (submit) submit.addEventListener('click', () => showToast(`${name}已提交，等待审核`));
+    }
+
+    function formTemplate(name) {
+      const business = name.replace('上报', '').replace('报修', '设备故障').replace('报销', '费用');
+      return `<div class="form-sheet"><h3>填写${name}</h3><div class="form-field"><label><em>*</em>${business}项目</label><div class="fake-input"><span>请选择${business}项目</span>${icon('chevron-down')}</div></div><div class="form-field"><label><em>*</em>发生时间</label><div class="fake-input"><span>2026-07-25 09:30</span>${icon('calendar-days')}</div></div><div class="form-field"><label><em>*</em>说明</label><div class="fake-input"><span>请输入${name}说明</span>${icon('align-left')}</div></div><button class="submit-button" id="demoSubmit" type="button">提交${name}</button></div>`;
+    }
+
+    function closeFeature() { document.getElementById('featureView').classList.remove('show'); }
+    function openRoleSheet() { document.getElementById('roleOverlay').classList.add('show'); document.getElementById('roleOverlay').setAttribute('aria-hidden', 'false'); }
+    function closeRoleSheet() { document.getElementById('roleOverlay').classList.remove('show'); document.getElementById('roleOverlay').setAttribute('aria-hidden', 'true'); }
+    function showToast(message) { const toast = document.getElementById('toast'); document.getElementById('toastText').textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2100); }
+
+    document.getElementById('roleTrigger').addEventListener('click', openRoleSheet);
+    document.getElementById('roleOverlay').addEventListener('click', event => { if (event.target === event.currentTarget) closeRoleSheet(); });
+    document.getElementById('featureBack').addEventListener('click', closeFeature);
+    bindPageActions();
+    renderApp();
+  </script>
+</body>
+</html>

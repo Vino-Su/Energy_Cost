@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>今日回顾 - 车机品质巡查</title>
+<link rel="stylesheet" href="components/car-common.css">
+<style>
+/* 今日回顾：结果确认优先，待办与问题作为后续动作。 */
+.tr-app { display: flex; flex-direction: column; }
+.tr-summary { display: flex; align-items: center; gap: 20px; min-height: 72px; padding: 12px var(--car-pad); margin: var(--car-gap) var(--car-gap) 0; background: var(--car-surface); border: 1px solid var(--car-border); border-radius: var(--car-radius); }
+.tr-summary__ok { display: flex; align-items: center; gap: 10px; padding-right: 20px; border-right: 1px solid var(--car-border); flex-shrink: 0; }
+.tr-summary__ok .ic { width: 30px; height: 30px; color: var(--car-success); flex-shrink: 0; }
+.tr-summary__ok .t { font-size: var(--car-fs-panel); font-weight: 600; color: var(--car-success); line-height: 1.2; }
+.tr-summary__ok .s { font-size: var(--car-fs-aux); color: var(--car-text-secondary); margin-top: 2px; }
+.tr-summary__meta { display: flex; align-items: center; gap: 24px; flex: 1; min-width: 0; }
+.tr-summary__meta .it { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tr-summary__meta .k { font-size: 12px; color: var(--car-text-secondary); }
+.tr-summary__meta .v { font-size: var(--car-fs-body); font-weight: 500; color: var(--car-text); white-space: nowrap; }
+.tr-summary__meta .v.car-mono { color: var(--car-primary); }
+.tr-summary__state { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px; border-radius: var(--car-radius-sm); background: var(--car-success-soft); color: var(--car-success); font-size: var(--car-fs-aux); font-weight: 500; white-space: nowrap; }
+.tr-summary__state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.tr-summary__state.is-warning { background: var(--car-warning-soft); color: var(--car-warning); }
+.tr-data-notice { display: none; align-items: center; gap: 10px; min-height: 48px; margin: 12px var(--car-gap) 0; padding: 0 var(--car-pad); background: var(--car-warning-soft); border: 1px solid #ffe58f; border-radius: var(--car-radius); color: #ad6800; font-size: var(--car-fs-body); }
+.tr-data-notice.is-show { display: flex; }
+.tr-data-notice .ic { width: 20px; height: 20px; flex-shrink: 0; }
+.tr-content { display: grid; grid-template-columns: minmax(380px, 40%) minmax(0, 1fr); gap: var(--car-gap); flex: 1; min-height: 0; padding: var(--car-gap); }
+.tr-left { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: var(--car-gap); min-height: 0; }
+.tr-panel, .tr-section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: var(--car-surface); border: 1px solid var(--car-border); border-radius: var(--car-radius); }
+.tr-panel__head, .tr-section__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 12px var(--car-pad); border-bottom: 1px solid var(--car-border); }
+.tr-panel__title, .tr-section__title { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--car-fs-panel); font-weight: 600; }
+.tr-panel__title::before, .tr-section__title::before { content: ""; width: 4px; height: 18px; background: var(--car-primary); border-radius: 2px; flex-shrink: 0; }
+.tr-panel__note, .tr-section__count { font-size: var(--car-fs-aux); color: var(--car-text-secondary); white-space: nowrap; }
+.tr-kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; }
+.tr-kpi { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 96px; padding: 14px; background: var(--car-surface-soft); border: 1px solid transparent; border-radius: var(--car-radius-sm); text-align: left; }
+.tr-kpi__label { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.tr-kpi__value { display: flex; align-items: baseline; gap: 3px; font-family: var(--car-font-num); font-size: var(--car-fs-value); font-weight: 600; line-height: 32px; color: var(--car-text); }
+.tr-kpi__unit { font-family: var(--car-font); font-size: var(--car-fs-aux); font-weight: 400; color: var(--car-text-secondary); }
+.tr-kpi--problems { border-color: #bae0ff; background: var(--car-primary-soft); cursor: pointer; transition: background-color 0.15s, transform 0.12s; }
+.tr-kpi--problems:active { background: #bae0ff; transform: scale(0.98); }
+.tr-kpi--problems .tr-kpi__value { color: var(--car-primary); }
+.tr-kpi__action { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--car-primary); font-size: var(--car-fs-aux); font-weight: 500; }
+.tr-kpi__action .ic { width: 16px; height: 16px; }
+.tr-problem-body { display: flex; align-items: stretch; gap: 10px; padding: 12px; }
+.tr-problem-state { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 74px; padding: 12px; border-radius: var(--car-radius-sm); }
+.tr-problem-state--closed { background: var(--car-success-soft); }
+.tr-problem-state--open { background: var(--car-warning-soft); }
+.tr-problem-state .n { font-family: var(--car-font-num); font-size: var(--car-fs-value); font-weight: 600; line-height: 1; }
+.tr-problem-state--closed .n { color: var(--car-success); }
+.tr-problem-state--open .n { color: var(--car-warning); }
+.tr-problem-state .l { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.tr-right { display: grid; grid-template-rows: minmax(118px, 0.78fr) minmax(0, 1.22fr) auto; gap: var(--car-gap); min-height: 0; }
+.tr-section__body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
+.tr-task-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 72px; padding: 12px var(--car-pad); border-bottom: 1px solid var(--car-border); }
+.tr-task-row:last-child { border-bottom: none; }
+.tr-task-row__area { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-list); font-weight: 500; }
+.tr-task-row__meta { margin-top: 4px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.tr-empty-mini { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 0; padding: 12px; color: var(--car-text-secondary); }
+.tr-empty-mini .ic { width: 36px; height: 36px; color: var(--car-success); }
+.tr-empty-mini .t { font-size: var(--car-fs-body); color: var(--car-text); font-weight: 500; }
+.tr-foot { display: flex; gap: 12px; padding: 12px 0 0; border-top: 1px solid var(--car-border); }
+.tr-foot .car-btn { flex: 1; }
+.tr-foot--single .car-btn { width: 100%; }
+@media (max-width: 1279px) {
+    .tr-summary { gap: 14px; min-height: 64px; }
+    .tr-summary__ok { padding-right: 14px; }
+    .tr-summary__meta { gap: 14px; }
+    .tr-panel__head, .tr-section__head { min-height: 52px; }
+    .tr-kpi { min-height: 88px; padding: 12px; }
+    .tr-right { grid-template-rows: minmax(104px, 0.78fr) minmax(0, 1.22fr) auto; }
+}
+</style>
+</head>
+<body>
+<div class="car-app tr-app">
+    <header class="car-topbar">
+        <button class="car-topbar__back" id="js-back" aria-label="返回">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="car-topbar__page">
+            <div class="car-topbar__brand">
+                <svg class="car-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h2l2-5h9l3 5h2"/><path d="M5 13v5h14v-5"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>
+                酷哇车机 · 品质巡查
+            </div>
+            <div class="car-topbar__title">今日回顾</div>
+        </div>
+        <div class="car-topbar__spacer"></div>
+        <div class="car-topbar__meta">
+            <span class="car-pill" id="js-date">2026-07-24</span>
+            <span class="car-pill js-clock">--:--</span>
+        </div>
+    </header>
+
+    <!-- 交车结果与关键上下文 -->
+    <div class="tr-summary">
+        <div class="tr-summary__ok">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            <div><div class="t">交车成功</div><div class="s" id="js-driver-sub">巡查员 --</div></div>
+        </div>
+        <div class="tr-summary__meta">
+            <div class="it"><span class="k">车辆</span><span class="v car-mono" id="js-vehNo">--</span></div>
+            <div class="it"><span class="k">工作时段</span><span class="v car-mono" id="js-span">--</span></div>
+            <div class="it"><span class="k">数据更新</span><span class="v car-mono" id="js-updated-at">--</span></div>
+        </div>
+        <span class="tr-summary__state" id="js-data-state">数据已同步</span>
+    </div>
+    <div class="tr-data-notice" id="js-data-notice" role="status" aria-live="polite">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.73 3h15.14A2 2 0 0 0 21.3 17L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <span id="js-data-notice-text">数据同步异常，当前显示缓存数据。</span>
+    </div>
+    <main class="tr-content">
+        <!-- 左侧：等权结果指标与问题状态 -->
+        <div class="tr-left" aria-label="今日工作结果">
+            <section class="tr-panel">
+                <div class="tr-panel__head"><span class="tr-panel__title">今日工作结果</span><span class="tr-panel__note">交车前统计</span></div>
+                <div class="tr-kpi-grid">
+                    <div class="tr-kpi"><span class="tr-kpi__label">任务完成数</span><span class="tr-kpi__value"><span id="js-done">0</span><span class="tr-kpi__unit">项</span></span></div>
+                    <div class="tr-kpi"><span class="tr-kpi__label">轨迹里程</span><span class="tr-kpi__value"><span id="js-mileage">0.00</span><span class="tr-kpi__unit">km</span></span></div>
+                    <div class="tr-kpi"><span class="tr-kpi__label">出车时长</span><span class="tr-kpi__value"><span id="js-duration">0</span><span class="tr-kpi__unit">min</span></span></div>
+                    <button type="button" class="tr-kpi tr-kpi--problems" id="js-probs" aria-label="查看今日问题明细"><span class="tr-kpi__label">问题上报</span><span class="tr-kpi__value" id="js-problems">0<span class="tr-kpi__unit">项</span></span><span class="tr-kpi__action">查看明细 <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span></button>
+                </div>
+            </section>
+            <section class="tr-panel">
+                <div class="tr-panel__head"><span class="tr-panel__title">今日问题状态</span><span class="tr-panel__note" id="js-prob-note">共 0 项</span></div>
+                <div class="tr-problem-body">
+                    <div class="tr-problem-state tr-problem-state--closed"><span class="n" id="js-prob-closed">0</span><span class="l">已闭环</span></div>
+                    <div class="tr-problem-state tr-problem-state--open"><span class="n" id="js-prob-open">0</span><span class="l">待处理</span></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- 右侧：任务待办与固定操作区 -->
+        <div class="tr-right">
+            <section class="tr-section">
+                <div class="tr-section__head"><span class="tr-section__title">今日未完成巡查任务</span><span class="tr-section__count" id="js-today-cnt">0 项</span></div>
+                <div class="tr-section__body" id="js-today-list"></div>
+            </section>
+            <section class="tr-section">
+                <div class="tr-section__head"><span class="tr-section__title">明日待办巡查任务</span><span class="tr-section__count" id="js-tom-cnt">0 项</span></div>
+                <div class="tr-section__body" id="js-tom-list"></div>
+            </section>
+            <div class="tr-foot" id="js-foot">
+                <button type="button" class="car-btn car-btn--ghost" id="js-exit-btn">返回绑定页</button>
+                <button type="button" class="car-btn car-btn--primary" id="js-probList">查看今日问题</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="components/car-common.js"></script>
+<script>
+(function () {
+    var st = CAR.getState();
+    var r = st.review || { done: 4, mileage: 38.62, duration: 312, problems: 6 };
+    var reviewState = (r.dataState || CAR.query('reviewState') || 'ok').toLowerCase();
+    var isDataStale = reviewState === 'stale' || reviewState === 'error';
+    // 工作时段（演示：绑车时间 → 交车时间，duration 分钟）
+    var startHHMM = (st.bindTime && st.bindTime.split(' ')[1]) || '08:00';
+    function addMin(hhmm, min) {
+        var p = hhmm.split(':'), t = p[0] * 60 + +p[1] + min;
+        return ('0' + Math.floor(t / 60) % 24).slice(-2) + ':' + ('0' + t % 60).slice(-2);
+    }
+    var endHHMM = addMin(startHHMM, r.duration);
+    document.getElementById('js-date').textContent = CAR.formatNow().split(' ')[0];
+    document.getElementById('js-vehNo').textContent = st.vehicleNo || '粤B·D2856';
+    document.getElementById('js-span').textContent = startHHMM + ' – ' + endHHMM;
+    document.getElementById('js-driver-sub').textContent = '巡查员 ' + (st.driverName || '--') + ' · 已解除人车绑定';
+    var updatedAt = r.updatedAt || CAR.formatNow();
+    document.getElementById('js-updated-at').textContent = updatedAt.indexOf(' ') > -1 ? updatedAt.split(' ')[1] : updatedAt;
+    if (isDataStale) {
+        document.getElementById('js-data-state').textContent = '数据异常';
+        document.getElementById('js-data-state').classList.add('is-warning');
+        document.getElementById('js-data-notice').classList.add('is-show');
+        document.getElementById('js-data-notice-text').textContent = '数据同步异常，当前显示 ' + updatedAt + ' 的缓存数据。';
+    }
+
+    document.getElementById('js-done').textContent = r.done;
+    document.getElementById('js-mileage').textContent = r.mileage.toFixed(2);
+    document.getElementById('js-duration').textContent = r.duration;
+    document.getElementById('js-problems').innerHTML = r.problems + '<span class="tr-kpi__unit">项</span>';
+
+    // 问题处理摘要（演示：已闭环 4 / 待处理 2）
+    var closed = Math.max(0, r.problems - 2), open = r.problems - closed;
+    document.getElementById('js-prob-closed').textContent = closed;
+    document.getElementById('js-prob-open').textContent = open;
+    document.getElementById('js-prob-note').textContent = '共 ' + r.problems + ' 项';
+    CAR.bindClock();
+    CAR.installDebugFab();
+
+    // 今日未完成（演示：当日全部完成，正向空态）
+    var TODAY = [];
+    // 明日待办
+    var TOMORROW = [
+        { area: '临江大道东段', time: '08:00-09:30', status: '待开始' },
+        { area: '云山路片区', time: '10:00-11:30', status: '待开始' },
+        { area: '凤起路-文二路', time: '14:00-15:30', status: '待开始' }
+    ];
+
+    function render(list, container, cntId, emptyTxt, isPositive) {
+        var el = document.getElementById(container);
+        if (!list.length) {
+            var cls = isPositive ? 'ic' : 'ic';
+            var col = isPositive ? 'var(--car-success)' : 'var(--car-border)';
+            el.innerHTML = '<div class="tr-empty-mini"><svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="' + col + '" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="t">' + emptyTxt + '</span></div>';
+        } else {
+            var html = '';
+            list.forEach(function (t) {
+                var tag = t.status === '待开始' ? 'car-tag--warning' : 'car-tag--info';
+                html += '<div class="tr-task-row"><div><div class="tr-task-row__area">' + t.area + '</div><div class="tr-task-row__meta car-mono">' + t.time + '</div></div><span class="car-tag ' + tag + '">' + t.status + '</span></div>';
+            });
+            el.innerHTML = html;
+        }
+        document.getElementById(cntId).textContent = list.length + ' 项';
+    }
+    render(TODAY, 'js-today-list', 'js-today-cnt', '今日任务全部完成', true);
+    render(TOMORROW, 'js-tom-list', 'js-tom-cnt', '明日暂无待办任务', false);
+
+    // 已解绑后可返回绑定页；问题入口保持交车后的只读范围。
+    document.getElementById('js-back').addEventListener('click', function () { CAR.go('car-bind.html', { delay: 300 }); });
+    function openTodayProblems() { CAR.go('car-home.html?panel=problems&from=review', { delay: 220 }); }
+    document.getElementById('js-probs').addEventListener('click', openTodayProblems);
+    document.getElementById('js-probList').addEventListener('click', openTodayProblems);
+    document.getElementById('js-exit-btn').addEventListener('click', function () { CAR.go('car-bind.html', { delay: 300 }); });
+    if (!r.problems) {
+        document.getElementById('js-probList').hidden = true;
+        document.getElementById('js-foot').classList.add('tr-foot--single');
+    }
+})();
+</script>
+</body>
+</html>

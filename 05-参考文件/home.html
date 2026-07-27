@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>工作台 - 城市管家</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../03-高保真页面/components/app-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            margin: 0 auto;
+            max-width: 375px;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            width: 100%;
+            margin: 0;
+            min-height: 100vh;
+            padding-bottom: 56px;
+        }
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 375px;
+            height: 44px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .top-nav-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+        .content-area {
+            padding-top: 44px;
+            padding-bottom: 56px;
+        }
+        .welcome-block {
+            padding: 20px 16px 12px;
+        }
+        .welcome-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000000d9;
+            line-height: 28px;
+        }
+        .welcome-desc {
+            margin-top: 4px;
+            font-size: 13px;
+            color: #00000073;
+            line-height: 20px;
+        }
+        .section-title {
+            font-size: 14px;
+            color: #00000073;
+            padding: 16px 16px 12px;
+        }
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 0 16px;
+        }
+        .app-item {
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: opacity 0.15s;
+        }
+        .app-item:active {
+            opacity: 0.6;
+        }
+        .app-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .app-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+        .app-icon.attendance { background: #f6ffed; color: #52c41a; }
+        .app-icon.approval { background: #fff7e6; color: #fa8c16; }
+        .app-icon.vehicle { background: #e6f4ff; color: #1677ff; }
+        .app-icon.city { background: #f2f0ff; color: #722ed1; }
+        .app-name {
+            font-size: 13px;
+            color: #000000d9;
+            font-weight: 500;
+            text-align: center;
+        }
+        .bottom-tab {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 375px;
+            height: 56px;
+            background: #ffffff;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            z-index: 1000;
+        }
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            text-decoration: none;
+            color: #00000073;
+            font-size: 10px;
+            transition: color 0.2s;
+        }
+        .tab-item.active {
+            color: #1677ff;
+        }
+        .tab-item svg {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+        <div class="top-nav-title">工作台</div>
+        <div class="project-switcher" role="button" aria-label="切换项目" onclick="CityStewardCommon.openProjectPicker()">
+            <span class="project-switcher-text">选择项目</span>
+            <svg class="project-switcher-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <!-- 欢迎区 -->
+        <div class="welcome-block">
+            <div class="welcome-title">应用中心</div>
+            <div class="welcome-desc">选择应用进入对应业务模块</div>
+        </div>
+
+        <!-- 应用入口 -->
+        <div class="section-title">我的应用</div>
+        <div class="app-grid">
+            <a href="#" class="app-item">
+                <div class="app-icon attendance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+                </div>
+                <span class="app-name">酷哇考勤</span>
+            </a>
+
+            <a href="#" class="app-item">
+                <div class="app-icon approval">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                </div>
+                <span class="app-name">酷哇审批</span>
+            </a>
+
+            <a href="#" class="app-item">
+                <div class="app-icon vehicle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h2l2-5h9l3 5h2"/><path d="M5 13v5h14v-5"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/><path d="M9 8V5h6v3"/></svg>
+                </div>
+                <span class="app-name">用车管理</span>
+            </a>
+
+            <a href="城市管家角色权限演示Demo.html" class="app-item">
+                <div class="app-icon city">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-3"/><path d="M9 9v.01M9 12v.01M9 15v.01"/></svg>
+                </div>
+                <span class="app-name">城市管家</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 底部Tab -->
+    <div class="bottom-tab">
+        <a href="#" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span>消息</span>
+        </a>
+        <a href="home.html" class="tab-item active">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+            <span>工作台</span>
+        </a>
+        <a href="#" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>我的</span>
+        </a>
+    </div>
+    <script src="../03-高保真页面/components/app-common.js"></script>
+</body>
+</html>

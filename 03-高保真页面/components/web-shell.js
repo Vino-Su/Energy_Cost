@@ -19,8 +19,12 @@
         city: '<svg class="web-topnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
         energy: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
         fuel: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V5a2 2 0 012-2h7a2 2 0 012 2v16"/><path d="M3 21h13M7 7h5M15 8h2l2 2v7a2 2 0 002 2"/></svg>',
+        fuelAnalysis: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5a2 2 0 012-2h7a2 2 0 012 2v14"/><path d="M3 19h14"/><path d="M7 9h5"/><path d="M18 8v8M21 12h-6"/></svg>',
         water: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 6.2 6 11a6 6 0 11-12 0c0-4.8 6-11 6-11z"/></svg>',
-        charge: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L6 13h6l-1 9 7-12h-6z"/></svg>'
+        charge: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L6 13h6l-1 9 7-12h-6z"/></svg>',
+        chargeAnalysis: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L6 13h6l-1 9 7-12h-6z"/><path d="M18 14v6M21 17h-6"/></svg>',
+        vehicleUse: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M10.85 12.15L19 4M18 5l3 3M15 8l3 3"/></svg>',
+        vehicleUseGroup: '<svg class="web-side-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>'
     };
 
     function readStoredProject() {
@@ -33,10 +37,25 @@
     }
 
     function shellTemplate(activeSide, projectLocked) {
-        const sideItems = [
-            { key: 'fuel', label: '加油记录', href: 'web-fuel-records.html', icon: icons.fuel },
-            { key: 'water', label: '加水记录', href: 'web-water-records.html', icon: icons.water },
-            { key: 'charge', label: '充电记录', href: 'web-charge-records.html', icon: icons.charge }
+        const sideGroups = [
+            {
+                title: '能耗成本管理',
+                groupIcon: icons.energy,
+                items: [
+                    { key: 'fuel', label: '加油记录', href: 'web-fuel-records.html', icon: icons.fuel },
+                    { key: 'water', label: '加水记录', href: 'web-water-records.html', icon: icons.water },
+                    { key: 'charge', label: '充电记录', href: 'web-charge-records.html', icon: icons.charge },
+                    { key: 'fuelAnalysis', label: '油耗分析', href: 'web-fuel-analysis.html', icon: icons.fuelAnalysis },
+                    { key: 'chargeAnalysis', label: '电耗分析', href: 'web-charge-analysis.html', icon: icons.chargeAnalysis }
+                ]
+            },
+            {
+                title: '用车记录',
+                groupIcon: icons.vehicleUseGroup,
+                items: [
+                    { key: 'vehicleUse', label: '用车记录', href: 'web-vehicle-use-records.html', icon: icons.vehicleUse }
+                ]
+            }
         ];
         const currentProject = readStoredProject();
         return `
@@ -48,11 +67,7 @@
                     <span class="web-brand-name">酷哇智慧环卫</span>
                 </a>
                 <nav class="web-topnav" aria-label="业务模块">
-                    <a class="web-topnav-item active" href="web-fuel-records.html" aria-current="page">${icons.info}<span>信息管理</span></a>
-                    <a class="web-topnav-item" href="#">${icons.realtime}<span>实时管理</span></a>
-                    <a class="web-topnav-item" href="#">${icons.plan}<span>作业制定</span></a>
-                    <a class="web-topnav-item" href="#">${icons.analysis}<span>数据分析</span></a>
-                    <a class="web-topnav-item" href="#">${icons.city}<span>城市治理</span></a>
+                    <a class="web-topnav-item active" href="web-fuel-records.html" aria-current="page">${icons.info}<span>车辆运营</span></a>
                 </nav>
                 <div class="web-header-spacer"></div>
                 <div class="web-header-tools">
@@ -76,10 +91,14 @@
                     </div>
                 </div>
             </header>
-            <aside class="web-sidebar" aria-label="信息管理导航">
+            <aside class="web-sidebar" aria-label="车辆运营导航">
                 <div class="web-sidebar-scroll">
-                    <div class="web-side-group-title">${icons.energy}<span class="web-side-label">能耗成本管理</span><svg class="web-side-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg></div>
-                    ${sideItems.map((item) => `<a class="web-side-item${item.key === activeSide ? ' active' : ''}" href="${item.href}" ${item.key === activeSide ? 'aria-current="page"' : ''} title="${item.label}">${item.icon}<span class="web-side-label">${item.label}</span></a>`).join('')}
+                    ${sideGroups.map((group) => `
+                        <div class="web-side-group">
+                            <div class="web-side-group-title">${group.groupIcon}<span class="web-side-label">${group.title}</span><svg class="web-side-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg></div>
+                            ${group.items.map((item) => `<a class="web-side-item${item.key === activeSide ? ' active' : ''}" href="${item.href}" ${item.key === activeSide ? 'aria-current="page"' : ''} title="${item.label}">${item.icon}<span class="web-side-label">${item.label}</span></a>`).join('')}
+                        </div>
+                    `).join('')}
                 </div>
                 <div class="web-sidebar-footer"><button class="web-sidebar-toggle" id="webSidebarToggle" type="button" title="收起侧边栏" aria-label="收起侧边栏"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/><path d="M4 4h16v16H4z"/></svg></button></div>
             </aside>`;
@@ -183,7 +202,10 @@
 
         document.getElementById('webBackButton')?.addEventListener('click', () => {
             if (window.history.length > 1) window.history.back();
-            else window.location.href = `web-${activeSide}-records.html`;
+            else {
+                const fallback = { fuelAnalysis: 'web-fuel-analysis.html', chargeAnalysis: 'web-charge-analysis.html' };
+                window.location.href = fallback[activeSide] || `web-${activeSide}-records.html`;
+            }
         });
 
         document.getElementById('webSidebarToggle')?.addEventListener('click', () => {

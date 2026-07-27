@@ -1,0 +1,252 @@
+/* ========================================================================
+   车机端 APP 公共样式（16:9 横屏）— 品质巡查模块
+   严格遵循 .claude/UI_design_CAR.md：1280×720 基准、主色 #1677ff、
+   56px 触控、CSS 变量、CSS Grid 主布局、固定字号离散断点。
+   禁止 backdrop-filter / vw 字号 / transform:scale 整页缩放 / 外部 CDN。
+   ======================================================================== */
+
+/* 1. 设计令牌（规范 13.2 推荐变量） */
+:root {
+    /* 基础色 */
+    --car-primary: #1677ff;
+    --car-primary-pressed: #4096ff;
+    --car-primary-soft: #e6f4ff;
+    --car-success: #52c41a;
+    --car-success-soft: #f6ffed;
+    --car-warning: #faad14;
+    --car-warning-soft: #fffbe6;
+    --car-danger: #ff4d4f;
+    --car-danger-soft: #fff2f0;
+    --car-neutral: #86909c;
+    --car-neutral-soft: #f2f3f5;
+    /* 表面与文字 */
+    --car-page-bg: #f2f5f8;
+    --car-surface: #ffffff;
+    --car-surface-soft: #f7f9fc;
+    --car-text: #000000d9;
+    --car-text-secondary: #00000073;
+    --car-text-disabled: #00000040;
+    --car-border: #dfe5ec;
+    /* 尺寸与间距 */
+    --car-radius: 8px;
+    --car-radius-sm: 4px;
+    --car-topbar-height: 56px;
+    --car-gap: 16px;
+    --car-pad: 20px;
+    --car-touch: 56px;
+    /* 字号层级（规范 6.2，固定字号） */
+    --car-fs-value: 28px;   /* 关键数值 */
+    --car-fs-title: 24px;   /* 页面标题 */
+    --car-fs-panel: 20px;   /* 工作区标题 */
+    --car-fs-list: 18px;    /* 列表标题 */
+    --car-fs-body: 16px;    /* 正文 */
+    --car-fs-aux: 14px;     /* 辅助文字 */
+    /* 字体 */
+    --car-font: "PingFang SC", "Microsoft YaHei", "SF UI Text", Arial, sans-serif;
+    --car-font-num: "DIN", "Arial", sans-serif;
+}
+
+/* 2. 基础重置 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--car-font);
+    color: var(--car-text);
+    background: var(--car-page-bg);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: 0;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; border: none; background: none; }
+a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+img { display: block; max-width: 100%; }
+
+/* 全局隐藏滚动条（AXhub 复制友好） */
+::-webkit-scrollbar { width: 0; height: 0; display: none; }
+* { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* 3. 车机根画布（16:9 基准 1280×720，居中适配多视口） */
+.car-app {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--car-page-bg);
+}
+
+/* 4. 全局顶栏（规范 7.1，56px） */
+.car-topbar {
+    position: relative;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: var(--car-topbar-height);
+    padding: 0 var(--car-pad);
+    background: var(--car-surface);
+    border-bottom: 1px solid var(--car-border);
+}
+.car-topbar__back { display: inline-flex; align-items: center; justify-content: center; width: var(--car-touch); height: var(--car-touch); color: var(--car-text); border-radius: var(--car-radius-sm); transition: background-color 0.15s; flex-shrink: 0; }
+.car-topbar__back:active { background: var(--car-surface-soft); }
+.car-topbar__back.is-hidden { visibility: hidden; }
+.car-topbar__page { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.car-topbar__brand { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--car-text-secondary); white-space: nowrap; }
+.car-topbar__brand .car-logo { width: 16px; height: 16px; color: var(--car-primary); }
+.car-topbar__title { font-size: var(--car-fs-panel); font-weight: 600; white-space: nowrap; line-height: 1.2; }
+.car-topbar__spacer { flex: 1; }
+.car-topbar__meta { display: flex; align-items: center; gap: 16px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-topbar__meta .car-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--car-surface-soft); border-radius: var(--car-radius-sm); }
+.car-topbar__meta .car-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--car-success); }
+.car-topbar__icon-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--car-touch); height: 40px; color: var(--car-text); border-radius: var(--car-radius); transition: background-color 0.15s; }
+.car-topbar__icon-btn:active { background: var(--car-surface-soft); }
+/* 调试入口（隐藏式：右下角小图标，长按触发） */
+.car-debug-fab { position: fixed; right: 12px; bottom: 12px; z-index: 200; width: 20px; height: 20px; opacity: 0.25; transition: opacity 0.2s; }
+.car-debug-fab:hover, .car-debug-fab:active { opacity: 0.6; }
+
+/* 5. 主区域分屏网格（规范 4.1 主次分屏 64:36 / 4.3 列表详情） */
+.car-main { position: relative; display: flex; flex-direction: column; height: calc(100% - var(--car-topbar-height)); padding: var(--car-gap); gap: var(--car-gap); }
+.car-main-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 36%); gap: var(--car-gap); min-width: 0; min-height: 0; flex: 1; }
+.car-list-detail { display: grid; grid-template-columns: minmax(320px, 36%) minmax(0, 1fr); gap: var(--car-gap); min-width: 0; min-height: 0; flex: 1; }
+@media (min-width: 1600px) {
+    .car-main-split { grid-template-columns: minmax(0, 1fr) minmax(460px, 560px); }
+}
+@media (max-width: 1279px) {
+    :root { --car-gap: 12px; --car-pad: 16px; }
+}
+
+/* 6. 卡片 / 面板（规范 8.3） */
+.car-card { background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-border); }
+.car-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-border); overflow: hidden; }
+.car-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px var(--car-pad); border-bottom: 1px solid var(--car-border); }
+.car-panel__title { font-size: var(--car-fs-panel); font-weight: 600; white-space: nowrap; }
+.car-panel__body { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* 7. 按钮（规范 8.2，56px 高、8px 圆角） */
+.car-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: var(--car-touch); padding: 0 24px; border-radius: var(--car-radius); font-size: var(--car-fs-list); font-weight: 500; white-space: nowrap; transition: background-color 0.15s, transform 0.12s; }
+.car-btn:active { transform: scale(0.98); }
+.car-btn--primary { background: var(--car-primary); color: #fff; }
+.car-btn--primary:active { background: var(--car-primary-pressed); }
+.car-btn--ghost { background: var(--car-surface-soft); color: var(--car-text); border: 1px solid var(--car-border); }
+.car-btn--ghost:active { background: var(--car-neutral-soft); }
+.car-btn--danger { background: var(--car-danger); color: #fff; }
+.car-btn:disabled { background: var(--car-neutral-soft) !important; color: var(--car-text-disabled) !important; cursor: not-allowed; transform: none; }
+.car-btn--block { width: 100%; }
+.car-btn--lg { height: var(--car-touch); font-size: var(--car-fs-list); }
+/* 图标按钮（规范 8.2，56×56） */
+.car-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--car-touch); height: var(--car-touch); border-radius: var(--car-radius); background: var(--car-surface); color: var(--car-text); border: 1px solid var(--car-border); transition: background-color 0.15s, transform 0.12s; }
+.car-icon-btn:active { background: var(--car-surface-soft); transform: scale(0.98); }
+.car-icon-btn:disabled { color: var(--car-text-disabled); background: var(--car-neutral-soft); cursor: not-allowed; transform: none; }
+
+/* 8. 状态标签（规范 8.4，28px 高） */
+.car-tag { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border-radius: var(--car-radius-sm); font-size: var(--car-fs-aux); font-weight: 500; white-space: nowrap; max-width: 112px; overflow: hidden; }
+.car-tag--info { background: var(--car-primary-soft); color: var(--car-primary); }     /* 进行中 */
+.car-tag--success { background: var(--car-success-soft); color: var(--car-success); }  /* 已完成 */
+.car-tag--warning { background: var(--car-warning-soft); color: var(--car-warning); }  /* 待处理/待开始 */
+.car-tag--neutral { background: var(--car-neutral-soft); color: var(--car-neutral); }   /* 待确认/待分配/已结束 */
+.car-tag--danger { background: var(--car-danger-soft); color: var(--car-danger); }
+
+/* 9. 列表项 / 任务卡片（规范 8.3） */
+.car-list-item { display: flex; flex-direction: column; gap: 6px; padding: 14px var(--car-pad); border-bottom: 1px solid var(--car-border); cursor: pointer; transition: background-color 0.15s; }
+.car-list-item:last-child { border-bottom: none; }
+.car-list-item:active { background: var(--car-surface-soft); }
+.car-list-item.is-selected { background: var(--car-primary-soft); box-shadow: inset 4px 0 0 0 var(--car-primary); }
+.car-list-item__row1 { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.car-list-item__name { font-size: var(--car-fs-list); font-weight: 500; color: var(--car-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.car-list-item__row2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-list-item__row2 .car-sep { color: var(--car-border); }
+
+/* 10. 状态指示点（规范 1.2 不只用颜色，配文字） */
+.car-status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: var(--car-fs-aux); }
+.car-status-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--car-neutral); }
+.car-status-dot.is-online::before { background: var(--car-primary); }
+.car-status-dot.is-running::before { background: var(--car-success); }
+.car-status-dot.is-offline::before { background: var(--car-warning); }
+
+/* 页面淡出过渡（跳转时） */
+.car-app.is-leaving { animation: car-fade-out 0.22s ease-out forwards; }
+@keyframes car-fade-out { from { opacity: 1; } to { opacity: 0.4; } }
+/* 列表选中态过渡 */
+.car-list-item, .home-task, .run-prob { transition: background-color 0.18s ease-out, box-shadow 0.18s ease-out; }
+/* 选中态指示条滑入 */
+.home-task.is-selected::before { transition: background-color 0.18s ease-out; }
+/* 里程数字滚动 */
+.car-num-roll { display: inline-block; transition: transform 0.3s ease-out; }
+
+/* 11. 地图底图容器与辅助元素（语义化占位：路网+建筑+水系，不依赖外部瓦片） */
+.car-map { position: relative; min-width: 0; min-height: 0; border-radius: var(--car-radius); overflow: hidden; border: 1px solid var(--car-border); background: #e8eef2; }
+/* 底图：分层背景，模拟街区底色 */
+.car-map__base { position: absolute; inset: 0; background:
+    radial-gradient(ellipse 60% 40% at 20% 18%, rgba(255,255,255,0.5), transparent 70%),
+    radial-gradient(ellipse 50% 35% at 78% 72%, rgba(255,255,255,0.45), transparent 70%),
+    linear-gradient(180deg, #eef3f6 0%, #e3eaee 100%); }
+/* 水系：蓝色色块 */
+.car-map__water { position: absolute; left: 0; right: 0; bottom: 0; height: 22%; background: linear-gradient(180deg, #b8d4e6, #9cc1d8); opacity: 0.7; clip-path: polygon(0 40%, 12% 30%, 28% 45%, 45% 35%, 62% 50%, 80% 38%, 100% 48%, 100% 100%, 0 100%); }
+/* 绿地公园 */
+.car-map__park { position: absolute; border-radius: 6px; background: rgba(163,206,143,0.45); }
+.car-map__park--1 { left: 8%; top: 14%; width: 14%; height: 12%; }
+.car-map__park--2 { right: 12%; top: 22%; width: 10%; height: 9%; }
+/* 建筑块 */
+.car-map__bldg { position: absolute; background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.06); border-radius: 3px; box-shadow: 0 1px 0 rgba(0,0,0,0.04); }
+/* 道路网：主路+支路，白色宽线 */
+.car-map__roads { position: absolute; inset: 0; pointer-events: none; }
+.car-map__roads::before, .car-map__roads::after { content: ""; position: absolute; background: rgba(255,255,255,0.92); box-shadow: 0 0 0 1px rgba(0,0,0,0.04); }
+.car-map__roads::before { left: 0; right: 0; top: 48%; height: 14px; transform: rotate(-2deg); }
+.car-map__roads::after { top: 0; bottom: 0; left: 42%; width: 14px; transform: rotate(3deg); }
+.car-map__road--h2 { position: absolute; left: 0; right: 0; top: 28%; height: 8px; background: rgba(255,255,255,0.75); }
+.car-map__road--v2 { position: absolute; top: 0; bottom: 0; left: 68%; width: 8px; background: rgba(255,255,255,0.75); }
+/* 路网标注小字 */
+.car-map__label { position: absolute; font-size: 11px; color: rgba(0,0,0,0.4); font-weight: 500; white-space: nowrap; pointer-events: none; }
+.car-map__grid { position: absolute; inset: 0; opacity: 0.25; background-image:
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px); background-size: 80px 80px; }
+.car-map__zone { position: absolute; border: 2px dashed rgba(22,119,255,0.65); background: rgba(22,119,255,0.10); border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(22,119,255,0.08); }
+.car-map__track { position: absolute; pointer-events: none; }
+.car-map__point { position: absolute; transform: translate(-50%, -50%); }
+/* 右侧悬浮工具组（沿地图边缘竖排） */
+.car-map-tools { position: absolute; right: var(--car-gap); top: var(--car-gap); display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+/* 地图顶部横幅（新任务提醒，规范 9.1） */
+.car-map-banner { position: absolute; left: 50%; top: var(--car-gap); transform: translateX(-50%); z-index: 12; display: flex; align-items: center; gap: 16px; max-width: 70%; height: 56px; padding: 0 8px 0 20px; background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-primary); box-shadow: 0 6px 20px rgba(20,40,70,0.12); }
+.car-map-banner__txt { font-size: var(--car-fs-body); color: var(--car-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.car-map-banner__btn { height: 40px; padding: 0 16px; border-radius: var(--car-radius-sm); background: var(--car-primary); color: #fff; font-size: var(--car-fs-aux); font-weight: 500; }
+/* 图例（规范 10，图层组合区分） */
+.car-legend { position: absolute; left: var(--car-gap); bottom: var(--car-gap); display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; background: rgba(255,255,255,0.92); border-radius: var(--car-radius); border: 1px solid var(--car-border); font-size: 13px; color: var(--car-text-secondary); }
+.car-legend__row { display: flex; align-items: center; gap: 8px; }
+.car-legend__mark { width: 18px; height: 12px; border-radius: 3px; }
+
+/* 12. Toast（规范 9.2，顶栏下方居中） */
+.car-toast { position: fixed; top: calc(var(--car-topbar-height) + 16px); left: 50%; transform: translateX(-50%) translateY(-12px); z-index: 3000; display: flex; align-items: center; gap: 8px; min-height: 48px; max-width: 60%; padding: 0 22px; background: rgba(0,0,0,0.82); color: #fff; font-size: var(--car-fs-body); border-radius: var(--car-radius); opacity: 0; visibility: hidden; transition: opacity 0.18s, transform 0.18s; }
+.car-toast.is-show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+/* 13. 确认弹窗（规范 9.3，基准 440px） */
+.car-modal-mask { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); opacity: 0; visibility: hidden; transition: opacity 0.18s; }
+.car-modal-mask.is-show { opacity: 1; visibility: visible; }
+.car-modal { width: 440px; max-width: 60%; background: var(--car-surface); border-radius: var(--car-radius); overflow: hidden; }
+.car-modal__head { padding: 20px 24px 8px; font-size: var(--car-fs-panel); font-weight: 600; }
+.car-modal__body { padding: 4px 24px 20px; font-size: var(--car-fs-body); line-height: 24px; color: var(--car-text-secondary); }
+.car-modal__foot { display: flex; gap: 12px; padding: 0 24px 20px; }
+.car-modal__foot .car-btn { flex: 1; height: 52px; }
+
+/* 14. 二维码区（绑定/交车复用） */
+.car-qr-wrap { display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-border); }
+.car-qr { width: 220px; height: 220px; }
+
+/* 15. 空状态（规范 9.4） */
+.car-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px 20px; color: var(--car-text-secondary); }
+.car-empty__icon { width: 56px; height: 56px; color: var(--car-border); }
+.car-empty__txt { font-size: var(--car-fs-body); }
+
+/* 16. 通用辅助 */
+.car-row { display: flex; align-items: center; gap: 12px; }
+.car-col { display: flex; flex-direction: column; }
+.car-grow { flex: 1; min-width: 0; }
+.car-mono { font-family: var(--car-font-num); }
+.car-mute { color: var(--car-text-secondary); }
+.car-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.car-divider { height: 1px; background: var(--car-border); border: none; }
+.car-hidden { display: none !important; }
+/* 焦点态（规范 12，2px 主色轮廓） */
+:focus-visible { outline: 2px solid var(--car-primary); outline-offset: 2px; }

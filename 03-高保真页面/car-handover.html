@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>交车 - 车机品质巡查</title>
+<link rel="stylesheet" href="components/car-common.css">
+<style>
+.ho-main { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: var(--car-gap); flex: 1; padding: var(--car-gap); min-height: 0; }
+@media (max-width: 1279px) { .ho-main { grid-template-columns: minmax(0, 1fr) 400px; } }
+.ho-left { display: flex; flex-direction: column; justify-content: center; gap: 24px; padding: 40px; background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-border); position: relative; overflow: hidden; }
+.ho-left::before { content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(250,173,20,0.08), transparent 70%); }
+.ho-left__kicker { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; padding: 6px 14px; background: var(--car-warning-soft); color: var(--car-warning); border-radius: 20px; font-size: var(--car-fs-aux); font-weight: 500; }
+.ho-left__title { font-size: var(--car-fs-title); font-weight: 600; line-height: 1.3; }
+.ho-left__desc { font-size: var(--car-fs-body); line-height: 28px; color: var(--car-text-secondary); max-width: 420px; }
+.ho-check { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; padding: 16px; background: var(--car-surface-soft); border-radius: var(--car-radius); border: 1px solid var(--car-border); }
+.ho-check__row { display: flex; align-items: center; gap: 10px; font-size: var(--car-fs-body); }
+.ho-check__row .ho-ok { width: 20px; height: 20px; color: var(--car-success); flex-shrink: 0; }
+.ho-right { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 32px; background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-border); }
+.ho-right__cap { font-size: var(--car-fs-panel); font-weight: 600; }
+.ho-right__sub { font-size: var(--car-fs-aux); color: var(--car-text-secondary); text-align: center; line-height: 22px; }
+.ho-vehicle-tag { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--car-surface-soft); border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); font-size: var(--car-fs-body); }
+.ho-vehicle-tag .car-mono { color: var(--car-primary); font-weight: 600; }
+/* 扫码氛围：二维码外层扫描框 */
+.ho-qr-scanbox { position: relative; padding: 24px; }
+.ho-qr-scanbox::before, .ho-qr-scanbox::after, .ho-qr-scanbox > i, .ho-qr-scanbox > b { content: ""; position: absolute; width: 22px; height: 22px; border: 3px solid var(--car-warning); }
+.ho-qr-scanbox::before { left: 0; top: 0; border-right: none; border-bottom: none; border-radius: 4px 0 0 0; }
+.ho-qr-scanbox::after { right: 0; top: 0; border-left: none; border-bottom: none; border-radius: 0 4px 0 0; }
+.ho-qr-scanbox > i { left: 0; bottom: 0; border-right: none; border-top: none; border-radius: 0 0 0 4px; }
+.ho-qr-scanbox > b { right: 0; bottom: 0; border-left: none; border-top: none; border-radius: 0 0 4px 0; }
+.ho-qr-scanbox .car-qr-wrap { border: none; padding: 0; background: transparent; }
+/* 演示入口（实际开发由手机端扫码，车机端无此按钮） */
+.ho-demo-hint { margin-top: 4px; font-size: 12px; color: var(--car-text-disabled); }
+.ho-demo-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 14px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); background: transparent; border: 1px dashed var(--car-border); border-radius: var(--car-radius-sm); transition: color 0.15s, border-color 0.15s; }
+.ho-demo-btn:active { color: var(--car-primary); border-color: var(--car-primary); }
+</style>
+</head>
+<body>
+<div class="car-app">
+    <header class="car-topbar">
+        <button class="car-topbar__back" onclick="history.back()" aria-label="返回">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="car-topbar__page">
+            <div class="car-topbar__brand">
+                <svg class="car-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h2l2-5h9l3 5h2"/><path d="M5 13v5h14v-5"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>
+                酷哇车机 · 品质巡查
+            </div>
+            <div class="car-topbar__title">交车</div>
+        </div>
+        <div class="car-topbar__spacer"></div>
+        <div class="car-topbar__meta">
+            <span class="car-pill car-mono" id="js-vehNo">粤B·D2856</span>
+            <span class="car-pill js-clock">--:--</span>
+        </div>
+    </header>
+
+    <div class="ho-main">
+        <section class="ho-left">
+            <span class="ho-left__kicker">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                扫码交车
+            </span>
+            <h1 class="ho-left__title">请使用手机APP扫描二维码<br>完成交车解绑</h1>
+            <p class="ho-left__desc">交车前系统已校验当日无进行中任务，扫码后将解除人员与车辆使用关系，并进入今日回顾页。</p>
+            <div class="ho-check">
+                <div class="ho-check__row"><svg class="ho-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>无进行中任务，允许交车</div>
+                <div class="ho-check__row"><svg class="ho-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>当日任务数据已同步至云端</div>
+            </div>
+        </section>
+
+        <aside class="ho-right">
+            <div class="ho-right__cap">车辆交车二维码</div>
+            <div class="ho-vehicle-tag">交车车辆 <span class="car-mono" id="js-vehicleNo">粤B·D2856</span></div>
+            <div class="ho-qr-scanbox"><i></i><b></b><div class="car-qr-wrap" id="js-qr"></div></div>
+            <span class="ho-demo-hint">演示入口 · 实际由手机端扫码完成</span>
+            <button class="ho-demo-btn" id="js-scan">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                模拟扫码完成交车
+            </button>
+        </aside>
+    </div>
+</div>
+
+<script src="components/car-common.js"></script>
+<script>
+(function () {
+    var st = CAR.getState();
+    document.getElementById('js-vehNo').textContent = st.vehicleNo;
+    document.getElementById('js-vehicleNo').textContent = st.vehicleNo;
+    document.getElementById('js-qr').innerHTML = CAR.qrSVG('handover-' + st.vehicleId);
+    CAR.bindClock();
+    CAR.installDebugFab();
+
+    // 进入交车页即代表已通过未完成任务校验（首页/执行页已拦截）
+    // 演示：点击扫码按钮 → 解绑中 → 跳今日回顾
+    document.getElementById('js-scan').addEventListener('click', function () {
+        var btn = this;
+        btn.disabled = true; btn.textContent = '正在解绑…';
+        CAR.unbindVehicle();
+        CAR.go('car-today-review.html', { toast: '交车成功，已解除人车绑定', delay: 1100 });
+    });
+})();
+</script>
+</body>
+</html>
