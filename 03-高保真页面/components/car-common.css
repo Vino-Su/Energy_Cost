@@ -94,8 +94,8 @@ img { display: block; max-width: 100%; }
 .car-topbar__back:active { background: var(--car-surface-soft); }
 .car-topbar__back.is-hidden { visibility: hidden; }
 .car-topbar__page { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.car-topbar__brand { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--car-text-secondary); white-space: nowrap; }
-.car-topbar__brand .car-logo { width: 16px; height: 16px; color: var(--car-primary); }
+.car-topbar__brand { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--car-text); white-space: nowrap; }
+.car-topbar__brand .car-logo { width: 22px; height: 22px; color: var(--car-primary); }
 .car-topbar__title { font-size: var(--car-fs-panel); font-weight: 600; white-space: nowrap; line-height: 1.2; }
 .car-topbar__spacer { flex: 1; }
 .car-topbar__meta { display: flex; align-items: center; gap: 16px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
@@ -250,3 +250,53 @@ img { display: block; max-width: 100%; }
 .car-hidden { display: none !important; }
 /* 焦点态（规范 12，2px 主色轮廓） */
 :focus-visible { outline: 2px solid var(--car-primary); outline-offset: 2px; }
+
+/* 17. 任务详情共享组件：首页详情与执行态摘要复用 */
+.car-task-context { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding-bottom: 16px; border-bottom: 1px solid var(--car-border); }
+.car-task-context__eyebrow { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-task-context__title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.car-task-context__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-title); font-weight: 600; line-height: 32px; color: var(--car-text); }
+.car-task-context__meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-task-context__meta .car-sep { color: var(--car-border); }
+.car-task-context__meta .car-mono { font-size: var(--car-fs-body); color: var(--car-text); }
+.car-task-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 12px 0; border-bottom: 1px solid var(--car-border); }
+.car-task-kpi { display: flex; flex-direction: column; min-width: 0; gap: 5px; padding: 2px 12px; border-left: 1px solid var(--car-border); }
+.car-task-kpi:first-child { padding-left: 0; border-left: 0; }
+.car-task-kpi:last-child { padding-right: 0; }
+.car-task-kpi__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-task-kpi__value { display: flex; align-items: baseline; gap: 3px; min-width: 0; }
+.car-task-kpi__value .car-mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 24px; font-weight: 600; line-height: 28px; color: var(--car-text); }
+.car-task-kpi__unit { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-task-kpi--problems .car-task-kpi__label, .car-task-kpi--problems .car-task-kpi__value .car-mono { color: var(--car-primary); }
+.car-task-requirement { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 2px 14px; border-left: 4px solid var(--car-primary); }
+.car-task-requirement__label { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-task-requirement__value { margin: 0; font-size: var(--car-fs-body); line-height: 24px; color: var(--car-text); }
+.car-task-requirement--compact { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 10px var(--car-pad); border-left: 0; border-top: 1px solid var(--car-border); background: var(--car-surface-soft); }
+.car-task-requirement--compact .car-task-requirement__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 20px; }
+.car-task-problems { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.car-task-problems__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 12px var(--car-pad); border-bottom: 1px solid var(--car-border); }
+.car-task-problems__title { font-size: var(--car-fs-panel); font-weight: 600; color: var(--car-text); }
+.car-task-problems__count { font-family: var(--car-font-num); font-size: var(--car-fs-aux); font-weight: 600; color: var(--car-primary); }
+.car-task-problem-list { flex: 1; min-height: 0; overflow-y: auto; }
+.car-task-problem { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 12px; min-height: 96px; padding: 14px var(--car-pad); border: 0; border-bottom: 1px solid var(--car-border); background: var(--car-surface); color: var(--car-text); font: inherit; text-align: left; cursor: pointer; transition: background-color 0.18s ease-out; }
+.car-task-problem:last-child { border-bottom: 0; }
+.car-task-problem:active { background: var(--car-primary-soft); }
+.car-task-problem__head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.car-task-problem__no { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--car-font-num); font-size: var(--car-fs-body); font-weight: 600; }
+.car-task-problem__chevron { align-self: center; color: var(--car-text-secondary); }
+.car-task-problem__field { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.car-task-problem__label { flex: 0 0 56px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-task-problem__field strong, .car-task-problem__field span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-body); font-weight: 400; }
+.car-task-problem__field--node span:last-child { color: var(--car-primary); }
+.car-task-action { padding: var(--car-pad); border-top: 1px solid var(--car-border); background: var(--car-surface); }
+.car-task-action .car-btn { width: 100%; }
+.car-task-kpis--overlay { display: flex; width: auto; padding: 10px 4px; border: 1px solid var(--car-border); border-radius: var(--car-radius); background: rgba(255,255,255,0.94); box-shadow: 0 4px 14px rgba(20,40,70,0.10); }
+.car-task-kpis--overlay .car-task-kpi { align-items: center; padding: 0 18px; }
+.car-task-kpis--overlay .car-task-kpi__value .car-mono { font-size: var(--car-fs-list); line-height: 22px; }
+@media (max-width: 1279px) {
+    .car-task-context { padding-bottom: 12px; }
+    .car-task-kpis { padding: 10px 0; }
+    .car-task-kpi { padding: 2px 8px; }
+    .car-task-kpis--overlay .car-task-kpi { padding: 0 12px; }
+    .car-task-problem { min-height: 72px; padding: 12px var(--car-pad); }
+}

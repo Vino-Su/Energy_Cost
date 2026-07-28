@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>巡查地图 - 品质巡查</title>
+    <link rel="stylesheet" href="components/app-common.css">
+    <script>
+        // 嵌入态探测：作为品质巡查「地图」Tab 内容时，站内链接在外壳顶层打开
+        (function () {
+            if (/[?&]embedded=1/.test(location.search)) {
+                var base = document.createElement('base');
+                base.target = '_parent';
+                document.head.appendChild(base);
+                document.documentElement.classList.add('is-embedded');
+            }
+        })();
+    </script>
+    <script src="components/app-common.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            margin: 0 auto;
+            max-width: 375px;
+            min-height: 100vh;
+            background: #e9eef3;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #000000d9;
+            background: #e9eef3;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, a { font: inherit; -webkit-tap-highlight-color: transparent; }
+        button { cursor: pointer; }
+
+        /* ===== 工作台容器（与用车管理 map-workbench 同源） ===== */
+        .workbench {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            min-height: 760px;
+            margin: 0 auto;
+            overflow: hidden;
+            background: #eef2f5;
+            box-shadow: 0 24px 70px rgba(20, 40, 70, 0.22);
+        }
+
+        /* ===== 地图底图（仿用 map-workbench 风格） ===== */
+        .map-shell {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            background:
+                linear-gradient(115deg, transparent 0 32%, rgba(255,255,255,0.52) 32% 34%, transparent 34%),
+                linear-gradient(24deg, transparent 0 45%, rgba(255,255,255,0.45) 45% 47%, transparent 47%),
+                linear-gradient(155deg, transparent 0 54%, rgba(255,255,255,0.45) 54% 56%, transparent 56%),
+                #dfe6ea;
+        }
+        .map-grid {
+            position: absolute;
+            inset: 0;
+            opacity: 0.72;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.48) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.48) 1px, transparent 1px);
+            background-size: 56px 56px;
+        }
+        /* 任务作业区域：淡蓝色填充虚线（PRD 6.1.1-8） */
+        .map-zone {
+            position: absolute;
+            border-radius: 14px;
+            background: rgba(22, 119, 255, 0.10);
+            border: 2px dashed rgba(22, 119, 255, 0.55);
+            color: rgba(22, 119, 255, 0.7);
+            font-size: 11px;
+            display: grid;
+            place-items: center;
+            transition: all 0.3s ease;
+        }
+        .map-zone.is-active {
+            background: rgba(22, 119, 255, 0.16);
+            border-color: rgba(22, 119, 255, 0.85);
+        }
+        .map-road {
+            position: absolute;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.54);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.52);
+            transform-origin: left center;
+        }
+        .map-road.main { left: 0; top: 252px; width: 375px; transform: rotate(34deg); }
+        .map-road.secondary { left: 0; top: 456px; width: 375px; transform: rotate(-16deg); opacity: 0.76; }
+        .map-road.cross { left: 0; top: 72px; width: 375px; transform: rotate(78deg); opacity: 0.62; }
+        /* 轨迹图层 */
+        .track-layer {
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%;
+            z-index: 2;
+            overflow: visible;
+            pointer-events: none;
+        }
+        .actual-track {
+            fill: none;
+            stroke: #ff4d4f;
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0.92;
+            filter: drop-shadow(0 1px 2px rgba(255,77,79,0.28));
+        }
+        /* 重点点位：橙色 pin，编号居中（PRD 6.1.1-2 / 6.1.1-8） */
+        .keypoint {
+            position: absolute;
+            z-index: 6;
+            width: 30px;
+            height: 38px;
+            transform: translate(-50%, -100%);
+            filter: drop-shadow(0 2px 5px rgba(224,98,13,0.32));
+            pointer-events: none;
+        }
+        .keypoint svg { width: 100%; height: 100%; display: block; }
+        .keypoint > span {
+            position: absolute;
+            left: 50%; top: 42%;
+            transform: translate(-50%, -50%);
+            font-family: "DIN", "SF UI Text", sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+        /* 问题点位（PRD 6.1.1-8 / 6.1.1-10） */
+        .problem-point {
+            position: absolute;
+            z-index: 7;
+            width: 30px;
+            height: 38px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            transform: translate(-50%, -100%);
+            filter: drop-shadow(0 2px 5px rgba(20,40,70,0.28));
+            transition: transform 0.15s ease;
+        }
+        .problem-point:active { transform: translate(-50%, -100%) scale(0.92); }
+        .problem-pin {
+            position: relative;
+            width: 26px;
+            height: 26px;
+            margin: 0 auto;
+            border: 2px solid #fff;
+            border-radius: 50% 50% 50% 0;
+            display: grid;
+            place-items: center;
+            transform: rotate(-45deg);
+        }
+        .problem-pin > span { transform: rotate(45deg); color: #fff; font-size: 14px; font-weight: 700; }
+        .problem-point--pending .problem-pin { background: #8c8c8c; }
+        .problem-point--assigned .problem-pin { background: #1677ff; }
+        .problem-point--processing .problem-pin { background: #faad14; }
+        .problem-point--done .problem-pin { background: #52c41a; }
+        /* 人员位置（非机动车视角：人员而非车辆） */
+        .person-marker {
+            position: absolute;
+            z-index: 8;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border: 2px solid #91d5ff;
+            box-shadow: 0 3px 13px rgba(22,119,255,0.35);
+            display: grid;
+            place-items: center;
+            color: #1677ff;
+            transition: left 0.42s ease, top 0.42s ease;
+        }
+        .person-marker::after {
+            content: "";
+            position: absolute;
+            inset: -9px;
+            border-radius: inherit;
+            border: 1px solid rgba(22,119,255,0.35);
+            animation: personPulse 1.8s ease-out infinite;
+        }
+        .person-marker svg { width: 20px; height: 20px; }
+        @keyframes personPulse {
+            0% { transform: scale(0.7); opacity: 0.55; }
+            100% { transform: scale(1.18); opacity: 0; }
+        }
+        .workbench.sheet-open .person-marker { z-index: 5; }
+
+        /* ===== 顶部人员状态条（含返回按钮，与用车管理 top-back 同源） ===== */
+        .top-card {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            top: 14px;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 10px 28px rgba(15, 35, 70, 0.14);
+            z-index: 8;
+        }
+        .top-back {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e8e8e8;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.82);
+            display: grid;
+            place-items: center;
+            color: #000000d9;
+            text-decoration: none;
+            flex: none;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .top-back:active { transform: scale(0.92); background: #f5f5f5; }
+        .top-back svg { width: 20px; height: 20px; }
+        .person-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            flex: none;
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+        .person-icon svg { width: 20px; height: 20px; }
+        .person-summary {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+        }
+        .person-name {
+            min-width: 0;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 22px;
+            color: #000000d9;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .person-name-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .person-role {
+            flex: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 20px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #e6f4ff;
+            color: #1677ff;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 16px;
+            white-space: nowrap;
+        }
+        .person-meta {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+            color: #00000073;
+            font-size: 12px;
+            line-height: 18px;
+            white-space: nowrap;
+        }
+        .person-meta span + span { padding-left: 7px; border-left: 1px solid #e8e8e8; }
+        .person-meta strong { color: #000000d9; font-weight: 600; }
+
+        /* ===== 新任务轻提醒 banner（PRD 6.1.1-9） ===== */
+        .task-banner {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            top: 76px;
+            z-index: 8;
+            min-height: 44px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px 8px 12px;
+            border-radius: 10px;
+            background: rgba(22, 119, 255, 0.96);
+            color: #fff;
+            box-shadow: 0 8px 22px rgba(22, 119, 255, 0.28);
+            animation: bannerIn 0.3s ease-out;
+        }
+        .task-banner.show { display: flex; }
+        @keyframes bannerIn {
+            from { transform: translateY(-12px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .task-banner__icon { flex: none; display: grid; place-items: center; }
+        .task-banner__icon svg { width: 18px; height: 18px; }
+        .task-banner__txt { flex: 1; min-width: 0; font-size: 13px; line-height: 18px; }
+        .task-banner__txt strong { font-weight: 600; }
+        .task-banner__view {
+            flex: none;
+            min-height: 28px;
+            padding: 0 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.22);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 28px;
+            border: none;
+        }
+        .task-banner__view:active { background: rgba(255,255,255,0.35); }
+
+        /* ===== 右侧辅助工具栏（PRD 6.1.1-11） ===== */
+        .map-tools {
+            position: absolute;
+            right: 14px;
+            bottom: 232px;
+            z-index: 9;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: bottom 0.24s ease, opacity 0.24s ease;
+        }
+        .workbench.sheet-open .map-tools { opacity: 0; pointer-events: none; }
+        .tool-btn {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.96);
+            color: #1677ff;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 4px 13px rgba(0,0,0,0.15);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .tool-btn:active { transform: scale(0.92); }
+        .tool-btn svg { width: 20px; height: 20px; }
+        .tool-btn--problem { color: #ff4d4f; }
+        .tool-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border: 2px solid #fff;
+            border-radius: 9px;
+            background: #ff4d4f;
+            color: #fff;
+            font-family: "DIN", "SF UI Text", sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ===== 左下路线图例 ===== */
+        .map-legend {
+            position: absolute;
+            left: 14px;
+            bottom: 232px;
+            z-index: 9;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: bottom 0.24s ease, opacity 0.24s ease;
+        }
+        .workbench.sheet-open .map-legend { opacity: 0; pointer-events: none; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            line-height: 14px;
+            color: #000000d9;
+            white-space: nowrap;
+        }
+        .legend-mark { flex: none; }
+        .legend-mark.zone { width: 14px; height: 10px; border: 2px dashed rgba(22,119,255,0.7); border-radius: 3px; background: rgba(22,119,255,0.10); }
+        .legend-mark--kp { width: 12px; height: 12px; background: #e0620d; border-radius: 50%; }
+        .legend-mark.track { width: 18px; height: 0; border-top: 2px solid #ff4d4f; }
+        .legend-mark--person { width: 12px; height: 12px; background: #1677ff; border-radius: 50%; }
+        .legend-mark--problem { width: 12px; height: 12px; background: #faad14; border-radius: 50%; }
+
+        /* ===== 底部任务控制台（任务卡片 + 操作按钮） ===== */
+        .console {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10;
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -6px 24px rgba(15, 35, 70, 0.12);
+            transition: transform 0.28s ease-out;
+        }
+        .console__grip {
+            display: flex;
+            justify-content: center;
+            padding: 8px 0 4px;
+        }
+        .console__grip-bar {
+            width: 36px;
+            height: 4px;
+            border-radius: 2px;
+            background: #e8e8e8;
+        }
+        .console__summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 4px 16px 10px;
+        }
+        .console__summary-title { font-size: 13px; color: #00000073; }
+        .console__summary-count { font-family: "DIN", "SF UI Text", sans-serif; font-size: 13px; font-weight: 600; color: #1677ff; }
+        .console__summary-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            color: #1677ff;
+            font-size: 12px;
+            background: none;
+            border: none;
+        }
+        .console__summary-toggle svg { width: 14px; height: 14px; transition: transform 0.24s ease; }
+        .workbench.sheet-open .console__summary-toggle svg { transform: rotate(180deg); }
+
+        /* 任务卡片（对齐用车管理 map-workbench 的 task-line 范式，PRD 6.1.1-2） */
+        .task-card { padding: 0 16px 12px; }
+        .task-line { display: flex; align-items: center; gap: 8px; }
+        .task-line + .task-line { margin-top: 8px; }
+        /* 第 1 行：区域名 + 状态 + 任务详情（详情为右上角文字链接，非底部按钮） */
+        .task-line-head { justify-content: space-between; }
+        .task-title-wrap { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+        .task-card__area {
+            flex: 1; min-width: 0;
+            font-size: 16px; font-weight: 700; color: #000000d9; line-height: 22px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .task-head-right { flex: none; display: flex; align-items: center; gap: 8px; }
+        .detail-link {
+            flex: none; font-size: 12px; line-height: 18px; color: #1677ff;
+            text-decoration: none; font-weight: 500; background: none; border: none; padding: 0;
+        }
+        .detail-link:active { opacity: 0.7; }
+        /* 第 2 行：任务类型 + 作业类型 + 计划时间段 */
+        .task-card__meta {
+            font-size: 12px; line-height: 18px; color: #00000073;
+        }
+        .task-card__meta .sep { color: #e8e8e8; }
+        .task-card__meta .mono { font-family: "DIN", "SF UI Text", sans-serif; color: #000000a6; }
+        .task-type-tag {
+            flex: none; padding: 3px 7px; border-radius: 6px; background: #e6f4ff; color: #1677ff;
+            font-size: 12px; font-weight: 700; white-space: nowrap;
+        }
+        .work-type-tag {
+            flex: none; padding: 3px 7px; border-radius: 6px; background: #e6fffb; color: #08979c;
+            font-size: 12px; font-weight: 700; white-space: nowrap;
+        }
+        /* 状态标签 */
+        .tag {
+            flex: none; display: inline-flex; align-items: center;
+            min-height: 22px; padding: 1px 8px; border-radius: 6px;
+            font-size: 12px; font-weight: 700; line-height: 18px;
+        }
+        .tag--todo { background: #fffbe6; color: #d48806; }
+        .tag--running { background: #e6f4ff; color: #1677ff; }
+        .tag--done { background: #f6ffed; color: #389e0d; }
+        /* 第 3 行：3 列指标卡（对齐用车管理 #f5f8fb 底圆角） */
+        .task-kpis {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .task-kpi {
+            min-height: 50px; padding: 6px 8px; border-radius: 8px; background: #f5f8fb;
+            text-align: center; display: flex; flex-direction: column; justify-content: center;
+        }
+        .task-kpi__label { font-size: 11px; line-height: 16px; color: #00000073; }
+        .task-kpi__value { margin-top: 2px; font-family: "DIN", "SF UI Text", sans-serif; font-size: 14px; line-height: 20px; font-weight: 700; color: #000000d9; }
+        .task-kpi__value--link { color: #1677ff; }
+        .task-kpi__unit { font-size: 11px; color: #00000073; font-weight: 400; }
+        /* 第 4 行：操作行（图标按钮 + 主操作，对齐用车管理 task-line-actions） */
+        .task-actions {
+            display: grid; grid-template-columns: 46px 1fr; gap: 10px;
+            padding: 4px 0 0;
+        }
+        .icon-action, .primary-action {
+            height: 46px; border-radius: 12px; border: none;
+            display: grid; place-items: center;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .icon-action { border: 1px solid #e8e8e8; background: #ffffff; color: #1677ff; }
+        .primary-action {
+            background: #1677ff; color: #ffffff; font-size: 16px; font-weight: 700;
+            box-shadow: 0 8px 18px rgba(22,119,255,0.28);
+        }
+        .primary-action:active, .icon-action:active { transform: scale(0.98); opacity: 0.86; }
+        .icon-action svg { width: 21px; height: 21px; }
+
+        /* ===== 执行态：任务卡片收成一行（PRD 6.1.1-8） + 双明显按钮 ===== */
+        .task-card.is-executing .task-line-head { margin-bottom: 0; }
+        .exec-summary {
+            display: flex; align-items: center; gap: 10px; padding: 2px 0 0;
+            font-size: 12px; line-height: 18px; color: #00000073;
+        }
+        .exec-summary .exec-area {
+            flex: none; font-size: 16px; font-weight: 700; color: #000000d9; line-height: 22px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%;
+        }
+        .exec-summary .exec-metrics { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; justify-content: flex-end; }
+        .exec-summary .exec-metric { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
+        .exec-summary .exec-metric .m-label { color: #00000073; }
+        .exec-summary .exec-metric .m-val { font-family: "DIN", "SF UI Text", sans-serif; color: #000000d9; font-weight: 700; }
+        .exec-summary .sep { color: #e8e8e8; }
+        .exec-actions {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 16px 16px;
+        }
+        .exec-btn {
+            height: 50px; border-radius: 12px; font-size: 16px; font-weight: 700; border: none;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .exec-btn:active { opacity: 0.86; transform: scale(0.98); }
+        .exec-btn--finish { background: #ff4d4f; color: #fff; box-shadow: 0 8px 18px rgba(255,77,79,0.24); }
+        .exec-btn--report { background: #1677ff; color: #fff; box-shadow: 0 8px 18px rgba(22,119,255,0.28); }
+        .exec-btn svg { width: 20px; height: 20px; }
+
+        /* ===== 今日待办抽屉（PRD 6.1.1-4~7，上拉覆盖地图） ===== */
+        .sheet-mask {
+            position: absolute;
+            inset: 0;
+            z-index: 11;
+            background: rgba(0,0,0,0.32);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.24s ease, visibility 0.24s;
+        }
+        .sheet-mask.is-open { opacity: 1; visibility: visible; }
+        .sheet {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            z-index: 12;
+            max-height: 86%;
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.28s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .sheet.is-open { transform: translateY(0); }
+        .sheet__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px 8px;
+        }
+        .sheet__title { font-size: 15px; font-weight: 600; color: #000000d9; }
+        .sheet__close {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: #1677ff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            background: #fff;
+        }
+        /* 分组统计（PRD 6.1.1-5） */
+        .sheet__stats {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 16px 10px;
+            font-size: 12px;
+            color: #00000073;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .sheet__stats .stat { display: inline-flex; align-items: baseline; gap: 4px; }
+        .sheet__stats .stat .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; transform: translateY(-1px); }
+        .sheet__stats .stat .num { font-family: "DIN", "SF UI Text", sans-serif; font-size: 14px; font-weight: 600; color: #000000d9; }
+        .sheet__body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .sheet__group { padding: 10px 16px 4px; font-size: 12px; color: #00000073; background: #fafafa; }
+        .sheet-task {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f5f5f5;
+            background: #fff;
+            transition: background-color 0.15s;
+        }
+        .sheet-task:last-child { border-bottom: none; }
+        .sheet-task:active { background: #f5f5f5; }
+        .sheet-task.is-selected { background: #e6f4ff; }
+        .sheet-task.is-selected::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 0; bottom: 0; width: 3px;
+            background: #1677ff;
+        }
+        .sheet-task { position: relative; }
+        .sheet-task__r1 { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .sheet-task__area { font-size: 14px; font-weight: 500; color: #000000d9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sheet-task__r2 { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #00000073; flex-wrap: wrap; }
+        .sheet-task__r2 .sep { color: #e8e8e8; }
+        .sheet-task__r2 .mono { font-family: "DIN", "SF UI Text", sans-serif; }
+        .sheet-empty {
+            padding: 48px 16px;
+            text-align: center;
+            color: #00000073;
+            font-size: 14px;
+        }
+        .sheet-empty__icon { margin: 0 auto 12px; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: #f5f5f5; color: #bfbfbf; }
+        .sheet-empty__icon svg { width: 28px; height: 28px; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            max-width: 80%;
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.72);
+            color: #fff;
+            font-size: 14px;
+            line-height: 22px;
+            border-radius: 8px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s;
+        }
+        .toast.show { opacity: 1; visibility: visible; }
+    </style>
+</head>
+<body>
+<div class="workbench" id="workbench">
+    <!-- 地图底图 -->
+    <div class="map-shell">
+        <div class="map-grid"></div>
+        <div class="map-road main"></div>
+        <div class="map-road secondary"></div>
+        <div class="map-road cross"></div>
+        <!-- 任务作业区域（JS 动态填充） -->
+        <div id="js-zones"></div>
+        <!-- 实际轨迹 -->
+        <svg class="track-layer" viewBox="0 0 375 600" preserveAspectRatio="none" id="js-track-layer">
+            <path class="actual-track" id="js-track-path" d=""></path>
+        </svg>
+        <!-- 重点点位 -->
+        <div id="js-keypoints"></div>
+        <!-- 问题点位 -->
+        <div id="js-problems"></div>
+        <!-- 人员位置 -->
+        <div class="person-marker" id="js-person" style="left:50%;top:55%">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.6-1 3-2.5 3.5V20l1 1.5h-5l1-1.5V9.5C10 9 9 7.6 9 6a4 4 0 014-4z"/></svg>
+        </div>
+    </div>
+
+    <!-- 顶部人员状态条 -->
+    <div class="top-card">
+        <a href="javascript:void(0)" class="top-back" id="js-top-back" aria-label="返回上一页">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+        <div class="person-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="person-summary">
+            <div class="person-name-line">
+                <span class="person-name" id="js-person-name">李巡查</span>
+                <span class="person-role">巡查员·非机动车</span>
+            </div>
+            <div class="person-meta">
+                <span>今日任务 <strong id="js-today-total">4</strong></span>
+                <span>问题上报 <strong id="js-today-problems">3</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新任务轻提醒 banner -->
+    <div class="task-banner" id="js-banner" role="status" aria-live="polite">
+        <span class="task-banner__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </span>
+        <span class="task-banner__txt" id="js-banner-txt"><strong>巡查任务</strong> 新任务已派发</span>
+        <button type="button" class="task-banner__view" id="js-banner-view">查看</button>
+    </div>
+
+    <!-- 右侧辅助工具栏 -->
+    <div class="map-tools">
+        <button type="button" class="tool-btn tool-btn--problem" id="js-tool-problem" aria-label="查看问题上报记录">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+            <span class="tool-badge" id="js-problem-badge">0</span>
+        </button>
+        <button type="button" class="tool-btn" id="js-tool-reset" aria-label="复位">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button type="button" class="tool-btn" id="js-tool-layer" aria-label="图层">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </button>
+    </div>
+
+    <!-- 左下路线图例 -->
+    <div class="map-legend" id="js-legend">
+        <div class="legend-item"><span class="legend-mark zone"></span>任务作业区域</div>
+        <div class="legend-item"><span class="legend-mark--kp"></span>重点点位</div>
+        <div class="legend-item"><span class="legend-mark track"></span>实际轨迹</div>
+        <div class="legend-item"><span class="legend-mark--person"></span>人员位置</div>
+        <div class="legend-item"><span class="legend-mark--problem"></span>问题点位</div>
+    </div>
+
+    <!-- 底部任务控制台 -->
+    <div class="console" id="js-console">
+        <div class="console__grip"><div class="console__grip-bar"></div></div>
+        <div class="console__summary">
+            <span class="console__summary-title">今日待办任务</span>
+            <span class="console__summary-count" id="js-console-count">0 项</span>
+            <button type="button" class="console__summary-toggle" id="js-toggle-sheet" aria-label="展开今日待办">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+        </div>
+        <!-- 任务卡片正文（JS 动态填充） -->
+        <div class="task-card" id="js-task-card"></div>
+        <!-- 操作按钮区（JS 动态填充） -->
+        <div id="js-actions"></div>
+    </div>
+
+    <!-- 今日待办抽屉 -->
+    <div class="sheet-mask" id="js-sheet-mask"></div>
+    <div class="sheet" id="js-sheet" role="dialog" aria-modal="true" aria-label="今日待办任务清单">
+        <div class="sheet__head">
+            <span class="sheet__title">今日待办任务</span>
+            <button type="button" class="sheet__close" id="js-sheet-close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <span>收起</span>
+            </button>
+        </div>
+        <div class="sheet__stats" id="js-sheet-stats"></div>
+        <div class="sheet__body" id="js-sheet-body"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="js-toast"></div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ===== 演示任务数据（巡查员-非机动车视角） ===== */
+    var TASKS = [
+        { id: 'I001', area: '滨江路东段', status: 'done', type: '巡查任务', workType: '路面质检', time: '08:00-10:00', start: '08:02', mileage: 9.42, duration: 118, problems: 2,
+          zone: { left: '8%', top: '18%', width: '40%', height: '30%' },
+          points: [{ name: '滨江路18号路口', left: '20%', top: '32%' }, { name: '中央广场北门', left: '38%', top: '42%' }],
+          track: 'M 30 200 C 50 180, 70 160, 90 150 S 130 145, 150 160',
+          person: { left: '40%', top: '42%' },
+          problemsList: [
+            { id: 'P001', no: 'Q20260728-0014', status: 'done', statusText: '已完成', loc: '滨江路18号路口', point: { left: '22%', top: '36%' } }
+          ]
+        },
+        { id: 'I002', area: '中央广场片区', status: 'todo', type: '巡查任务', workType: '路面质检', time: '10:30-12:00', start: null, mileage: null, duration: null, problems: 0,
+          zone: { left: '42%', top: '40%', width: '38%', height: '32%' },
+          points: [{ name: '中央广场北门', left: '52%', top: '52%' }, { name: '喷泉广场', left: '68%', top: '60%' }],
+          track: '',
+          person: { left: '60%', top: '56%' },
+          problemsList: []
+        },
+        { id: 'I003', area: '解放南路沿线', status: 'todo', type: '巡查任务', workType: '路面质检', time: '13:30-15:00', start: null, mileage: null, duration: null, problems: 0,
+          zone: { left: '10%', top: '52%', width: '50%', height: '26%' },
+          points: [{ name: '解放南路1号桥', left: '22%', top: '62%' }, { name: '文昌路口', left: '48%', top: '68%' }],
+          track: '',
+          person: { left: '30%', top: '62%' },
+          problemsList: []
+        },
+        { id: 'I004', area: '人民东路-文昌路', status: 'todo', type: '巡查任务', workType: '路面质检', time: '15:30-17:00', start: null, mileage: null, duration: null, problems: 0,
+          zone: { left: '40%', top: '14%', width: '42%', height: '24%' },
+          points: [{ name: '人民东路跨线桥', left: '52%', top: '22%' }, { name: '文昌路小学', left: '68%', top: '28%' }],
+          track: '',
+          person: { left: '50%', top: '24%' },
+          problemsList: []
+        }
+    ];
+
+    var STATUS_TAG = { done: 'tag--done', running: 'tag--running', todo: 'tag--todo' };
+    var STATUS_TEXT = { done: '已完成', running: '进行中', todo: '待开始' };
+    var PROB_TAG = { done: 'tag--done', pending: 'tag--todo', processing: 'tag--running', assigned: 'tag--running' };
+
+    // 状态持久化（与车机端 car-common 一致思路，独立键避免污染用车管理）
+    var STATE_KEY = 'kuwash-inspection-state';
+    function loadState() {
+        try { return JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}'); } catch (e) { return {}; }
+    }
+    function saveState(s) {
+        try { sessionStorage.setItem(STATE_KEY, JSON.stringify(s)); } catch (e) {}
+    }
+    var state = loadState();
+    // 用持久化状态覆盖默认 status
+    TASKS.forEach(function (t) {
+        if (state[t.id] && state[t.id].status) { t.status = state[t.id].status; }
+    });
+
+    // 选中的任务：优先 URL 指定 → 进行中 → 待开始 → 第一条
+    var params = new URLSearchParams(location.search);
+    var requestedId = params.get('task');
+    var action = params.get('action');
+    var selectedId = (TASKS.find(function (t) { return t.id === requestedId; }) ||
+        TASKS.find(function (t) { return t.status === 'running'; }) ||
+        TASKS.find(function (t) { return t.status === 'todo'; }) ||
+        TASKS[0]).id;
+
+    function findTask(id) { return TASKS.find(function (t) { return t.id === id; }) }
+    function fmt(v, suffix, dash) { return v === null || v === undefined ? (dash || '—') : (v + (suffix || '')); }
+    function groupOrder(s) { return s === 'todo' ? 0 : (s === 'running' ? 1 : 2); }
+    function sortedTasks() {
+        return TASKS.slice().sort(function (a, b) {
+            if (groupOrder(a.status) !== groupOrder(b.status)) return groupOrder(a.status) - groupOrder(b.status);
+            return a.time < b.time ? -1 : 1;
+        });
+    }
+    function countBy() {
+        var c = { todo: 0, running: 0, done: 0 };
+        TASKS.forEach(function (t) { c[t.status]++; });
+        return c;
+    }
+    function todayProblems() {
+        var list = [];
+        TASKS.forEach(function (task) {
+            task.problemsList.forEach(function (p) { list.push(Object.assign({}, p, { taskId: task.id, taskArea: task.area })); });
+        });
+        return list;
+    }
+
+    /* ===== Toast ===== */
+    var toastTimer = null;
+    function toast(msg) {
+        var el = document.getElementById('js-toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2200);
+    }
+
+    /* ===== 地图渲染 ===== */
+    function renderMap(t) {
+        // 作业区域
+        var zonesEl = document.getElementById('js-zones');
+        zonesEl.innerHTML = '<span class="map-zone is-active" style="left:' + t.zone.left + ';top:' + t.zone.top + ';width:' + t.zone.width + ';height:' + t.zone.height + '">' + t.area + '</span>';
+        // 轨迹
+        var trackPath = document.getElementById('js-track-path');
+        trackPath.setAttribute('d', t.track || '');
+        document.getElementById('js-track-layer').style.display = t.track ? '' : 'none';
+        // 重点点位
+        var kpEl = document.getElementById('js-keypoints');
+        kpEl.innerHTML = t.points.map(function (p, idx) {
+            return '<span class="keypoint" style="left:' + p.left + ';top:' + p.top + '" title="' + p.name + '"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M512 0C229.2 0 0 229.2 0 512c0 229.2 512 819.2 512 819.2S1024 741.2 1024 512C1024 229.2 794.8 0 512 0z" fill="#e0620d"/></svg><span>' + (idx + 1) + '</span></span>';
+        }).join('');
+        // 问题点位（执行中/已完成展示）
+        var probEl = document.getElementById('js-problems');
+        if (t.problemsList && t.problemsList.length && (t.status === 'running' || t.status === 'done')) {
+            probEl.innerHTML = t.problemsList.map(function (p) {
+                if (!p.point) return '';
+                return '<button type="button" class="problem-point problem-point--' + p.status + '" data-id="' + p.id + '" style="left:' + p.point.left + ';top:' + p.point.top + '" title="' + p.no + ' · ' + p.statusText + '"><span class="problem-pin"><span>!</span></span></button>';
+            }).join('');
+            probEl.querySelectorAll('.problem-point').forEach(function (el) {
+                el.addEventListener('click', function () { toast('问题详情本期暂未开放：' + el.dataset.id); });
+            });
+        } else {
+            probEl.innerHTML = '';
+        }
+        // 人员位置
+        var person = document.getElementById('js-person');
+        person.style.left = t.person.left;
+        person.style.top = t.person.top;
+    }
+
+    /* ===== 任务卡片渲染（PRD 6.1.1-2） ===== */
+    function renderTaskCard(t) {
+        var card = document.getElementById('js-task-card');
+        var actionsEl = document.getElementById('js-actions');
+
+        // 执行态：任务卡片收成一行（PRD 6.1.1-8：仅任务名+开始时间+作业里程+已作业时长）+ 双明显按钮
+        if (t.status === 'running') {
+            card.classList.add('is-executing');
+            card.innerHTML =
+                '<div class="exec-summary">' +
+                    '<span class="exec-area">' + t.area + '</span>' +
+                    '<span class="exec-metrics">' +
+                        '<span class="exec-metric"><span class="m-label">开始</span><span class="m-val">' + fmt(t.start, '', '—') + '</span></span>' +
+                        '<span class="sep">·</span>' +
+                        '<span class="exec-metric"><span class="m-val">' + fmt(t.mileage, '', '—') + '</span><span class="m-label">km</span></span>' +
+                        '<span class="sep">·</span>' +
+                        '<span class="exec-metric"><span class="m-val">' + fmt(t.duration, '', '—') + '</span><span class="m-label">min</span></span>' +
+                    '</span>' +
+                '</div>';
+            actionsEl.innerHTML = '<div class="exec-actions">' +
+                '<button type="button" class="exec-btn exec-btn--report" id="js-btn-report">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+                    '<span>问题上报</span>' +
+                '</button>' +
+                '<button type="button" class="exec-btn exec-btn--finish" id="js-btn-finish">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>' +
+                    '<span>结束任务</span>' +
+                '</button>' +
+            '</div>';
+            document.getElementById('js-btn-report').addEventListener('click', function () { toast('问题上报页本期暂未开放，由车载外设上报'); });
+            document.getElementById('js-btn-finish').addEventListener('click', function () { onFinish(t); });
+            return;
+        }
+
+        // 待开始 / 已完成：完整多行任务卡片（对齐用车管理 task-line 范式）
+        card.classList.remove('is-executing');
+        var html =
+            '<div class="task-line task-line-head">' +
+                '<div class="task-title-wrap">' +
+                    '<span class="task-card__area">' + t.area + '</span>' +
+                    '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span>' +
+                '</div>' +
+                '<div class="task-head-right">' +
+                    '<button type="button" class="detail-link" id="js-btn-detail">详情</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="task-line task-card__meta">' +
+                '<span class="task-type-tag">' + t.type + '</span>' +
+                '<span class="work-type-tag">' + t.workType + '</span>' +
+                '<span class="mono">' + t.time + '</span>' +
+            '</div>';
+        // 已完成展示指标卡（3 列：开始时间/作业里程/作业时长；问题上报作为第4项以链接形式附在第3卡或单独）
+        if (t.status === 'done') {
+            html += '<div class="task-line task-kpis">' +
+                '<div class="task-kpi"><span class="task-kpi__label">开始时间</span><span class="task-kpi__value">' + fmt(t.start, '', '—') + '</span></div>' +
+                '<div class="task-kpi"><span class="task-kpi__label">作业里程</span><span class="task-kpi__value">' + fmt(t.mileage, '', '—') + '<span class="task-kpi__unit"> km</span></span></div>' +
+                '<div class="task-kpi"><span class="task-kpi__label">作业时长</span><span class="task-kpi__value">' + fmt(t.duration, '', '—') + '<span class="task-kpi__unit"> min</span></span></div>' +
+            '</div>';
+        }
+        card.innerHTML = html;
+        document.getElementById('js-btn-detail').addEventListener('click', function () { toast('任务详情页本期暂未开放'); });
+
+        // 操作行：待开始=图标+开始任务；已完成=返回列表
+        if (t.status === 'todo') {
+            actionsEl.innerHTML = '<div class="task-actions">' +
+                '<button type="button" class="icon-action" id="js-btn-list" aria-label="今日任务列表">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg>' +
+                '</button>' +
+                '<button type="button" class="primary-action" id="js-btn-start">开始任务</button>' +
+            '</div>';
+            document.getElementById('js-btn-list').addEventListener('click', function () { openSheet(); });
+            document.getElementById('js-btn-start').addEventListener('click', function () { onStart(t); });
+        } else { // done
+            actionsEl.innerHTML = '<div class="task-actions">' +
+                '<button type="button" class="icon-action" id="js-btn-list2" aria-label="今日任务列表">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg>' +
+                '</button>' +
+                '<button type="button" class="primary-action" id="js-btn-back-list" style="background:#f5f5f5;color:#00000040;box-shadow:none;">已完成</button>' +
+            '</div>';
+            document.getElementById('js-btn-list2').addEventListener('click', function () { openSheet(); });
+            document.getElementById('js-btn-back-list').addEventListener('click', function () { openSheet(); });
+        }
+    }
+
+    /* ===== 开始任务校验链（PRD 6.1.1-3） ===== */
+    function onStart(t) {
+        // 1. 时间范围校验（阻断项）—— 静态原型：以当前是否早于开始时间模拟
+        // 2. 其他进行中任务校验（阻断项）
+        var running = TASKS.find(function (x) { return x.status === 'running'; });
+        if (running && running.id !== t.id) {
+            toast('当前存在进行中任务');
+            selectedId = running.id;
+            renderAll();
+            return;
+        }
+        // 3. 人员位置是否在路段范围（阻断项）—— 静态原型 mock 通过
+        // 校验通过
+        setStateStatus(t.id, 'running');
+        t.start = nowHHMM();
+        toast('任务已开始');
+        renderAll();
+    }
+
+    /* ===== 结束任务 → 今日回顾（本期跳占位，PRD 5.1） ===== */
+    function onFinish(t) {
+        // 任务完成情况校验（静态原型直接通过）
+        setStateStatus(t.id, 'done');
+        var nextTodo = TASKS.find(function (x) { return x.status === 'todo'; });
+        if (nextTodo) {
+            selectedId = nextTodo.id;
+            toast('已结束当前任务，已自动推送下一条');
+            renderAll();
+        } else {
+            // 今日任务均已完成 → 跳转今日回顾（本期占位）
+            // 嵌入态需顶到外壳层跳转（base target=_parent 只对链接点击生效，location.href 需显式指定 parent）
+            toast('今日任务均已完成，进入今日回顾');
+            var target = 'placeholder.html?from=inspection-today-review&title=' + encodeURIComponent('今日回顾');
+            setTimeout(function () {
+                if (window.parent && window.parent !== window) {
+                    window.parent.location.href = target;
+                } else {
+                    location.href = target;
+                }
+            }, 600);
+        }
+    }
+
+    function setStateStatus(id, status) {
+        state[id] = state[id] || {};
+        state[id].status = status;
+        saveState(state);
+        var t = findTask(id);
+        if (t) t.status = status;
+    }
+    function nowHHMM() {
+        // 脚本环境不可用 Date.now/new Date，用静态占位（演示数据已含真实时间）
+        return '10:31';
+    }
+
+    /* ===== 今日待办抽屉（PRD 6.1.1-4~7） ===== */
+    function renderSheetStats() {
+        var c = countBy();
+        document.getElementById('js-sheet-stats').innerHTML =
+            '<span class="stat"><span class="dot" style="background:#faad14"></span>未完成 <span class="num">' + c.todo + '</span></span>' +
+            '<span class="stat"><span class="dot" style="background:#52c41a"></span>进行中 <span class="num">' + c.running + '</span></span>' +
+            '<span class="stat"><span class="dot" style="background:#1677ff"></span>已完成 <span class="num">' + c.done + '</span></span>';
+    }
+    function renderSheetBody() {
+        var body = document.getElementById('js-sheet-body');
+        var sorted = sortedTasks();
+        if (!sorted.length) {
+            body.innerHTML = '<div class="sheet-empty"><div class="sheet-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg></div>暂无今日待办任务</div>';
+            return;
+        }
+        var groups = [{ key: 'todo', label: '未开始' }, { key: 'running', label: '进行中' }, { key: 'done', label: '已完成' }];
+        var html = '';
+        var lastGroup = null;
+        sorted.forEach(function (t) {
+            if (t.status !== lastGroup) {
+                var g = groups.find(function (x) { return x.key === t.status; });
+                html += '<div class="sheet__group">' + g.label + '</div>';
+                lastGroup = t.status;
+            }
+            html += '<div class="sheet-task' + (t.id === selectedId ? ' is-selected' : '') + '" data-id="' + t.id + '">' +
+                '<div class="sheet-task__r1"><span class="sheet-task__area">' + t.area + '</span>' +
+                '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span></div>' +
+                '<div class="sheet-task__r2"><span>' + t.type + '</span><span class="sep">·</span><span>' + t.workType + '</span><span class="sep">·</span><span class="mono">' + t.time + '</span></div>' +
+            '</div>';
+        });
+        body.innerHTML = html;
+        body.querySelectorAll('.sheet-task').forEach(function (el) {
+            el.addEventListener('click', function () {
+                selectedId = el.dataset.id;
+                closeSheet();
+                renderAll();
+            });
+        });
+    }
+    function openSheet() {
+        renderSheetStats();
+        renderSheetBody();
+        document.getElementById('js-sheet').classList.add('is-open');
+        document.getElementById('js-sheet-mask').classList.add('is-open');
+        document.getElementById('workbench').classList.add('sheet-open');
+    }
+    function closeSheet() {
+        document.getElementById('js-sheet').classList.remove('is-open');
+        document.getElementById('js-sheet-mask').classList.remove('is-open');
+        document.getElementById('workbench').classList.remove('sheet-open');
+    }
+
+    /* ===== 顶部统计 + 控制台计数 ===== */
+    function renderSummary() {
+        var c = countBy();
+        document.getElementById('js-today-total').textContent = TASKS.length;
+        document.getElementById('js-today-problems').textContent = todayProblems().length;
+        document.getElementById('js-console-count').textContent = (c.todo + c.running) + ' 项待办';
+        document.getElementById('js-problem-badge').textContent = todayProblems().length;
+    }
+
+    function renderAll() {
+        var t = findTask(selectedId) || TASKS[0];
+        renderMap(t);
+        renderTaskCard(t);
+        renderSummary();
+    }
+
+    /* ===== 事件绑定 ===== */
+    document.getElementById('js-toggle-sheet').addEventListener('click', openSheet);
+    document.getElementById('js-sheet-close').addEventListener('click', closeSheet);
+    document.getElementById('js-sheet-mask').addEventListener('click', closeSheet);
+    // 返回按钮：对齐用车管理 go('home.html')，嵌入态顶到外壳层直接退回工作台
+    function goBack(url) {
+        url = url || 'home.html';
+        if (window.parent && window.parent !== window.self) {
+            window.parent.location.href = url;
+        } else {
+            window.location.href = url;
+        }
+    }
+    document.getElementById('js-top-back').addEventListener('click', function () { goBack('home.html'); });
+    document.getElementById('js-tool-reset').addEventListener('click', function () { toast('已复位至当前位置'); var t = findTask(selectedId); if (t) { var p = document.getElementById('js-person'); p.style.left = t.person.left; p.style.top = t.person.top; } });
+    document.getElementById('js-tool-layer').addEventListener('click', function () { toast('辅助设施图层已切换'); });
+    document.getElementById('js-tool-problem').addEventListener('click', function () { toast('问题记录页本期暂未开放'); });
+    document.getElementById('js-banner-view').addEventListener('click', function () { closeBanner(); openSheet(); });
+
+    /* ===== 新任务轻提醒 banner（PRD 6.1.1-9，静态演示） ===== */
+    var bannerTimer = null;
+    function showBanner() {
+        document.getElementById('js-banner').classList.add('show');
+        // PRD：默认显示 1min；演示缩短为 6s
+        bannerTimer = setTimeout(closeBanner, 6000);
+    }
+    function closeBanner() {
+        document.getElementById('js-banner').classList.remove('show');
+        if (bannerTimer) { clearTimeout(bannerTimer); bannerTimer = null; }
+    }
+
+    /* ===== 嵌入态：响应外壳 queryExecuting（退出校验） ===== */
+    window.addEventListener('message', function (event) {
+        var data = event.data || {};
+        if (data.type === 'queryExecuting') {
+            var executing = TASKS.some(function (t) { return t.status === 'running'; });
+            try {
+                event.source.postMessage({ type: 'executingStatus', value: executing }, '*');
+            } catch (e) {}
+        }
+    });
+
+    /* ===== 项目切换联动（PRD：数据随项目刷新） ===== */
+    document.addEventListener('projectChanged', function () {
+        toast('项目已切换，任务列表已刷新');
+        renderAll();
+    });
+
+    /* ===== 初始化 ===== */
+    renderAll();
+    // 若 URL 指定 action=start，自动触发开始
+    if (action === 'start') {
+        var t0 = findTask(selectedId);
+        if (t0 && t0.status === 'todo') { setTimeout(function () { onStart(t0); }, 300); }
+    }
+    // 演示：加载后延时弹一次新任务 banner
+    setTimeout(showBanner, 1800);
+})();
+</script>
+</body>
+</html>

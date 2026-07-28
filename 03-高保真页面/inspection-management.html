@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>品质巡查 - 城市管家</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="components/app-common.css">
+    <script src="components/app-common.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            margin: 0 auto;
+            max-width: 375px;
+            min-height: 100vh;
+            background: #ffffff;
+        }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            width: 100%;
+            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        button, a { -webkit-tap-highlight-color: transparent; font: inherit; }
+
+        /* ===== 应用外壳（模式 A：独立应用，与用车管理同源） ===== */
+        .app-shell {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: calc(56px + env(safe-area-inset-bottom));
+            margin: 0 auto;
+            max-width: 375px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        .tab-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            background: #ffffff;
+        }
+        .tab-panel.active { display: block; }
+
+        /* 地图 Tab：iframe 填满 */
+        #panel-map { background: #eef2f5; }
+        #panel-map iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            background: #eef2f5;
+        }
+
+        /* 服务 Tab：可滚动，含顶部导航 */
+        #panel-service {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background: #ffffff;
+            padding-bottom: 16px;
+        }
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            width: 100%;
+            height: 44px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+        }
+        .top-nav-back {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000000d9;
+            background: transparent;
+            border: none;
+            margin-left: -8px;
+            cursor: pointer;
+        }
+        .top-nav-back:active { opacity: 0.6; }
+        .top-nav-back svg { width: 22px; height: 22px; }
+        .top-nav-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #00000073;
+            padding: 16px 16px 12px;
+        }
+        .section-title:first-child { padding-top: 12px; }
+
+        /* 子项宫格 */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 0 16px;
+        }
+        .module-item {
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: inherit;
+            transition: opacity 0.15s;
+        }
+        .module-item:active { opacity: 0.6; }
+        .module-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .module-icon svg { width: 22px; height: 22px; }
+        .module-name {
+            font-size: 13px;
+            color: #000000d9;
+            font-weight: 500;
+            text-align: center;
+        }
+        .module-icon.inspection { background: #e6f4ff; color: #1677ff; }
+        .module-icon.problem { background: #fff1f0; color: #ff4d4f; }
+        .module-icon.repair { background: #fff7e6; color: #fa8c16; }
+        .module-icon.stat { background: #f2f0ff; color: #722ed1; }
+
+        /* ===== 底部 Tab（地图 / 服务） ===== */
+        .app-tabbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            max-width: 375px;
+            height: calc(56px + env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
+            background: #ffffff;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            z-index: 1000;
+        }
+        .app-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            color: #00000073;
+            font-size: 10px;
+            line-height: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .app-tab.active { color: #1677ff; }
+        .app-tab:active { opacity: 0.7; }
+        .app-tab svg { width: 24px; height: 24px; }
+
+        /* ===== 退出确认弹窗（与用车管理一致） ===== */
+        .confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0 auto;
+            max-width: 375px;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .confirm-overlay.show { display: flex; }
+        .confirm-card {
+            width: 280px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .confirm-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #fffbe6;
+            color: #faad14;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+        }
+        .confirm-icon svg { width: 28px; height: 28px; }
+        .confirm-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000d9;
+            line-height: 24px;
+            margin-bottom: 6px;
+        }
+        .confirm-desc {
+            font-size: 14px;
+            color: #00000073;
+            line-height: 22px;
+            margin-bottom: 18px;
+        }
+        .confirm-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .confirm-btn {
+            flex: 1;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .confirm-btn:active { opacity: 0.85; }
+        .confirm-btn.secondary {
+            background: #ffffff;
+            border: 1px solid #e8e8e8;
+            color: #000000d9;
+        }
+        .confirm-btn.primary {
+            background: #1677ff;
+            border: 1px solid #1677ff;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <!-- 地图 Tab（默认）：嵌入巡查地图页 -->
+        <section id="panel-map" class="tab-panel active" role="tabpanel" aria-label="地图">
+            <iframe id="mapFrame" src="about:blank" title="巡查地图"></iframe>
+        </section>
+
+        <!-- 服务 Tab：子功能入口 -->
+        <section id="panel-service" class="tab-panel" role="tabpanel" aria-label="服务">
+            <div class="top-nav">
+                <button type="button" class="top-nav-back" onclick="requestExit()" aria-label="退出品质巡查">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div class="top-nav-title">服务</div>
+            </div>
+
+            <div class="content-area">
+                <!-- 任务管理：本期仅巡查任务 -->
+                <div class="section-title">任务管理</div>
+                <div class="module-grid">
+                    <a href="placeholder.html?from=inspection-tasks&title=巡查任务" class="module-item">
+                        <div class="module-icon inspection">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/><path d="M3 12h4M3 16h6"/></svg>
+                        </div>
+                        <span class="module-name">巡查任务</span>
+                    </a>
+                </div>
+
+                <!-- 问题与事件（本期占位） -->
+                <div class="section-title">问题与事件</div>
+                <div class="module-grid">
+                    <a href="placeholder.html?from=inspection-problem&title=问题管理" class="module-item">
+                        <div class="module-icon problem">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                        </div>
+                        <span class="module-name">问题管理</span>
+                    </a>
+                </div>
+
+                <!-- 维保管理（本期占位） -->
+                <div class="section-title">维保管理</div>
+                <div class="module-grid">
+                    <a href="placeholder.html?from=inspection-repair&title=故障报修" class="module-item">
+                        <div class="module-icon repair">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                        </div>
+                        <span class="module-name">故障报修</span>
+                    </a>
+                </div>
+
+                <!-- 数据统计（本期占位） -->
+                <div class="section-title">数据统计</div>
+                <div class="module-grid">
+                    <a href="placeholder.html?from=inspection-stat&title=巡查统计" class="module-item">
+                        <div class="module-icon stat">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+                        </div>
+                        <span class="module-name">巡查统计</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 底部 Tab：地图 / 服务 -->
+    <nav class="app-tabbar" aria-label="主导航">
+        <button type="button" class="app-tab active" id="tab-map" onclick="switchTab('map')" aria-label="地图">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>地图</span>
+        </button>
+        <button type="button" class="app-tab" id="tab-service" onclick="switchTab('service')" aria-label="服务">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>服务</span>
+        </button>
+    </nav>
+
+    <!-- 退出确认弹窗 -->
+    <div class="confirm-overlay" id="exitConfirm" role="dialog" aria-modal="true" aria-label="退出确认">
+        <div class="confirm-card">
+            <div class="confirm-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="confirm-title">有任务进行中</div>
+            <div class="confirm-desc">退出后任务仍会在后台记录，确认退出品质巡查？</div>
+            <div class="confirm-buttons">
+                <button type="button" class="confirm-btn secondary" onclick="closeExitConfirm()">取消</button>
+                <button type="button" class="confirm-btn primary" onclick="confirmExit()">确认退出</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ===== Tab 切换 ===== */
+        function switchTab(name) {
+            document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+            var panel = document.getElementById('panel-' + name);
+            if (panel) panel.classList.add('active');
+            document.querySelectorAll('.app-tab').forEach(function (t) { t.classList.remove('active'); });
+            var tab = document.getElementById('tab-' + name);
+            if (tab) tab.classList.add('active');
+            if (name === 'service') {
+                document.getElementById('panel-service').scrollTop = 0;
+            }
+        }
+
+        /* ===== 退出品质巡查（有进行中任务时二次确认） ===== */
+        var pendingExit = false;
+        function requestExit() {
+            if (pendingExit) return;
+            pendingExit = true;
+            askIframeExecuting(function (executing) {
+                pendingExit = false;
+                if (executing) {
+                    document.getElementById('exitConfirm').classList.add('show');
+                } else {
+                    window.location.href = 'home.html';
+                }
+            });
+        }
+        function confirmExit() {
+            closeExitConfirm();
+            window.location.href = 'home.html';
+        }
+        function closeExitConfirm() {
+            document.getElementById('exitConfirm').classList.remove('show');
+        }
+        // 向地图 iframe 查询是否有进行中任务
+        function askIframeExecuting(callback) {
+            var frame = document.getElementById('mapFrame');
+            if (!frame || !frame.contentWindow) { callback(false); return; }
+            var done = false;
+            function settle(val) { if (done) return; done = true; callback(val); }
+            var msgHandler = function (event) {
+                if (!frame.contentWindow || event.source !== frame.contentWindow) return;
+                var data = event.data || {};
+                if (data.type === 'executingStatus') {
+                    window.removeEventListener('message', msgHandler);
+                    settle(!!data.value);
+                }
+            };
+            window.addEventListener('message', msgHandler);
+            try {
+                frame.contentWindow.postMessage({ type: 'queryExecuting' }, '*');
+            } catch (e) {}
+            // 兜底：300ms 无响应视为无进行中任务
+            setTimeout(function () { settle(false); }, 300);
+        }
+
+        // 默认进入：可选 ?tab=service 直达服务 Tab
+        (function () {
+            var params = new URLSearchParams(location.search);
+            var hparams = new URLSearchParams(location.hash.replace(/^#/, ''));
+            var tab = params.get('tab') || hparams.get('tab');
+            if (tab === 'service') switchTab('service');
+        })();
+
+        /* ===== iframe 加载巡查地图页 ===== */
+        (function () {
+            var params = new URLSearchParams(location.search);
+            var frame = document.getElementById('mapFrame');
+            if (!frame) return;
+            var queryParts = ['embedded=1'];
+            var task = params.get('task');
+            var action = params.get('action');
+            if (task) queryParts.push('task=' + encodeURIComponent(task));
+            if (action) queryParts.push('action=' + encodeURIComponent(action));
+            frame.src = 'inspection-map.html?' + queryParts.join('&');
+        })();
+    </script>
+</body>
+</html>

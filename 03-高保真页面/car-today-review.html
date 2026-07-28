@@ -9,6 +9,7 @@
 /* 今日回顾：结果确认优先，待办与问题作为后续动作。 */
 .tr-app { display: flex; flex-direction: column; }
 .tr-summary { display: flex; align-items: center; gap: 20px; min-height: 72px; padding: 12px var(--car-pad); margin: var(--car-gap) var(--car-gap) 0; background: var(--car-surface); border: 1px solid var(--car-border); border-radius: var(--car-radius); }
+.tr-page-title { margin: var(--car-gap) var(--car-gap) 0; padding: 0 var(--car-pad); font-size: var(--car-fs-panel); font-weight: 600; color: var(--car-text); }
 .tr-summary__ok { display: flex; align-items: center; gap: 10px; padding-right: 20px; border-right: 1px solid var(--car-border); flex-shrink: 0; }
 .tr-summary__ok .ic { width: 30px; height: 30px; color: var(--car-success); flex-shrink: 0; }
 .tr-summary__ok .t { font-size: var(--car-fs-panel); font-weight: 600; color: var(--car-success); line-height: 1.2; }
@@ -74,15 +75,11 @@
 <body>
 <div class="car-app tr-app">
     <header class="car-topbar">
-        <button class="car-topbar__back" id="js-back" aria-label="返回">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </button>
         <div class="car-topbar__page">
             <div class="car-topbar__brand">
                 <svg class="car-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h2l2-5h9l3 5h2"/><path d="M5 13v5h14v-5"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>
-                酷哇车机 · 品质巡查
+                品质巡查
             </div>
-            <div class="car-topbar__title">今日回顾</div>
         </div>
         <div class="car-topbar__spacer"></div>
         <div class="car-topbar__meta">
@@ -91,6 +88,8 @@
         </div>
     </header>
 
+    <!-- 页面标题（由顶栏迁移至内容区承载） -->
+    <h1 class="tr-page-title">今日回顾</h1>
     <!-- 交车结果与关键上下文 -->
     <div class="tr-summary">
         <div class="tr-summary__ok">
@@ -216,7 +215,6 @@
     render(TOMORROW, 'js-tom-list', 'js-tom-cnt', '明日暂无待办任务', false);
 
     // 已解绑后可返回绑定页；问题入口保持交车后的只读范围。
-    document.getElementById('js-back').addEventListener('click', function () { CAR.go('car-bind.html', { delay: 300 }); });
     function openTodayProblems() { CAR.go('car-home.html?panel=problems&from=review', { delay: 220 }); }
     document.getElementById('js-probs').addEventListener('click', openTodayProblems);
     document.getElementById('js-probList').addEventListener('click', openTodayProblems);
