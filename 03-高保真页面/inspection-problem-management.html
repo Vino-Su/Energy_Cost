@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>问题管理 - 品质巡查</title>
+    <link rel="stylesheet" href="components/app-common.css">
+    <style>
+        * { box-sizing: border-box; }
+        html { min-height: 100%; max-width: 375px; margin: 0 auto; background: #f5f5f5; }
+        body {
+            min-height: 100vh; margin: 0; background: #f5f5f5; color: #1f2329;
+            font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            letter-spacing: 0; -webkit-tap-highlight-color: transparent;
+        }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 30; width: 100%; max-width: 375px;
+            height: 44px; margin: 0 auto; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,.96); border-bottom: 1px solid #e5e6eb;
+        }
+        .top-nav__back {
+            position: absolute; left: 8px; width: 36px; height: 36px; display: grid; place-items: center;
+            border: 0; border-radius: 6px; background: transparent; color: #1f2329;
+        }
+        .top-nav__back:active { background: #f2f3f5; }
+        .top-nav__back svg { width: 22px; height: 22px; }
+        .top-nav__title { font-size: 16px; font-weight: 600; line-height: 22px; }
+        .page { min-height: 100vh; padding-top: 44px; }
+        .tab-bar {
+            position: sticky; top: 44px; z-index: 20; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            height: 48px; background: #fff; border-bottom: 1px solid #e5e6eb;
+        }
+        .status-tab {
+            position: relative; min-width: 0; padding: 0; border: 0; background: transparent; color: #86909c;
+            font-size: 13px; line-height: 48px; white-space: nowrap;
+        }
+        .status-tab::after {
+            position: absolute; bottom: 0; left: 50%; width: 24px; height: 2px; border-radius: 2px;
+            background: transparent; content: ""; transform: translateX(-50%);
+        }
+        .status-tab.is-active { color: #1677ff; font-weight: 600; }
+        .status-tab.is-active::after { background: #1677ff; }
+        .tab-badge {
+            display: inline-flex; min-width: 16px; height: 16px; margin-left: 3px; padding: 0 4px;
+            align-items: center; justify-content: center; border-radius: 8px; background: #f2f3f5;
+            color: #86909c; font-size: 10px; line-height: 16px; vertical-align: 1px;
+        }
+        .status-tab.is-active .tab-badge { background: #e6f4ff; color: #1677ff; }
+        .toolbar { min-height: 52px; padding: 8px 16px; background: #fff; }
+        .filter-chip {
+            display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 11px;
+            border: 1px solid #e5e6eb; border-radius: 18px; background: #fff; color: #4e5969; font-size: 13px;
+        }
+        .filter-chip:active { background: #f7f8fa; }
+        .filter-chip svg { width: 16px; height: 16px; color: #1677ff; }
+        .filter-chip__arrow { color: #86909c; font-size: 11px; }
+        .list-area { padding: 4px 16px 28px; }
+        .problem-list { display: grid; gap: 12px; }
+        .problem-card {
+            width: 100%; padding: 15px 16px; overflow: hidden; border: 1px solid #e5e6eb; border-left: 3px solid #69b1ff;
+            border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(31,35,41,.04); text-align: left;
+            transition: transform .15s, border-color .15s;
+        }
+        .problem-card.pending { border-left-color: #faad14; }
+        .problem-card.assigned { border-left-color: #69b1ff; }
+        .problem-card.processing { border-left-color: #1677ff; }
+        .problem-card.done { border-left-color: #73d13d; }
+        .problem-card:active { border-color: #bedaff; transform: scale(.99); }
+        .problem-card__head { display: flex; align-items: center; gap: 10px; }
+        .problem-card__no { min-width: 0; flex: 1; overflow: hidden; color: #1f2329; font-family: "DIN", "SF UI Text", sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+        .status-tag { flex: 0 0 auto; min-width: 52px; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; line-height: 24px; text-align: center; }
+        .status-tag.pending { background: #fffbe6; color: #d48806; }
+        .status-tag.assigned { background: #e6f4ff; color: #0958d9; }
+        .status-tag.processing { background: #e6f4ff; color: #1677ff; }
+        .status-tag.done { background: #f6ffed; color: #389e0d; }
+        .problem-card__location { display: flex; align-items: flex-start; gap: 7px; margin-top: 10px; color: #4e5969; font-size: 14px; line-height: 20px; }
+        .problem-card__location svg { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 2px; color: #86909c; }
+        .problem-card__location span { min-width: 0; }
+        .problem-card__meta { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f1f2; color: #86909c; font-size: 12px; line-height: 18px; }
+        .problem-card__meta span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .problem-card__meta span:first-child { flex: 1; }
+        .problem-card__sep { width: 1px; height: 12px; flex: 0 0 auto; background: #e5e6eb; }
+        .empty-state { min-height: 300px; padding: 72px 24px 40px; border-radius: 8px; background: #fff; text-align: center; }
+        .empty-state__icon { width: 60px; height: 60px; display: grid; margin: 0 auto 16px; place-items: center; border-radius: 50%; background: #f2f3f5; color: #86909c; }
+        .empty-state__icon svg { width: 28px; height: 28px; }
+        .empty-state__title { color: #1f2329; font-size: 15px; font-weight: 600; line-height: 22px; }
+        .empty-state__desc { margin-top: 7px; color: #86909c; font-size: 12px; line-height: 19px; }
+        .sheet-overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.5); }
+        .sheet-overlay.is-open { display: flex; }
+        .sheet { width: 100%; max-width: 375px; padding-bottom: env(safe-area-inset-bottom); border-radius: 16px 16px 0 0; background: #fff; animation: sheet-in .2s ease-out; }
+        @keyframes sheet-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .sheet__handle { width: 36px; height: 4px; margin: 8px auto; border-radius: 2px; background: #d8dadf; }
+        .sheet__header { display: flex; height: 48px; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #f0f1f2; }
+        .sheet__title { font-size: 16px; font-weight: 600; line-height: 24px; }
+        .sheet__close { width: 36px; height: 36px; border: 0; border-radius: 6px; background: transparent; color: #4e5969; }
+        .sheet__close:active { background: #f2f3f5; }
+        .sheet__close svg { width: 20px; height: 20px; }
+        .sheet-option { display: flex; width: 100%; min-height: 50px; align-items: center; justify-content: space-between; padding: 0 16px; border: 0; border-bottom: 1px solid #f5f5f5; background: #fff; color: #1f2329; font-size: 14px; text-align: left; }
+        .sheet-option.is-active { color: #1677ff; font-weight: 500; }
+        .sheet-option__check { visibility: hidden; color: #1677ff; font-size: 18px; }
+        .sheet-option.is-active .sheet-option__check { visibility: visible; }
+        .custom-range { display: none; padding: 16px; border-top: 1px solid #f0f1f2; background: #fafafa; }
+        .custom-range.is-open { display: block; }
+        .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .date-field label { display: block; margin-bottom: 6px; color: #86909c; font-size: 12px; line-height: 18px; }
+        .date-field input { width: 100%; height: 42px; padding: 0 8px; border: 1px solid #e5e6eb; border-radius: 8px; background: #fff; color: #1f2329; outline: none; }
+        .date-field input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px #e8f3ff; }
+        .custom-error { min-height: 18px; margin-top: 7px; color: #ff4d4f; font-size: 12px; line-height: 18px; }
+        .custom-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .custom-button { height: 40px; border: 0; border-radius: 8px; font-size: 14px; }
+        .custom-button.secondary { background: #f2f3f5; color: #1f2329; }
+        .custom-button.primary { background: #1677ff; color: #fff; }
+        @media (max-width: 340px) { .toolbar, .list-area { padding-left: 12px; padding-right: 12px; } .status-tab { font-size: 12px; } .problem-card { padding: 13px; } }
+        @media (prefers-reduced-motion: reduce) { .problem-card, .sheet { animation: none; transition: none; } }
+    </style>
+</head>
+<body>
+    <header class="top-nav">
+        <button type="button" class="top-nav__back" id="js-back" aria-label="返回服务页" title="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h1 class="top-nav__title">问题管理</h1>
+    </header>
+    <main class="page">
+        <div class="tab-bar" id="js-tabs" role="tablist" aria-label="问题状态">
+            <button type="button" class="status-tab" data-status="pending" role="tab" aria-selected="false">待确认<span class="tab-badge" id="js-count-pending">0</span></button>
+            <button type="button" class="status-tab" data-status="assigned" role="tab" aria-selected="false">待分配<span class="tab-badge" id="js-count-assigned">0</span></button>
+            <button type="button" class="status-tab" data-status="processing" role="tab" aria-selected="false">待处理<span class="tab-badge" id="js-count-processing">0</span></button>
+            <button type="button" class="status-tab" data-status="done" role="tab" aria-selected="false">已完成<span class="tab-badge" id="js-count-done">0</span></button>
+        </div>
+        <section class="toolbar" aria-label="筛选条件">
+            <button type="button" class="filter-chip" id="js-date-filter" aria-label="选择计划执行日期">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+                <span id="js-date-label">今天</span><span class="filter-chip__arrow">⌄</span>
+            </button>
+        </section>
+        <section class="list-area" aria-live="polite">
+            <div class="problem-list" id="js-problem-list"></div>
+        </section>
+    </main>
+    <div class="sheet-overlay" id="js-filter-sheet" aria-hidden="true">
+        <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="js-filter-title">
+            <div class="sheet__handle"></div>
+            <div class="sheet__header">
+                <h2 class="sheet__title" id="js-filter-title">选择计划日期</h2>
+                <button type="button" class="sheet__close" id="js-filter-close" aria-label="关闭日期筛选">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                </button>
+            </div>
+            <div id="js-filter-options"></div>
+            <div class="custom-range" id="js-custom-range">
+                <div class="date-grid">
+                    <div class="date-field"><label for="js-custom-start">起始日期</label><input type="date" id="js-custom-start"></div>
+                    <div class="date-field"><label for="js-custom-end">结束日期</label><input type="date" id="js-custom-end"></div>
+                </div>
+                <div class="custom-error" id="js-custom-error"></div>
+                <div class="custom-actions">
+                    <button type="button" class="custom-button secondary" id="js-custom-cancel">取消</button>
+                    <button type="button" class="custom-button primary" id="js-custom-confirm">确定</button>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="components/inspection-problem-data.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        var REFERENCE_DATE = '2026-07-28';
+        var STATUS_ORDER = ['pending', 'assigned', 'processing', 'done'];
+        var FILTERS = [
+            { type: 'today', label: '今天', from: '2026-07-28', to: '2026-07-28' },
+            { type: 'tomorrow', label: '明天', from: '2026-07-29', to: '2026-07-29' },
+            { type: 'week', label: '近七天', from: '2026-07-22', to: '2026-07-28' },
+            { type: 'all', label: '全部', from: null, to: null },
+            { type: 'custom', label: '自定义时间段', from: null, to: null }
+        ];
+        var params = new URLSearchParams(location.search);
+        var requestedStatus = params.get('status');
+        var currentStatus = STATUS_ORDER.indexOf(requestedStatus) !== -1 ? requestedStatus : 'pending';
+        var requestedFilter = params.get('date');
+        var currentFilter = FILTERS.filter(function (item) { return item.type === requestedFilter; })[0] || FILTERS[0];
+        var customRange = { from: params.get('start') || '', to: params.get('end') || '' };
+        var records = Array.isArray(window.INSPECTION_PROBLEM_RECORDS) ? window.INSPECTION_PROBLEM_RECORDS : [];
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+            });
+        }
+        function activeRange() {
+            if (currentFilter.type !== 'custom') return currentFilter;
+            return { type: 'custom', label: customRange.from && customRange.to ? customRange.from + ' 至 ' + customRange.to : '自定义时间段', from: customRange.from, to: customRange.to };
+        }
+        function dateMatched(item) {
+            var range = activeRange();
+            if (!range.from || !range.to) return range.type !== 'custom';
+            return item.planDate >= range.from && item.planDate <= range.to;
+        }
+        function filtered(status) {
+            return records.filter(function (item) { return item.status === status && dateMatched(item); }).sort(function (a, b) {
+                return String(b.reportedAt).localeCompare(String(a.reportedAt));
+            });
+        }
+        function renderCard(item) {
+            return '<button type="button" class="problem-card ' + escapeHtml(item.status) + '" data-problem="' + escapeHtml(item.id) + '" aria-label="查看' + escapeHtml(item.no) + '详情">' +
+                '<span class="problem-card__head"><span class="problem-card__no">' + escapeHtml(item.no) + '</span><span class="status-tag ' + escapeHtml(item.status) + '">' + escapeHtml(item.statusText) + '</span></span>' +
+                '<span class="problem-card__location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 10c0 5.2-8 10-8 10S4 15.2 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.4"/></svg><span>' + escapeHtml(item.location) + '</span></span>' +
+                '<span class="problem-card__meta"><span>上报时间 ' + escapeHtml(item.reportedAt) + '</span><i class="problem-card__sep" aria-hidden="true"></i><span>' + escapeHtml(item.currentNode) + '</span></span>' +
+            '</button>';
+        }
+        function renderEmpty() {
+            var tab = document.querySelector('.status-tab[data-status="' + currentStatus + '"]');
+            var label = tab ? tab.childNodes[0].textContent : '当前状态';
+            return '<div class="empty-state"><div class="empty-state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3 6-7"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div><div class="empty-state__title">暂无' + escapeHtml(label) + '问题</div><div class="empty-state__desc">请切换日期范围后查看</div></div>';
+        }
+        function updateUrl() {
+            var query = new URLSearchParams();
+            query.set('status', currentStatus);
+            query.set('date', currentFilter.type);
+            if (currentFilter.type === 'custom') {
+                query.set('start', customRange.from);
+                query.set('end', customRange.to);
+            }
+            history.replaceState(null, '', 'inspection-problem-management.html?' + query.toString());
+        }
+        function render() {
+            STATUS_ORDER.forEach(function (status) {
+                var countEl = document.getElementById('js-count-' + status);
+                if (countEl) countEl.textContent = filtered(status).length;
+            });
+            document.querySelectorAll('.status-tab').forEach(function (button) {
+                var active = button.getAttribute('data-status') === currentStatus;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            document.getElementById('js-date-label').textContent = activeRange().label;
+            var visible = filtered(currentStatus);
+            document.getElementById('js-problem-list').innerHTML = visible.length ? visible.map(renderCard).join('') : renderEmpty();
+            updateUrl();
+        }
+        function renderFilterOptions() {
+            document.getElementById('js-filter-options').innerHTML = FILTERS.map(function (filter) {
+                var active = filter.type === currentFilter.type ? ' is-active' : '';
+                return '<button type="button" class="sheet-option' + active + '" data-filter="' + filter.type + '"><span>' + filter.label + '</span><span class="sheet-option__check">✓</span></button>';
+            }).join('');
+            document.getElementById('js-custom-range').classList.toggle('is-open', currentFilter.type === 'custom');
+            document.getElementById('js-custom-start').value = customRange.from;
+            document.getElementById('js-custom-end').value = customRange.to;
+            document.getElementById('js-custom-error').textContent = '';
+        }
+        function openFilter() {
+            renderFilterOptions();
+            var sheet = document.getElementById('js-filter-sheet');
+            sheet.classList.add('is-open');
+            sheet.setAttribute('aria-hidden', 'false');
+        }
+        function closeFilter() {
+            var sheet = document.getElementById('js-filter-sheet');
+            sheet.classList.remove('is-open');
+            sheet.setAttribute('aria-hidden', 'true');
+        }
+        function openDetail(id) {
+            var query = new URLSearchParams({ problem: id, from: 'service', status: currentStatus, date: currentFilter.type });
+            if (currentFilter.type === 'custom') {
+                query.set('start', customRange.from);
+                query.set('end', customRange.to);
+            }
+            location.href = 'inspection-problem-detail.html?' + query.toString();
+        }
+
+        document.getElementById('js-back').addEventListener('click', function () { location.href = 'inspection-management.html?tab=service'; });
+        document.getElementById('js-tabs').addEventListener('click', function (event) {
+            var button = event.target.closest('[data-status]');
+            if (!button) return;
+            currentStatus = button.getAttribute('data-status');
+            render();
+        });
+        document.getElementById('js-problem-list').addEventListener('click', function (event) {
+            var card = event.target.closest('[data-problem]');
+            if (card) openDetail(card.getAttribute('data-problem'));
+        });
+        document.getElementById('js-date-filter').addEventListener('click', openFilter);
+        document.getElementById('js-filter-close').addEventListener('click', closeFilter);
+        document.getElementById('js-filter-sheet').addEventListener('click', function (event) { if (event.target === this) closeFilter(); });
+        document.getElementById('js-filter-options').addEventListener('click', function (event) {
+            var option = event.target.closest('[data-filter]');
+            if (!option) return;
+            var type = option.getAttribute('data-filter');
+            currentFilter = FILTERS.filter(function (filter) { return filter.type === type; })[0] || FILTERS[0];
+            if (type === 'custom') {
+                renderFilterOptions();
+                return;
+            }
+            closeFilter();
+            render();
+        });
+        document.getElementById('js-custom-cancel').addEventListener('click', closeFilter);
+        document.getElementById('js-custom-confirm').addEventListener('click', function () {
+            var from = document.getElementById('js-custom-start').value;
+            var to = document.getElementById('js-custom-end').value;
+            var error = document.getElementById('js-custom-error');
+            if (!from || !to) { error.textContent = '请选择起始日期和结束日期'; return; }
+            if (from > to) { error.textContent = '结束日期不能早于起始日期'; return; }
+            customRange = { from: from, to: to };
+            currentFilter = FILTERS.filter(function (filter) { return filter.type === 'custom'; })[0];
+            closeFilter();
+            render();
+        });
+        render();
+    }());
+    </script>
+</body>
+</html>

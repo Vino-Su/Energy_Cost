@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>问题上报 - 品质巡查</title>
+    <link rel="stylesheet" href="components/app-common.css">
+    <link rel="stylesheet" href="components/top-capsule.css">
+    <style>
+        * { box-sizing: border-box; }
+        html { max-width: 375px; margin: 0 auto; background: #f5f5f5; }
+        body {
+            min-height: 100vh; margin: 0; padding: 0 0 calc(84px + env(safe-area-inset-bottom));
+            background: #f5f5f5; color: #000000d9;
+            font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, input, textarea { font: inherit; -webkit-tap-highlight-color: transparent; }
+        button { cursor: pointer; }
+        .page-head { padding: 18px 16px 14px; background: #ffffff; }
+        .page-head__eyebrow { display: flex; align-items: center; gap: 6px; color: #1677ff; font-size: 12px; line-height: 18px; }
+        .page-head__eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #1677ff; }
+        .page-head h1 { margin: 5px 0 0; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: 0; }
+        .page-head p { margin: 3px 0 0; color: #00000073; font-size: 13px; line-height: 20px; }
+        .form-group { margin-top: 12px; background: #ffffff; }
+        .group-title { padding: 14px 16px 8px; color: #00000073; font-size: 12px; line-height: 18px; }
+        .info-list { padding: 0 16px; }
+        .info-row { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border-top: 1px solid #f0f0f0; }
+        .info-row__label { flex: none; color: #00000073; font-size: 14px; line-height: 22px; }
+        .info-row__value { min-width: 0; color: #000000d9; font-size: 14px; line-height: 22px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .info-row__value--mono { font-family: "DIN", "SF UI Text", sans-serif; }
+        .form-body { padding: 0 16px 16px; }
+        .field-label { display: flex; align-items: center; justify-content: space-between; color: #000000d9; font-size: 14px; font-weight: 500; line-height: 22px; }
+        .field-label__optional { color: #00000073; font-size: 12px; font-weight: 400; }
+        .field-label__required::before { content: "*"; margin-right: 4px; color: #ff4d4f; }
+        .photo-capture {
+            width: 96px; height: 96px; padding: 0; display: grid; place-items: center;
+            border: 1px dashed #d9d9d9; border-radius: 8px; background: #fafafa; color: #1677ff; overflow: hidden;
+        }
+        .photo-capture__empty { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #00000073; font-size: 12px; line-height: 18px; }
+        .photo-capture__empty svg { width: 24px; height: 24px; color: #00000040; }
+        .photo-capture:active { opacity: 0.7; }
+        .photo-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .photo-thumb {
+            position: relative; width: 96px; height: 96px; border-radius: 8px; overflow: hidden; background: #f0f0f0;
+        }
+        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .photo-thumb__del {
+            position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; padding: 0;
+            display: grid; place-items: center; border: none; border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55); color: #ffffff; line-height: 1;
+        }
+        .photo-thumb__del:active { background: rgba(0, 0, 0, 0.75); }
+        .photo-thumb__del svg { width: 12px; height: 12px; }
+        .photo-count { margin-top: 8px; color: #00000073; font-size: 12px; line-height: 18px; }
+        .text-field { display: flex; gap: 10px; margin-top: 10px; }
+        textarea {
+            flex: 1; min-height: 96px; padding: 10px 12px; resize: vertical;
+            border: 1px solid #e8e8e8; border-radius: 8px; outline: none; color: #000000d9; font-size: 16px; line-height: 24px;
+        }
+        textarea:focus { border-color: #1677ff; box-shadow: 0 0 0 2px #e6f4ff; }
+        textarea::placeholder { color: #00000040; }
+        /* 语音输入：文本框右侧竖向高按钮，大点击区，适老化 */
+        .voice-btn {
+            flex: none; width: 76px; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px 4px;
+            border: 1px solid #1677ff; border-radius: 12px;
+            background: #e6f4ff; color: #1677ff;
+            font-size: 13px; font-weight: 600; line-height: 18px; text-align: center;
+        }
+        .voice-btn:active { background: #d1ecff; opacity: 0.9; }
+        .voice-btn svg { width: 28px; height: 28px; }
+        .voice-btn--rec { background: #1677ff; color: #ffffff; border-color: #1677ff; }
+        .voice-btn--rec .voice-dot {
+            display: block; width: 8px; height: 8px; margin-top: 2px; border-radius: 50%; background: #ffffff;
+            animation: voicePulse 0.9s ease-in-out infinite;
+        }
+        @keyframes voicePulse { 0%, 100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }
+        .voice-hint { margin-top: 8px; color: #00000073; font-size: 12px; line-height: 18px; }
+        .page-actions {
+            position: fixed; left: 50%; bottom: 0; z-index: 12; width: min(100%, 375px); transform: translateX(-50%);
+            display: grid; grid-template-columns: 1fr 2fr; gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+            background: #ffffff; border-top: 1px solid #e8e8e8;
+        }
+        .page-button { height: 44px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; }
+        .page-button:active { opacity: 0.85; }
+        .page-button--cancel { background: #ffffff; border: 1px solid #91caff; color: #1677ff; }
+        .page-button--submit { background: #1677ff; color: #ffffff; }
+        .toast {
+            position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 20; max-width: calc(100% - 48px);
+            padding: 10px 14px; border-radius: 8px; background: rgba(0, 0, 0, 0.76); color: #ffffff;
+            font-size: 14px; line-height: 20px; text-align: center; transform: translate(-50%, 12px); opacity: 0; pointer-events: none; transition: all 0.2s ease;
+        }
+        .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <div id="js-capsule" data-top-capsule></div>
+    <main>
+        <section class="form-group" aria-label="问题基础信息">
+            <div class="group-title">基础信息</div>
+            <div class="info-list">
+                <div class="info-row"><span class="info-row__label">任务编号</span><span class="info-row__value info-row__value--mono" id="js-task-no">I003</span></div>
+                <div class="info-row"><span class="info-row__label">问题编号</span><span class="info-row__value info-row__value--mono">Q20260728-0021</span></div>
+                <div class="info-row"><span class="info-row__label">上报时间</span><span class="info-row__value info-row__value--mono">2026-07-28 10:31</span></div>
+                <div class="info-row"><span class="info-row__label">问题位置</span><span class="info-row__value" id="js-location">中央广场北门</span></div>
+                <div class="info-row"><span class="info-row__label">经纬度</span><span class="info-row__value info-row__value--mono">113.9362, 22.5405</span></div>
+            </div>
+        </section>
+        <section class="form-group" aria-label="问题内容">
+            <div class="group-title">问题内容</div>
+            <div class="form-body">
+                <div class="field-label"><span class="field-label__required">问题照片</span><span class="field-label__optional">仅支持现场拍照，最多 5 张</span></div>
+                <div class="photo-grid" id="js-photo-grid">
+                    <button type="button" class="photo-capture" id="js-photo-capture" aria-label="拍摄问题照片">
+                        <span class="photo-capture__empty">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <span>拍照</span>
+                        </span>
+                    </button>
+                    <input type="file" id="js-photo-input" accept="image/*" capture="environment" hidden>
+                </div>
+                <div class="photo-count" id="js-photo-count">已添加 0/5 张</div>
+            </div>
+            <div class="form-body">
+                <div class="field-label"><span>问题描述</span><span class="field-label__optional">选填，支持语音</span></div>
+                <div class="text-field">
+                    <textarea id="js-description" maxlength="200" placeholder="请描述问题情况，或点击右侧按钮语音输入"></textarea>
+                    <button type="button" class="voice-btn" id="js-voice" aria-label="点击语音输入">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg>
+                        <span class="voice-btn__text">语音</span>
+                        <span class="voice-dot" hidden></span>
+                    </button>
+                </div>
+                <div class="voice-hint" id="js-voice-hint">点击右侧按钮，说出问题描述即可自动填入</div>
+            </div>
+            <div class="form-body">
+                <div class="field-label"><span>备注</span><span class="field-label__optional">选填，支持语音</span></div>
+                <div class="text-field">
+                    <textarea id="js-note" maxlength="200" placeholder="补充说明，或点击右侧按钮语音输入"></textarea>
+                    <button type="button" class="voice-btn" id="js-note-voice" aria-label="备注语音输入">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg>
+                        <span class="voice-btn__text">语音</span>
+                        <span class="voice-dot" hidden></span>
+                    </button>
+                </div>
+                <div class="voice-hint" id="js-note-voice-hint">点击右侧按钮，说出备注即可自动填入</div>
+            </div>
+        </section>
+    </main>
+    <footer class="page-actions">
+        <button type="button" class="page-button page-button--cancel" id="js-cancel">取消</button>
+        <button type="button" class="page-button page-button--submit" id="js-submit">提交问题</button>
+    </footer>
+    <div class="toast" id="js-toast" role="status" aria-live="polite"></div>
+    <script src="components/top-capsule.js"></script>
+    <script>
+    (function () {
+        'use strict';
+        var params = new URLSearchParams(location.search);
+        var taskId = params.get('task') || 'I002';
+        var taskLocations = { I001: '滨江路东段', I002: '中央广场片区', I003: '科苑路南段', I004: '创业路西段' };
+        var photoList = [];
+        var photoMax = 5;
+        var photoKey = 'kuwash-inspection-report-photo';
+        var photoGrid = document.getElementById('js-photo-grid');
+        var photoCapture = document.getElementById('js-photo-capture');
+        var photoInput = document.getElementById('js-photo-input');
+        var photoCountEl = document.getElementById('js-photo-count');
+        var toastEl = document.getElementById('js-toast');
+        var toastTimer = null;
+        document.getElementById('js-task-no').textContent = taskId;
+        document.getElementById('js-location').textContent = (taskLocations[taskId] || '中央广场') + '北门';
+        function readStoredPhoto() { try { return sessionStorage.getItem(photoKey); } catch (e) { return null; } }
+        function renderPhotoGrid() {
+            photoGrid.querySelectorAll('.photo-thumb').forEach(function (el) { el.remove(); });
+            photoList.forEach(function (src, idx) {
+                var thumb = document.createElement('div');
+                thumb.className = 'photo-thumb';
+                thumb.innerHTML = '<img src="' + src + '" alt="问题照片 ' + (idx + 1) + '">' +
+                    '<button type="button" class="photo-thumb__del" data-idx="' + idx + '" aria-label="删除照片">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+                thumb.querySelector('.photo-thumb__del').addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var i = parseInt(e.currentTarget.dataset.idx, 10);
+                    photoList.splice(i, 1);
+                    renderPhotoGrid();
+                });
+                photoGrid.insertBefore(thumb, photoCapture);
+            });
+            photoCountEl.textContent = '已添加 ' + photoList.length + '/' + photoMax + ' 张';
+            photoCapture.style.display = photoList.length >= photoMax ? 'none' : '';
+        }
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
+        }
+        function backToMap() { location.href = 'inspection-management.html?task=' + encodeURIComponent(taskId); }
+        function clearForm() {
+            photoList = [];
+            renderPhotoGrid();
+            document.getElementById('js-description').value = '';
+            document.getElementById('js-note').value = '';
+            showToast('已清空');
+        }
+        photoCapture.addEventListener('click', function () { photoInput.value = ''; photoInput.click(); });
+        photoInput.addEventListener('change', function () {
+            var file = photoInput.files && photoInput.files[0];
+            if (!file) return;
+            if (photoList.length >= photoMax) { showToast('最多上传 ' + photoMax + ' 张照片'); return; }
+            var reader = new FileReader();
+            reader.onload = function () {
+                photoList.push(reader.result);
+                renderPhotoGrid();
+            };
+            reader.readAsDataURL(file);
+        });
+        // 顶部胶囊（通用组件）
+        TopCapsule.mount(document.getElementById('js-capsule'), {
+            title: '问题上报',
+            back: backToMap,
+            moreItems: [
+                { label: '清空内容', action: function () { clearForm(); } },
+                { label: '关于', action: function () { showToast('品质巡查 v1.0'); } }
+            ],
+            onExit: backToMap
+        });
+        document.getElementById('js-cancel').addEventListener('click', backToMap);
+        // 语音输入：可复用，点击进入录音态，再次点击或自动结束完成识别并填入
+        function bindVoice(btnId, hintId, targetId, sampleText, hintIdle) {
+            var btn = document.getElementById(btnId);
+            var hint = document.getElementById(hintId);
+            var textEl = btn.querySelector('.voice-btn__text');
+            var dot = btn.querySelector('.voice-dot');
+            var target = document.getElementById(targetId);
+            var timer = null;
+            var recording = false;
+            function setState(rec) {
+                recording = rec;
+                if (rec) {
+                    btn.classList.add('voice-btn--rec');
+                    textEl.textContent = '结束';
+                    dot.hidden = false;
+                    hint.textContent = '正在聆听，请说话……';
+                    timer = setTimeout(stop, 4000);
+                } else {
+                    btn.classList.remove('voice-btn--rec');
+                    textEl.textContent = '语音';
+                    dot.hidden = true;
+                    hint.textContent = hintIdle;
+                }
+            }
+            function stop() {
+                if (!recording) return;
+                clearTimeout(timer);
+                setState(false);
+                var current = target.value.trim();
+                target.value = current ? (current + ' ' + sampleText) : sampleText;
+                showToast('语音已识别并填入');
+            }
+            btn.addEventListener('click', function () {
+                if (recording) { stop(); } else { setState(true); }
+            });
+        }
+        bindVoice('js-voice', 'js-voice-hint', 'js-description',
+            '科苑路南段路面有大量散落垃圾，需及时清理',
+            '点击右侧按钮，说出问题描述即可自动填入');
+        bindVoice('js-note-voice', 'js-note-voice-hint', 'js-note',
+            '需联系片区负责人现场核实处理',
+            '点击右侧按钮，说出备注即可自动填入');
+        document.getElementById('js-submit').addEventListener('click', function () {
+            if (photoList.length === 0) { showToast('请先拍摄问题照片'); return; }
+            showToast('问题已提交，已同步至环卫云');
+            try { sessionStorage.removeItem(photoKey); } catch (e) {}
+            setTimeout(backToMap, 700);
+        });
+        // 预填充：若由地图页拍照后跳转而来，带入已拍首张照片
+        var stored = readStoredPhoto();
+        if (stored) { photoList.push(stored); try { sessionStorage.removeItem(photoKey); } catch (e) {} }
+        renderPhotoGrid();
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+/* ===== 通用顶部胶囊组件 ===== */
+/* 用法：页面引入本 CSS + top-capsule.js，放置占位 <div data-top-capsule></div>，
+   调用 TopCapsule.mount(el, { title, backUrl, back, moreItems, exit }) */
+
+.tc-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+    height: 56px;
+    background: #ffffff;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+}
+/* 左侧返回按钮 */
+.tc-back {
+    position: absolute;
+    left: 16px;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 4px 12px rgba(15, 35, 70, 0.12);
+    color: #000000d9;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+.tc-back:active { transform: scale(0.92); background: #f5f5f5; }
+.tc-back svg { width: 16px; height: 16px; }
+/* 居中标题 */
+.tc-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000000d9;
+    line-height: 22px;
+}
+/* 右上角胶囊：更多 + 退出 */
+.tc-capsule {
+    position: absolute;
+    right: 16px;
+    width: 88px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 12px rgba(15, 35, 70, 0.12);
+}
+.tc-btn {
+    width: 43px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 15px;
+    background: transparent;
+    color: #1f1f1f;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.tc-btn:active { transform: scale(0.92); background: #f5f5f5; }
+.tc-btn svg { width: 20px; height: 20px; }
+.tc-divider {
+    width: 1px;
+    height: 18px;
+    flex: 0 0 1px;
+    background: #e8e8e8;
+}
+/* 更多下拉菜单 */
+.tc-pop {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    min-width: 120px;
+    padding: 4px 0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 35, 70, 0.18);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 20;
+}
+.tc-pop.show { display: flex; }
+.tc-pop__item {
+    height: 40px;
+    padding: 0 16px;
+    border: none;
+    background: #ffffff;
+    text-align: left;
+    font-size: 14px;
+    color: #000000d9;
+    cursor: pointer;
+}
+.tc-pop__item:active { background: #f5f5f5; }
+/* 仅返回、无胶囊时的精简态 */
+.tc-bar.tc-bar--simple { border-bottom: 1px solid #e8e8e8; height: 44px; }
+.tc-bar.tc-bar--simple .tc-back { box-shadow: none; background: transparent; }
+.tc-bar.tc-bar--simple .tc-title { font-size: 16px; }

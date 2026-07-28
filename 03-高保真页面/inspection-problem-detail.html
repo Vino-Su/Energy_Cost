@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>问题详情 - 品质巡查</title>
+    <link rel="stylesheet" href="components/app-common.css">
+    <style>
+        * { box-sizing: border-box; }
+        html { max-width: 375px; margin: 0 auto; background: #f5f5f5; }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0 0 calc(76px + env(safe-area-inset-bottom));
+            background: #f5f5f5;
+            color: #000000d9;
+            font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .top-nav__back {
+            position: absolute;
+            left: 8px;
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border: none;
+            background: transparent;
+            color: #000000d9;
+        }
+        .top-nav__back:active { opacity: 0.6; }
+        .top-nav__back svg { width: 22px; height: 22px; }
+        .top-nav__title { font-size: 16px; font-weight: 600; line-height: 24px; }
+
+        .problem-map {
+            position: relative;
+            height: 208px;
+            overflow: hidden;
+            background:
+                linear-gradient(119deg, transparent 0 34%, rgba(255,255,255,0.62) 34% 37%, transparent 37%),
+                linear-gradient(22deg, transparent 0 53%, rgba(255,255,255,0.55) 53% 56%, transparent 56%),
+                linear-gradient(156deg, transparent 0 73%, rgba(255,255,255,0.48) 73% 75%, transparent 75%),
+                #dfe7eb;
+        }
+        .problem-map::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.55;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+        .map-area {
+            position: absolute;
+            left: 17%;
+            top: 31%;
+            width: 56%;
+            height: 42%;
+            border: 2px dashed rgba(22,119,255,0.62);
+            border-radius: 12px;
+            background: rgba(22,119,255,0.11);
+        }
+        .map-pin {
+            position: absolute;
+            left: 49%;
+            top: 51%;
+            z-index: 2;
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            transform: translate(-50%, -100%) rotate(-45deg);
+            border: 3px solid #ffffff;
+            border-radius: 50% 50% 50% 0;
+            background: #52c41a;
+            box-shadow: 0 4px 12px rgba(24,39,59,0.25);
+        }
+        .map-pin svg { width: 19px; height: 19px; transform: rotate(45deg); color: #ffffff; }
+        .map-label {
+            position: absolute;
+            left: 16px;
+            bottom: 14px;
+            z-index: 3;
+            max-width: calc(100% - 32px);
+            padding: 6px 10px;
+            overflow: hidden;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.94);
+            color: #000000a6;
+            font-size: 12px;
+            line-height: 18px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(24,39,59,0.11);
+        }
+
+        .summary-band { padding: 14px 16px; background: #ffffff; }
+        .summary-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .problem-no { min-width: 0; overflow: hidden; font-family: "DIN", "SF UI Text", sans-serif; font-size: 17px; font-weight: 700; line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+        .status-tag { flex: none; display: inline-flex; align-items: center; min-height: 22px; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; line-height: 18px; }
+        .status-tag--done { background: #f6ffed; color: #389e0d; }
+        .status-tag--pending { background: #fffbe6; color: #d48806; }
+        .status-tag--assigned { background: #e6f4ff; color: #0958d9; }
+        .status-tag--processing { background: #e6f4ff; color: #1677ff; }
+        .summary-sub { margin-top: 5px; color: #00000073; font-size: 12px; line-height: 18px; }
+
+        .section { margin-top: 12px; background: #ffffff; }
+        .section__title { padding: 13px 16px 8px; color: #00000073; font-size: 12px; line-height: 18px; }
+        .info-list { padding: 0 16px; }
+        .info-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; min-height: 48px; padding: 12px 0; border-top: 1px solid #f0f0f0; }
+        .info-row__label { flex: none; color: #00000073; font-size: 14px; line-height: 22px; }
+        .info-row__value { min-width: 0; color: #000000d9; font-size: 14px; line-height: 22px; text-align: right; word-break: break-word; }
+        .info-row__value--mono { font-family: "DIN", "SF UI Text", sans-serif; }
+        .text-block { padding: 10px 16px 16px; border-top: 1px solid #f0f0f0; color: #000000d9; font-size: 14px; line-height: 22px; white-space: pre-wrap; }
+        .photo-row { display: flex; gap: 8px; padding: 10px 16px 16px; border-top: 1px solid #f0f0f0; }
+        .photo-empty {
+            width: 92px;
+            height: 92px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1px dashed #d9d9d9;
+            border-radius: 8px;
+            background: #fafafa;
+            color: #00000073;
+            font-size: 12px;
+            line-height: 18px;
+        }
+        .photo-empty svg { width: 22px; height: 22px; color: #00000040; }
+        .photo-note { align-self: center; color: #00000073; font-size: 12px; line-height: 18px; }
+
+        .page-actions {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            z-index: 20;
+            width: min(100%, 375px);
+            padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            background: #ffffff;
+            border-top: 1px solid #e8e8e8;
+        }
+        .page-actions__back { width: 100%; height: 44px; border: none; border-radius: 8px; background: #1677ff; color: #ffffff; font-size: 16px; font-weight: 600; }
+        .page-actions__back:active { opacity: 0.85; }
+    </style>
+</head>
+<body>
+    <header class="top-nav">
+        <button type="button" class="top-nav__back" id="js-top-back" aria-label="返回问题列表">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="top-nav__title">问题详情</span>
+    </header>
+
+    <main>
+        <section class="problem-map" aria-label="问题点位地图">
+            <div class="map-area"></div>
+            <span class="map-pin" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 12.5 10.2 16 17 8.5"/></svg></span>
+            <span class="map-label" id="js-map-location"></span>
+        </section>
+
+        <section class="summary-band" aria-label="问题摘要">
+            <div class="summary-top">
+                <span class="problem-no" id="js-problem-no"></span>
+                <span class="status-tag" id="js-status"></span>
+            </div>
+            <div class="summary-sub" id="js-summary-sub"></div>
+        </section>
+
+        <section class="section" aria-label="问题信息">
+            <div class="section__title">问题信息</div>
+            <div class="info-list">
+                <div class="info-row"><span class="info-row__label">任务编号</span><span class="info-row__value info-row__value--mono" id="js-task-id"></span></div>
+                <div class="info-row"><span class="info-row__label">问题上报时间</span><span class="info-row__value info-row__value--mono" id="js-reported-at"></span></div>
+                <div class="info-row"><span class="info-row__label">经纬度</span><span class="info-row__value info-row__value--mono" id="js-coordinate"></span></div>
+                <div class="info-row"><span class="info-row__label">问题位置</span><span class="info-row__value" id="js-location"></span></div>
+            </div>
+            <div class="section__title">问题照片</div>
+            <div class="photo-row" id="js-problem-photos"></div>
+            <div class="section__title">问题描述</div>
+            <div class="text-block" id="js-description"></div>
+            <div class="section__title">备注</div>
+            <div class="text-block" id="js-remark"></div>
+        </section>
+
+        <section class="section" aria-label="问题处置信息">
+            <div class="section__title">问题处置信息</div>
+            <div class="info-list">
+                <div class="info-row"><span class="info-row__label">处置人员</span><span class="info-row__value" id="js-handler"></span></div>
+                <div class="info-row"><span class="info-row__label">处置完成时间</span><span class="info-row__value info-row__value--mono" id="js-handled-at"></span></div>
+            </div>
+            <div class="section__title">处置后照片</div>
+            <div class="photo-row" id="js-handled-photos"></div>
+            <div class="section__title">备注</div>
+            <div class="text-block" id="js-handle-remark"></div>
+        </section>
+    </main>
+
+    <footer class="page-actions">
+        <button type="button" class="page-actions__back" id="js-back">返回</button>
+    </footer>
+
+    <script src="components/inspection-problem-data.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        var params = new URLSearchParams(location.search);
+        var requestedId = params.get('problem') || 'P001';
+        var requestedTaskId = params.get('task');
+        var source = params.get('from');
+        var records = window.INSPECTION_PROBLEM_BY_ID || {};
+        var item = records[requestedId] || {
+            id: requestedId, no: requestedId, taskId: requestedTaskId, status: 'pending', statusText: '待确认',
+            location: '待确认问题位置', reportedAt: '—', coordinate: '—', description: '暂无问题描述。', remark: '—',
+            handler: '待分配', handledAt: '—', handleRemark: '问题尚未完成处置。', photos: [], handledPhotos: []
+        };
+        item.taskId = requestedTaskId || item.taskId;
+
+        function setText(id, value) { document.getElementById(id).textContent = value || '—'; }
+        function renderPhotoState(id, list, emptyText) {
+            var holder = document.getElementById(id);
+            if (list && list.length) {
+                holder.innerHTML = list.map(function (src, index) { return '<img src="' + src + '" alt="问题照片 ' + (index + 1) + '">'; }).join('');
+                return;
+            }
+            holder.innerHTML = '<div class="photo-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-4.5-4.5L6 20"/></svg><span>暂无照片</span></div><span class="photo-note">' + emptyText + '</span>';
+        }
+        function backToProblemList() {
+            if (source === 'service') {
+                var query = new URLSearchParams({
+                    status: params.get('status') || item.status || 'pending',
+                    date: params.get('date') || 'today'
+                });
+                if (params.get('date') === 'custom') {
+                    query.set('start', params.get('start') || '');
+                    query.set('end', params.get('end') || '');
+                }
+                location.href = 'inspection-problem-management.html?' + query.toString();
+                return;
+            }
+            location.href = 'inspection-management.html?task=' + encodeURIComponent(item.taskId) + '&sheet=problems';
+        }
+
+        setText('js-map-location', item.location);
+        setText('js-problem-no', item.no);
+        setText('js-status', item.statusText);
+        document.getElementById('js-status').classList.add(item.status === 'done' ? 'status-tag--done' : (item.status === 'processing' ? 'status-tag--processing' : (item.status === 'assigned' ? 'status-tag--assigned' : 'status-tag--pending')));
+        setText('js-summary-sub', item.location + ' · ' + item.reportedAt);
+        setText('js-task-id', item.taskId);
+        setText('js-reported-at', item.reportedAt);
+        setText('js-coordinate', item.coordinate);
+        setText('js-location', item.location);
+        setText('js-description', item.description);
+        setText('js-remark', item.remark);
+        setText('js-handler', item.handler);
+        setText('js-handled-at', item.handledAt);
+        setText('js-handle-remark', item.handleRemark);
+        renderPhotoState('js-problem-photos', item.photos, '当前问题未上传现场照片');
+        renderPhotoState('js-handled-photos', item.handledPhotos, '当前问题未上传处置后照片');
+
+        document.getElementById('js-top-back').addEventListener('click', backToProblemList);
+        document.getElementById('js-back').addEventListener('click', backToProblemList);
+    })();
+    </script>
+</body>
+</html>

@@ -70,35 +70,128 @@
             top: 0;
             z-index: 10;
             width: 100%;
-            height: 44px;
+            height: 56px;
             background: #ffffff;
-            border-bottom: 1px solid #e8e8e8;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-        }
-        .top-nav-back {
-            width: 32px;
-            height: 32px;
+            border-bottom: 1px solid #f0f0f0;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #000000d9;
-            background: transparent;
-            border: none;
-            margin-left: -8px;
-            cursor: pointer;
+            padding: 0 16px;
         }
-        .top-nav-back:active { opacity: 0.6; }
-        .top-nav-back svg { width: 22px; height: 22px; }
-        .top-nav-title {
+        /* 小程序胶囊（与地图页 top-bar 完全同款） */
+        .nav-back {
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 16px;
+            left: 16px;
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 4px 12px rgba(15, 35, 70, 0.12);
+            color: #000000d9;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .nav-back:active { transform: scale(0.92); background: #f5f5f5; }
+        .nav-back svg { width: 16px; height: 16px; }
+        .nav-title {
+            font-size: 15px;
             font-weight: 600;
             color: #000000d9;
+            line-height: 22px;
         }
+        .nav-capsule {
+            position: absolute;
+            right: 16px;
+            width: 88px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 4px 12px rgba(15, 35, 70, 0.12);
+        }
+        .nav-capsule__btn {
+            width: 43px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 15px;
+            background: transparent;
+            color: #1f1f1f;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .nav-capsule__btn:active { transform: scale(0.92); background: #f5f5f5; }
+        .nav-capsule__btn svg { width: 20px; height: 20px; }
+        .nav-capsule__divider {
+            width: 1px;
+            height: 18px;
+            flex: 0 0 1px;
+            background: #e8e8e8;
+        }
+        .nav-pop {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            min-width: 120px;
+            padding: 4px 0;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 35, 70, 0.18);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 20;
+        }
+        .nav-pop.show { display: flex; }
+        .nav-pop button {
+            height: 40px;
+            padding: 0 16px;
+            border: none;
+            background: #ffffff;
+            text-align: left;
+            font-size: 14px;
+            color: #000000d9;
+            cursor: pointer;
+        }
+        .nav-pop button:active { background: #f5f5f5; }
+
+        /* 项目切换行（标题栏下方第一行） */
+        .project-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #ffffff;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .project-bar__label { color: #00000073; font-size: 13px; line-height: 20px; flex: none; }
+        .project-bar__switch {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            background: #f7faff;
+            color: #1677ff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .project-bar__switch:active { background: #eef6ff; border-color: #91caff; }
+        .project-bar__arrow { width: 16px; height: 16px; flex: none; color: #00000073; }
 
         .section-title {
             font-size: 14px;
@@ -262,11 +355,33 @@
 
         <!-- 服务 Tab：子功能入口 -->
         <section id="panel-service" class="tab-panel" role="tabpanel" aria-label="服务">
-            <div class="top-nav">
-                <button type="button" class="top-nav-back" onclick="requestExit()" aria-label="退出品质巡查">
+            <div class="top-nav" data-no-project-switcher="true">
+                <button type="button" class="nav-back" id="js-service-back" aria-label="返回">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
                 </button>
-                <div class="top-nav-title">服务</div>
+                <span class="nav-title">服务</span>
+                <div class="nav-capsule">
+                    <button type="button" class="nav-capsule__btn" id="js-service-more" aria-label="更多" aria-haspopup="menu" aria-expanded="false">
+                        <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="14" r="2.2" fill="currentColor"/><circle cx="14" cy="14" r="2.8" fill="currentColor"/><circle cx="22" cy="14" r="2.2" fill="currentColor"/></svg>
+                    </button>
+                    <span class="nav-capsule__divider" aria-hidden="true"></span>
+                    <button type="button" class="nav-capsule__btn" id="js-service-exit" aria-label="退出品质巡查">
+                        <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="9.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="14" cy="14" r="3.25" fill="currentColor"/></svg>
+                    </button>
+                    <div class="nav-pop" id="js-service-pop">
+                        <button type="button" data-action="today">今日回顾</button>
+                        <button type="button" data-action="layer">图层设置</button>
+                        <button type="button" data-action="about">关于</button>
+                    </div>
+                </div>
+            </div>
+            <!-- 项目切换行（标题栏下方第一行） -->
+            <div class="project-bar" id="js-project-bar">
+                <span class="project-bar__label">当前项目</span>
+                <button type="button" class="project-bar__switch" id="js-project-switch" aria-label="切换项目">
+                    <span class="project-switcher-text">选择项目</span>
+                    <svg class="project-bar__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
             </div>
 
             <div class="content-area">
@@ -284,7 +399,7 @@
                 <!-- 问题与事件（本期占位） -->
                 <div class="section-title">问题与事件</div>
                 <div class="module-grid">
-                    <a href="placeholder.html?from=inspection-problem&title=问题管理" class="module-item">
+                    <a href="inspection-problem-management.html" class="module-item">
                         <div class="module-icon problem">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>
                         </div>
@@ -358,6 +473,50 @@
             }
         }
 
+        /* ===== 服务页顶部胶囊交互（与地图页同款） ===== */
+        (function () {
+            var back = document.getElementById('js-service-back');
+            var more = document.getElementById('js-service-more');
+            var exit = document.getElementById('js-service-exit');
+            var pop = document.getElementById('js-service-pop');
+            function toast(msg) {
+                var t = document.createElement('div');
+                t.textContent = msg;
+                t.setAttribute('style', 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:8px;background:rgba(0,0,0,0.76);color:#fff;font-size:14px;z-index:9999;pointer-events:none;');
+                document.body.appendChild(t);
+                setTimeout(function () { t.remove(); }, 2000);
+            }
+            if (back) back.addEventListener('click', function () { switchTab('map'); });
+            // 项目切换：复用 app-common 的项目选择器
+            var projSwitch = document.getElementById('js-project-switch');
+            if (projSwitch && typeof CityStewardCommon !== 'undefined' && CityStewardCommon.openProjectPicker) {
+                projSwitch.addEventListener('click', function () { CityStewardCommon.openProjectPicker(); });
+            }
+            if (more) {
+                more.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    pop.classList.toggle('show');
+                    more.setAttribute('aria-expanded', pop.classList.contains('show') ? 'true' : 'false');
+                });
+            }
+            document.addEventListener('click', function () {
+                pop.classList.remove('show');
+                more.setAttribute('aria-expanded', 'false');
+            });
+            if (pop) {
+                pop.addEventListener('click', function (e) {
+                    var action = e.target.getAttribute('data-action');
+                    if (!action) return;
+                    pop.classList.remove('show');
+                    more.setAttribute('aria-expanded', 'false');
+                    if (action === 'today') { toast('今日回顾将在全部任务完成后展示'); }
+                    else if (action === 'layer') { toast('辅助设施图层已切换'); }
+                    else if (action === 'about') { toast('品质巡查 v1.0'); }
+                });
+            }
+            if (exit) exit.addEventListener('click', function () { requestExit(); });
+        })();
+
         /* ===== 退出品质巡查（有进行中任务时二次确认） ===== */
         var pendingExit = false;
         function requestExit() {
@@ -379,6 +538,19 @@
         function closeExitConfirm() {
             document.getElementById('exitConfirm').classList.remove('show');
         }
+        // 执行态由地图 iframe 同步，供退出确认等流程读取。
+        function setExecutingShell(executing) {
+            document.body.classList.toggle('is-executing', !!executing);
+        }
+
+        window.addEventListener('message', function (event) {
+            var frame = document.getElementById('mapFrame');
+            if (!frame || event.source !== frame.contentWindow) return;
+            var data = event.data || {};
+            if (data.type === 'inspectionExecuting' || data.type === 'executingStatus') {
+                setExecutingShell(data.value);
+            }
+        });
         // 向地图 iframe 查询是否有进行中任务
         function askIframeExecuting(callback) {
             var frame = document.getElementById('mapFrame');
@@ -401,6 +573,12 @@
             setTimeout(function () { settle(false); }, 300);
         }
 
+        function syncExecutingShell() {
+            askIframeExecuting(function (executing) {
+                setExecutingShell(executing);
+            });
+        }
+
         // 默认进入：可选 ?tab=service 直达服务 Tab
         (function () {
             var params = new URLSearchParams(location.search);
@@ -417,8 +595,14 @@
             var queryParts = ['embedded=1'];
             var task = params.get('task');
             var action = params.get('action');
+            var sheet = params.get('sheet');
             if (task) queryParts.push('task=' + encodeURIComponent(task));
             if (action) queryParts.push('action=' + encodeURIComponent(action));
+            if (sheet) queryParts.push('sheet=' + encodeURIComponent(sheet));
+            frame.addEventListener('load', function () {
+                // 等待子页面完成脚本初始化后主动确认一次，避免首次状态通知被错过。
+                setTimeout(syncExecutingShell, 60);
+            });
             frame.src = 'inspection-map.html?' + queryParts.join('&');
         })();
     </script>
