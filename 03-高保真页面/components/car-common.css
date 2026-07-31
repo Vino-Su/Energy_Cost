@@ -98,14 +98,35 @@ img { display: block; max-width: 100%; }
 .car-topbar__brand .car-logo { width: 22px; height: 22px; color: var(--car-primary); }
 .car-topbar__title { font-size: var(--car-fs-panel); font-weight: 600; white-space: nowrap; line-height: 1.2; }
 .car-topbar__spacer { flex: 1; }
+.car-topbar__center { flex: 1 1 0; align-self: stretch; display: flex; align-items: stretch; justify-content: center; min-width: 0; padding: 0 12px; }
 .car-topbar__meta { display: flex; align-items: center; gap: 16px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
 .car-topbar__meta .car-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--car-surface-soft); border-radius: var(--car-radius-sm); }
 .car-topbar__meta .car-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--car-success); }
 .car-topbar__icon-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--car-touch); height: 40px; color: var(--car-text); border-radius: var(--car-radius); transition: background-color 0.15s; }
 .car-topbar__icon-btn:active { background: var(--car-surface-soft); }
+/* 顶栏新任务提醒：全局稳定位置，避免遮挡地图与业务详情。 */
+.car-task-notice { display: flex; align-items: center; gap: 10px; width: min(100%, 640px); min-width: 0; height: 100%; padding-left: 10px; overflow: hidden; background: transparent; border-right: 1px solid var(--car-border); border-left: 1px solid var(--car-border); color: var(--car-text); transition: opacity 0.18s ease-out, transform 0.18s ease-out; }
+.car-task-notice.is-dismissing { opacity: 0; transform: translateY(-4px); pointer-events: none; }
+.car-task-notice__icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: var(--car-radius); background: var(--car-primary-soft); color: var(--car-primary); }
+.car-task-notice__lead { flex: 0 0 auto; font-size: var(--car-fs-body); font-weight: 600; white-space: nowrap; }
+.car-task-notice__summary { flex: 1 1 auto; min-width: 0; overflow: hidden; color: var(--car-text-secondary); font-size: var(--car-fs-aux); white-space: nowrap; text-overflow: ellipsis; }
+.car-task-notice__more { flex: 0 0 auto; padding: 2px 6px; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: var(--car-surface-soft); color: var(--car-text-secondary); font-family: var(--car-font-num); font-size: 13px; white-space: nowrap; }
+.car-task-notice__action { flex: 0 0 auto; align-self: stretch; min-width: 96px; padding: 0 14px; border-left: 1px solid var(--car-border); background: transparent; color: var(--car-primary); font-size: var(--car-fs-body); font-weight: 500; white-space: nowrap; transition: background-color 0.15s; }
+.car-task-notice__action:active { background: var(--car-primary-soft); }
+.car-task-notice__close { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 var(--car-touch); align-self: stretch; width: var(--car-touch); padding: 0; color: var(--car-text-disabled); transition: background-color 0.15s, color 0.15s; }
+.car-task-notice__close:active { background: var(--car-surface-soft); color: var(--car-text); }
 /* 调试入口（隐藏式：右下角小图标，长按触发） */
 .car-debug-fab { position: fixed; right: 12px; bottom: 12px; z-index: 200; width: 20px; height: 20px; opacity: 0.25; transition: opacity 0.2s; }
 .car-debug-fab:hover, .car-debug-fab:active { opacity: 0.6; }
+.car-runtime-alert { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 40px; padding: 0 14px; border: 1px solid #ffe58f; border-radius: var(--car-radius); background: var(--car-warning-soft); color: #ad6800; font-size: var(--car-fs-aux); font-weight: 500; white-space: nowrap; }
+.car-runtime-alert::before { content: ''; flex: 0 0 9px; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.car-runtime-alert--loading { border-color: #bae0ff; background: var(--car-primary-soft); color: var(--car-primary); }
+.car-runtime-alert--loading::before { border: 2px solid currentColor; border-right-color: transparent; background: transparent; animation: car-runtime-spin 0.8s linear infinite; }
+.car-topbar__spacer:has(.car-runtime-alert) { display: flex; align-items: center; justify-content: center; }
+.car-app.is-loading .car-main-split, .car-app.is-loading .pd-grid { opacity: 0.56; }
+.car-app.is-driving .home-detail__body, .car-app.is-driving .car-task-problem-list, .car-app.is-driving .run-drawer__body, .car-app.is-driving .home-drawer__body, .car-app.is-driving .pd-body { overflow: hidden; }
+.car-app.is-driving #js-handover, .car-app.is-driving #js-fullscreen, .car-app.is-driving #js-layer, .car-app.is-driving #js-finish, .car-app.is-driving #js-start, .car-app.is-driving #js-task-tool, .car-app.is-driving #js-problem-tool, .car-app.is-driving [data-detail], .car-app.is-driving .home-task, .car-app.is-driving .run-task-item, .car-app.is-driving .car-task-problem { opacity: 0.42; cursor: not-allowed; }
+@keyframes car-runtime-spin { to { transform: rotate(360deg); } }
 
 /* 5. 主区域分屏网格（规范 4.1 主次分屏 64:36 / 4.3 列表详情） */
 .car-main { position: relative; display: flex; flex-direction: column; height: calc(100% - var(--car-topbar-height)); padding: var(--car-gap); gap: var(--car-gap); }
@@ -116,6 +137,11 @@ img { display: block; max-width: 100%; }
 }
 @media (max-width: 1279px) {
     :root { --car-gap: 12px; --car-pad: 16px; }
+    .car-topbar { gap: 8px; }
+    .car-topbar__center { padding: 0 4px; }
+    .car-topbar__meta { gap: 8px; }
+    .car-task-notice { gap: 8px; padding-left: 8px; }
+    .car-task-notice__action { min-width: 88px; padding: 0 10px; }
 }
 
 /* 6. 卡片 / 面板（规范 8.3） */
@@ -208,10 +234,6 @@ img { display: block; max-width: 100%; }
 .car-map__point { position: absolute; transform: translate(-50%, -50%); }
 /* 右侧悬浮工具组（沿地图边缘竖排） */
 .car-map-tools { position: absolute; right: var(--car-gap); top: var(--car-gap); display: flex; flex-direction: column; gap: 10px; z-index: 10; }
-/* 地图顶部横幅（新任务提醒，规范 9.1） */
-.car-map-banner { position: absolute; left: 50%; top: var(--car-gap); transform: translateX(-50%); z-index: 12; display: flex; align-items: center; gap: 16px; max-width: 70%; height: 56px; padding: 0 8px 0 20px; background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-primary); box-shadow: 0 6px 20px rgba(20,40,70,0.12); }
-.car-map-banner__txt { font-size: var(--car-fs-body); color: var(--car-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.car-map-banner__btn { height: 40px; padding: 0 16px; border-radius: var(--car-radius-sm); background: var(--car-primary); color: #fff; font-size: var(--car-fs-aux); font-weight: 500; }
 /* 图例（规范 10，图层组合区分） */
 .car-legend { position: absolute; left: var(--car-gap); bottom: var(--car-gap); display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; background: rgba(255,255,255,0.92); border-radius: var(--car-radius); border: 1px solid var(--car-border); font-size: 13px; color: var(--car-text-secondary); }
 .car-legend__row { display: flex; align-items: center; gap: 8px; }

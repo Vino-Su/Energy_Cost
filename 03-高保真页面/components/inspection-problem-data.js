@@ -9,15 +9,15 @@
             description: '路口东南侧人行道存在散落包装物，影响通行与环境卫生。',
             remark: '巡查时已上报环卫云，现场位置已标记。',
             handler: '王建国', handledAt: '2026-07-28 10:05',
-            handleRemark: '已完成现场清理，复核后问题关闭。', photos: [], handledPhotos: []
+            handleRemark: '已完成现场清理，复核后事件关闭。', photos: [], handledPhotos: []
         },
         {
             id: 'P002', no: 'Q20260728-0015', taskId: 'I002', planDate: '2026-07-28',
-            status: 'pending', statusText: '待确认', currentNode: '待确认问题属性',
+            status: 'pending', statusText: '待确认', currentNode: '待确认事件属性',
             location: '中央广场北门', reportedAt: '2026-07-28 10:26', coordinate: '113.9418, 22.5356',
             description: '广场北门绿化带外沿发现生活垃圾堆放，需要确认责任归属。',
             remark: '已同步定位信息，等待调度确认。',
-            handler: '待分配', handledAt: '—', handleRemark: '问题待确认，暂未进入处置环节。', photos: [], handledPhotos: []
+            handler: '待分配', handledAt: '—', handleRemark: '事件待确认，暂未进入处置环节。', photos: [], handledPhotos: []
         },
         {
             id: 'P003', no: 'Q20260728-0016', taskId: 'I003', planDate: '2026-07-28',
@@ -53,11 +53,11 @@
         },
         {
             id: 'P007', no: 'Q20260726-0021', taskId: 'I006', planDate: '2026-07-26',
-            status: 'pending', statusText: '待确认', currentNode: '待确认问题属性',
+            status: 'pending', statusText: '待确认', currentNode: '待确认事件属性',
             location: '文昌路社区西门', reportedAt: '2026-07-26 16:20', coordinate: '113.9561, 22.5324',
             description: '社区西门人行道砖面出现破损，需要确认是否纳入市政维修。',
             remark: '已标记破损区域，等待确认处置类别。',
-            handler: '待分配', handledAt: '—', handleRemark: '问题待确认，暂未进入处置环节。', photos: [], handledPhotos: []
+            handler: '待分配', handledAt: '—', handleRemark: '事件待确认，暂未进入处置环节。', photos: [], handledPhotos: []
         },
         {
             id: 'P008', no: 'Q20260724-0012', taskId: 'I007', planDate: '2026-07-24',
@@ -73,7 +73,7 @@
             location: '创业路与景观大道交叉口', reportedAt: '2026-07-22 09:52', coordinate: '113.9136, 22.5522',
             description: '路口隔离栏反光贴破损，夜间辨识度下降。',
             remark: '已更换破损反光贴并完成安全检查。',
-            handler: '周倩', handledAt: '2026-07-22 11:18', handleRemark: '更换完成，复核通过后关闭问题。', photos: [], handledPhotos: []
+            handler: '周倩', handledAt: '2026-07-22 11:18', handleRemark: '更换完成，复核通过后关闭事件。', photos: [], handledPhotos: []
         }
     ];
 

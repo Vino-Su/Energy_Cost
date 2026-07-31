@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>问题详情 - 车机品质巡查</title>
+<title>事件详情 - 车机品质巡查</title>
 <link rel="stylesheet" href="components/car-common.css">
 <style>
 /* 与任务执行页一致的主次分屏：左地图 + 右详情 */
@@ -20,8 +20,11 @@
 .pd-field__label { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
 .pd-field__value { font-size: var(--car-fs-body); color: var(--car-text); word-break: break-all; }
 .pd-photos { display: flex; gap: 10px; flex-wrap: wrap; }
-.pd-photo { width: 96px; height: 72px; border-radius: var(--car-radius-sm); background: linear-gradient(135deg, #c7d2dc, #9fb0bd); display: flex; align-items: center; justify-content: center; color: #fff; }
-.pd-photo svg { width: 26px; height: 26px; }
+.pd-photo { position: relative; width: 116px; height: 78px; overflow: hidden; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: #9eabb4; }
+.pd-photo::before { content: ''; position: absolute; left: -8px; right: -8px; bottom: -18px; height: 64px; border-top: 3px solid rgba(255,255,255,0.75); background: #5c6870; transform: rotate(-7deg); }
+.pd-photo::after { content: attr(data-caption); position: absolute; left: 6px; bottom: 5px; padding: 2px 5px; border-radius: 3px; background: rgba(0,0,0,0.62); color: #fff; font-size: 11px; }
+.pd-photo--water span, .pd-photo--oil span { position: absolute; z-index: 2; left: 28px; top: 42px; width: 54px; height: 15px; border-radius: 50%; background: rgba(71,145,194,0.8); transform: rotate(-7deg); }
+.pd-photo--oil span { background: rgba(26,31,34,0.88); }
 .pd-desc { font-size: var(--car-fs-body); line-height: 24px; color: var(--car-text); padding: 12px 16px; background: var(--car-surface-soft); border-radius: var(--car-radius-sm); }
 /* 处理日志时间线 */
 .pd-log { display: flex; flex-direction: column; gap: 0; padding: 4px 0 0 8px; }
@@ -36,14 +39,14 @@
 .pd-log__time { font-size: var(--car-fs-aux); color: var(--car-text-secondary); font-family: var(--car-font-num); }
 .pd-log__detail { font-size: var(--car-fs-aux); color: var(--car-text-secondary); margin-top: 4px; line-height: 20px; }
 /* 处置节点图 */
-.pd-flow { display: flex; align-items: center; gap: 4px; padding: 16px 8px; }
+.pd-flow { display: flex; align-items: center; gap: 2px; padding: 16px 2px; }
 .pd-node { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
 .pd-node__dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; background: var(--car-neutral); }
 .pd-node.is-done .pd-node__dot { background: var(--car-success); }
 .pd-node.is-current .pd-node__dot { background: var(--car-warning); box-shadow: 0 0 0 5px rgba(250,173,20,0.20); }
-.pd-node__label { font-size: var(--car-fs-aux); color: var(--car-text); }
+.pd-node__label { font-size: 12px; color: var(--car-text); white-space: nowrap; }
 .pd-node.is-pending .pd-node__label { color: var(--car-text-disabled); }
-.pd-line { flex: 0 0 40px; height: 2px; background: var(--car-border); }
+.pd-line { flex: 0 0 10px; height: 2px; background: var(--car-border); }
 .pd-line.is-done { background: var(--car-success); }
 .pd-foot { display: flex; justify-content: flex-end; padding: var(--car-pad); border-top: 1px solid var(--car-border); }
 .pd-problem-pin { z-index: 8; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -61,9 +64,17 @@
                 品质巡查
             </div>
         </div>
-        <div class="car-topbar__spacer"></div>
+        <div class="car-topbar__center">
+            <div class="car-task-notice car-hidden" id="js-task-notice" role="status" aria-live="polite" aria-atomic="true">
+                <span class="car-task-notice__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+                <span class="car-task-notice__lead">新任务已派发</span>
+                <span class="car-task-notice__summary" data-task-notice-summary>巡查任务 · 解放南路沿线 · 13:30-15:00</span>
+                <span class="car-task-notice__more" data-task-notice-more aria-label="另有1条新任务">+1</span>
+                <button type="button" class="car-task-notice__action" data-task-notice-view>查看任务</button>
+                <button type="button" class="car-task-notice__close" data-task-notice-close aria-label="关闭新任务提醒" title="关闭新任务提醒"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </div>
+        </div>
         <div class="car-topbar__meta">
-            <span class="car-pill car-mono" id="js-probNo">WT20260724-001</span>
             <span class="car-pill js-clock">--:--</span>
         </div>
     </header>
@@ -85,13 +96,13 @@
                 <div class="car-map__grid"></div>
                 <span class="car-map__label" style="left:30%;top:51%">滨江路</span>
                 <div class="car-map__zone" style="left:25%;top:30%;width:40%;height:36%"></div>
-                <div class="car-map__point pd-problem-pin" id="js-problemPoint" style="left:45%;top:48%" aria-label="问题点位"><span class="pd-problem-pin__icon"><span>!</span></span></div>
+                <div class="car-map__point pd-problem-pin" id="js-problemPoint" style="left:45%;top:48%" aria-label="事件点位"><span class="pd-problem-pin__icon"><span>!</span></span></div>
                 <!-- 车辆位置（与首页/执行页地图元素一致） -->
                 <div class="car-map__point" style="left:38%;top:42%">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="#1677ff" style="filter:drop-shadow(0 2px 4px rgba(20,40,70,0.3))"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
                 </div>
                 <div class="car-legend">
-                    <div class="car-legend__row"><span class="car-legend__mark" style="background:#ff4d4f;border-radius:50%"></span>问题点位</div>
+                    <div class="car-legend__row"><span class="car-legend__mark" style="background:#ff4d4f;border-radius:50%"></span>事件点位</div>
                     <div class="car-legend__row"><span class="car-legend__mark" style="background:#1677ff;border-radius:50%"></span>车辆位置</div>
                     <div class="car-legend__row"><span class="car-legend__mark" style="background:rgba(22,119,255,0.10);border:2px dashed rgba(22,119,255,0.55)"></span>任务作业区域</div>
                 </div>
@@ -100,7 +111,7 @@
             <!-- 右：详情 -->
             <div class="car-panel">
                 <div class="car-panel__head">
-                    <span class="car-panel__title">问题详情</span>
+                    <span class="car-panel__title">事件详情</span>
                 </div>
                 <div class="pd-body">
                     <!-- 标题摘要 -->
@@ -111,22 +122,27 @@
                         </div>
                     </div>
 
-                    <!-- 问题信息 -->
+                    <!-- 事件信息 -->
                     <div class="pd-section">
-                        <div class="pd-section__title">问题信息</div>
+                        <div class="pd-section__title">事件信息</div>
                         <div class="pd-grid-fields">
-                            <div class="pd-field"><span class="pd-field__label">问题上报时间</span><span class="pd-field__value car-mono" id="js-reportTime">2026-07-24 10:48</span></div>
-                            <div class="pd-field"><span class="pd-field__label">问题经纬度</span><span class="pd-field__value car-mono" id="js-coordinates">113.264,23.129</span></div>
-                            <div class="pd-field"><span class="pd-field__label">问题位置</span><span class="pd-field__value" id="js-location">滨江路18号路口</span></div>
+                            <div class="pd-field"><span class="pd-field__label">事件发生时间</span><span class="pd-field__value car-mono" id="js-reportTime">2026-07-24 10:48</span></div>
+                            <div class="pd-field"><span class="pd-field__label">事件来源</span><span class="pd-field__value" id="js-source">车载监控采样</span></div>
+                            <div class="pd-field"><span class="pd-field__label">事件发现类型</span><span class="pd-field__value" id="js-discoveryType">AI</span></div>
+                            <div class="pd-field"><span class="pd-field__label">事件发现方</span><span class="pd-field__value" id="js-discoverer">巡查车</span></div>
+                            <div class="pd-field"><span class="pd-field__label">事件经纬度</span><span class="pd-field__value car-mono" id="js-coordinates">113.264,23.129</span></div>
+                            <div class="pd-field"><span class="pd-field__label">事件位置</span><span class="pd-field__value" id="js-location">滨江路18号路口</span></div>
+                            <div class="pd-field"><span class="pd-field__label">详细位置</span><span class="pd-field__value" id="js-detailedLocation">滨江路东段北侧车道</span></div>
+                            <div class="pd-field"><span class="pd-field__label">问题类型</span><span class="pd-field__value" id="js-problemType">路面油污</span></div>
                         </div>
-                        <div class="pd-field"><span class="pd-field__label">问题照片</span>
-                            <div class="pd-photos">
-                                <div class="pd-photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
-                                <div class="pd-photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
+                        <div class="pd-field"><span class="pd-field__label">事件照片</span>
+                            <div class="pd-photos" id="js-photos">
+                                <div class="pd-photo pd-photo--oil" data-caption="车载画面 1"><span></span></div>
+                                <div class="pd-photo pd-photo--water" data-caption="车载画面 2"><span></span></div>
                             </div>
                         </div>
-                        <div class="pd-field"><span class="pd-field__label">问题描述</span><div class="pd-desc" id="js-desc">路面存在大面积油污未清理，影响通行，需尽快安排清洗。</div></div>
-                        <div class="pd-field"><span class="pd-field__label">备注</span><div class="pd-desc" id="js-note">疑似车辆漏油导致，建议排查周边停放车辆。</div></div>
+                        <div class="pd-field"><span class="pd-field__label">事件描述</span><div class="pd-desc" id="js-desc">路面存在大面积油污未清理，影响通行，需尽快安排清洗。</div></div>
+                        <div class="pd-field"><span class="pd-field__label">所属任务</span><div class="pd-desc" id="js-note">滨江路东段品质巡查任务</div></div>
                     </div>
 
                     <!-- 处置节点图（与状态联动：done/current/pending 由 JS 渲染） -->
@@ -143,7 +159,7 @@
                             <div class="pd-field"><span class="pd-field__label">处置完成时间</span><span class="pd-field__value car-mono" id="js-handlerTime">—</span></div>
                         </div>
                         <div class="pd-field"><span class="pd-field__label">处置后照片</span><span class="pd-field__value car-mute" id="js-afterPhoto">暂无</span></div>
-                        <div class="pd-field"><span class="pd-field__label">处置备注</span><div class="pd-desc" id="js-handlerDesc">问题待分配责任人，暂无处置记录。</div></div>
+                        <div class="pd-field"><span class="pd-field__label">处置备注</span><div class="pd-desc" id="js-handlerDesc">事件待分配责任人，暂无处置记录。</div></div>
                     </div>
 
                     <!-- 处理日志（对齐需求 7.3.4：详情展示处理日志） -->
@@ -166,49 +182,30 @@
     CAR.bindClock();
     CAR.installDebugFab();
     var pid = CAR.query('id') || 'P001';
-    // 演示：4 种状态的处理日志联动（对齐需求 4.2 状态机：待确认/待分配/待处理/已完成）
-    var MAP = {
-        'P001': { no: 'Q20260727-0014', status: '已完成', tag: 'car-tag--success', current: 3, reportTime: '2026-07-27 09:12', coordinates: '113.264,23.129', location: '滨江路18号路口', desc: '路面存在大面积油污，已安排现场清洗并完成复检。', note: '车载外设自动上报，关联滨江路东段巡查任务。', point: { left: '45%', top: '48%' }, handler: '李建国', handlerTime: '2026-07-27 10:06', afterPhoto: '已上传', handlerDesc: '路面油污已清洗完毕，复检合格。' },
-        'P002': { no: 'Q20260727-0033', status: '待处理', tag: 'car-tag--warning', current: 2, reportTime: '2026-07-27 11:08', coordinates: '113.271,23.135', location: '中央广场北门', desc: '广场北门入口路面存在积水，需安排人员处理并复核。', note: '当前由责任人处理中，关联中央广场片区巡查任务。', point: { left: '51%', top: '46%' }, handler: '王建军', handlerTime: '—', afterPhoto: '暂无', handlerDesc: '已指派处置人员，等待现场处理结果。' },
-        'P003': { no: 'Q20260727-0021', status: '待分配', tag: 'car-tag--neutral', current: 1, reportTime: '2026-07-27 09:46', coordinates: '113.268,23.127', location: '滨江路东段K2+300', desc: '路段局部路面破损，已完成问题确认，待分配处置责任人。', note: '车载外设自动上报，关联滨江路东段巡查任务。', point: { left: '42%', top: '56%' }, handler: '—', handlerTime: '—', afterPhoto: '暂无', handlerDesc: '问题已确认，待分配责任人。' },
-        'P004': { no: 'Q20260727-0048', status: '待确认', tag: 'car-tag--neutral', current: 0, reportTime: '2026-07-27 11:16', coordinates: '113.273,23.133', location: '中央广场东侧辅路', desc: '巡查行进中由车载外设发现路面遗撒，已生成问题记录，待确认处置。', note: '车载外设自动上报，关联当前巡查任务。', point: { left: '52%', top: '46%' }, handler: '—', handlerTime: '—', afterPhoto: '暂无', handlerDesc: '等待问题确认与责任分配。' },
-        'P005': { no: 'Q20260727-0049', status: '待分配', tag: 'car-tag--neutral', current: 1, reportTime: '2026-07-27 11:19', coordinates: '113.274,23.132', location: '中央广场喷泉广场南侧', desc: '喷泉广场南侧路面发现散落杂物，已完成问题确认，待分配处置责任人。', note: '车载外设自动上报，关联当前巡查任务。', point: { left: '55%', top: '50%' }, handler: '—', handlerTime: '—', afterPhoto: '暂无', handlerDesc: '问题已确认，待分配责任人。' },
-        'P006': { no: 'Q20260727-0050', status: '待处理', tag: 'car-tag--warning', current: 2, reportTime: '2026-07-27 11:22', coordinates: '113.275,23.131', location: '中央广场南门辅路', desc: '南门辅路发现局部积水，责任人已接收并处理中。', note: '车载外设自动上报，关联当前巡查任务。', point: { left: '61%', top: '55%' }, handler: '王建军', handlerTime: '—', afterPhoto: '暂无', handlerDesc: '已指派处置人员，等待现场处理结果。' }
-    };
-    var p = MAP[pid] || MAP['P001'];
-    var liveProblems = [];
-    try { liveProblems = JSON.parse(sessionStorage.getItem('car-live-problems') || '[]'); } catch (e) {}
-    var liveProblem = liveProblems.find(function (item) { return item.id === pid; });
-    if (liveProblem && liveProblem.id === pid) {
-        var statusTag = { pending: 'car-tag--neutral', assigned: 'car-tag--neutral', processing: 'car-tag--warning', done: 'car-tag--success' };
-        var statusNode = { pending: 0, assigned: 1, processing: 2, done: 3 };
-        p = Object.assign({}, MAP[pid] || MAP.P004, {
-            no: liveProblem.no,
-            status: liveProblem.statusText,
-            tag: statusTag[liveProblem.status] || 'car-tag--neutral',
-            current: statusNode[liveProblem.status] === undefined ? 0 : statusNode[liveProblem.status],
-            reportTime: liveProblem.reportTime,
-            coordinates: liveProblem.coordinates,
-            location: liveProblem.loc,
-            point: liveProblem.point,
-            note: '车载外设自动上报，关联当前巡查任务。'
-        });
-    }
-    document.getElementById('js-probNo').textContent = p.no;
+    var p = CAR.getProblem(pid) || CAR.getProblem('P001');
+    var statusMeta = CAR.EVENT_STATUS[p.status] || CAR.EVENT_STATUS.judging;
+    p.current = statusMeta.order;
+    p.tag = statusMeta.tag;
+    p.afterPhoto = p.status === 'done' ? '已上传 2 张' : '暂无';
     document.getElementById('js-title-no').textContent = p.no;
     var sEl = document.getElementById('js-status');
-    sEl.textContent = p.status;
+    sEl.textContent = statusMeta.text;
     sEl.className = 'car-tag ' + p.tag;
-    document.getElementById('js-reportTime').textContent = p.reportTime;
+    document.getElementById('js-reportTime').textContent = p.occurrenceTime;
+    document.getElementById('js-source').textContent = p.source;
+    document.getElementById('js-discoveryType').textContent = p.discoveryType;
+    document.getElementById('js-discoverer').textContent = p.discoverer;
     document.getElementById('js-coordinates').textContent = p.coordinates;
     document.getElementById('js-location').textContent = p.location;
-    document.getElementById('js-desc').textContent = p.desc;
-    document.getElementById('js-note').textContent = p.note;
+    document.getElementById('js-detailedLocation').textContent = p.detailedLocation;
+    document.getElementById('js-problemType').textContent = p.problemType;
+    document.getElementById('js-desc').textContent = p.description;
+    document.getElementById('js-note').textContent = p.taskArea + ' · ' + p.taskId;
     document.getElementById('js-problemPoint').style.left = p.point.left;
     document.getElementById('js-problemPoint').style.top = p.point.top;
 
     // 处置节点联动渲染
-    var NODES = ['待确认', '待分配', '待处理', '已完成'];
+    var NODES = Object.keys(CAR.EVENT_STATUS).map(function (status) { return CAR.EVENT_STATUS[status].text; });
     var html = '';
     NODES.forEach(function (n, i) {
         if (i > 0) {
@@ -225,10 +222,12 @@
 
     // 处理日志联动渲染（按 current 节点截取已发生日志，current 节点为 active）
     var LOGS = [
-        { action: '问题上报', time: '2026-07-24 10:48', detail: '车载外设自动上报，记录位置与照片。', node: 0 },
-        { action: '问题确认', time: '2026-07-24 11:02', detail: '云端确认问题有效，进入待分配。', node: 1 },
-        { action: '分配责任人', time: '2026-07-24 11:15', detail: '已指派处置人员李建国。', node: 2 },
-        { action: '现场处置', time: '2026-07-24 14:20', detail: '路面油污已清洗，上传处置后照片。', node: 3 }
+        { action: '事件上报', time: p.reportTime, detail: p.source + '生成事件，记录位置与图片。', node: 0 },
+        { action: '完成判别', time: p.reportTime, detail: '事件判别有效，进入责任分配。', node: 1 },
+        { action: '责任分配', time: p.reportTime, detail: '事件已进入责任人待接收队列。', node: 2 },
+        { action: '开始处理', time: p.reportTime, detail: '责任人已接收并开展现场处置。', node: 3 },
+        { action: '等待核查', time: p.reportTime, detail: '处置结果已提交，等待巡查核查。', node: 4 },
+        { action: '处置完成', time: p.handlerTime, detail: p.handlerDesc, node: 5 }
     ];
     var logHtml = '';
     LOGS.forEach(function (l, i) {

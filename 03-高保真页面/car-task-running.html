@@ -8,8 +8,9 @@
 <style>
 /* 执行态左屏顶部任务指标条 */
 .run-stats { position: absolute; left: var(--car-gap); top: var(--car-gap); z-index: 11; }
-.run-tools { position: absolute; right: var(--car-gap); top: var(--car-gap); display: flex; flex-direction: column; gap: 10px; z-index: 10; }
-/* 任务/问题页面级入口按钮（对齐 car-home 右侧工具栏） */
+.run-tools { position: absolute; right: var(--car-gap); top: var(--car-gap); display: flex; flex-direction: column; align-items: flex-end; gap: 10px; z-index: 10; }
+.run-handover-btn { width: 88px; gap: 8px; padding: 0 12px; font-size: var(--car-fs-body); white-space: nowrap; }
+/* 任务/事件页面级入口按钮（对齐 car-home 右侧工具栏） */
 .run-tool-btn { position: relative; overflow: visible; }
 .run-tool-btn--task { color: var(--car-primary); }
 .run-tool-btn--problem { color: var(--car-danger); }
@@ -18,18 +19,11 @@
 .run-tool-badge { position: absolute; top: -7px; right: -7px; display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border: 2px solid var(--car-surface); border-radius: 11px; background: var(--car-danger); color: #fff; font-family: var(--car-font-num); font-size: 12px; font-weight: 700; line-height: 1; }
 .run-tool-btn--task .run-tool-badge { background: var(--car-primary); }
 .run-tools__divider { width: 28px; height: 1px; margin: 2px auto; background: rgba(0,0,0,0.14); }
-/* 普通新任务轻提醒：与执行指标左对齐，保持地图和当前任务的可读性 */
-#js-banner { left: 50%; top: calc(var(--car-gap) + 78px); transform: translateX(-50%); width: min(520px, calc(100% - 2 * var(--car-gap) - 80px)); max-width: none; height: 56px; gap: 12px; padding: 0 8px 0 16px; border-color: rgba(22,119,255,0.30); box-shadow: 0 4px 12px rgba(20,40,70,0.10); transition: opacity 0.18s ease-out, transform 0.18s ease-out; }
-#js-banner.is-dismissing { opacity: 0; transform: translate(-50%, -4px); pointer-events: none; }
-#js-banner > svg { flex: 0 0 auto; }
-.run-task-banner__lead { flex: 0 0 auto; font-size: var(--car-fs-body); font-weight: 600; color: var(--car-text); white-space: nowrap; }
-.run-task-banner__txt { flex: 1 1 auto; min-width: 0; overflow: hidden; color: var(--car-text-secondary); font-size: var(--car-fs-aux); white-space: nowrap; text-overflow: ellipsis; }
-.run-task-banner__action { flex: 0 0 auto; min-height: 48px; padding: 0 12px; background: transparent; color: var(--car-primary); font-size: var(--car-fs-body); font-weight: 500; white-space: nowrap; }
-.run-task-banner__action:active { background: var(--car-primary-soft); }
-.run-task-banner__close { flex: 0 0 40px; min-height: 48px; padding: 0; background: transparent; color: var(--car-text-secondary); font-size: 20px; line-height: 1; }
-.run-task-banner__close:active { background: var(--car-surface-soft); }
 /* 轨迹：强制 SVG 服从容器实际尺寸，防止被 viewBox 1:1 比例自撑为正方形导致与车辆点错位 */
 .run-track { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.run-phone-track { z-index: 5; }
+.run-phone-track path { stroke: var(--car-primary); stroke-dasharray: 3 2; }
+.run-phone-point { z-index: 8; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 2px solid #fff; border-radius: 50%; background: var(--car-success); color: #fff; box-shadow: 0 2px 5px rgba(20,40,70,0.24); }
 .run-keypoints { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
 /* 重点点位：橙色 pin（沿用业务方提供的定位图标），尖端锚定坐标，编号居中 */
 .run-keypoint { position: absolute; width: 36px; height: 42px; transform: translate(-50%, -100%); filter: drop-shadow(0 2px 5px rgba(224,98,13,0.32)); }
@@ -41,18 +35,34 @@
 .run-problem-point__icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 2px solid #fff; border-radius: 50% 50% 50% 0; background: var(--car-danger); color: #fff; font-family: var(--car-font-num); font-size: 18px; font-weight: 700; box-shadow: 0 2px 6px rgba(255,77,79,0.36); transform: rotate(-45deg); }
 .run-problem-point__icon > span { transform: rotate(45deg); }
 @keyframes run-problem-arrive { from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-/* 地图总览图层（点击任务/问题图标时切换，对齐 car-home） */
+/* 地图总览图层（点击任务/事件图标时切换，对齐 car-home） */
 .run-map-all-zones { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-.run-map-all-zone { position: absolute; border: 2px dashed rgba(22,119,255,0.34); border-radius: 14px; background: rgba(22,119,255,0.05); }
+.run-map-all-zone { position: absolute; padding: 8px; border: 2px dashed rgba(22,119,255,0.34); border-radius: var(--car-radius); background: rgba(22,119,255,0.05); color: var(--car-text); font-size: var(--car-fs-aux); font-weight: 600; }
+.run-map-all-zone--pending { border-color: var(--car-warning); background: var(--car-warning-soft); }
+.run-map-all-zone--running { border-color: var(--car-success); background: var(--car-success-soft); }
+.run-map-all-zone--done { border-color: var(--car-primary); background: var(--car-primary-soft); }
+.run-map-all-zone--transferred, .run-map-all-zone--terminated, .run-map-all-zone--invalid { border-color: var(--car-neutral); background: var(--car-neutral-soft); }
 .run-map-all-zone.is-current { border-color: rgba(22,119,255,0.82); background: rgba(22,119,255,0.12); box-shadow: inset 0 0 0 1px rgba(22,119,255,0.12); }
 .run-map-problems { position: absolute; inset: 0; z-index: 9; pointer-events: none; }
-.run-map-problem { --run-prob-color: var(--car-neutral); position: absolute; width: 36px; height: 42px; transform: translate(-50%,-100%); pointer-events: auto; }
+.run-map-problem { --run-prob-color: var(--car-neutral); position: absolute; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; transform: translate(-50%,-82%); pointer-events: auto; }
 .run-map-problem__icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 2px solid #fff; border-radius: 50% 50% 50% 0; background: var(--run-prob-color); color: #fff; font-family: var(--car-font-num); font-size: 18px; font-weight: 700; box-shadow: 0 2px 6px rgba(20,40,70,0.28); transform: rotate(-45deg); }
 .run-map-problem__icon > span { transform: rotate(45deg); }
-.run-map-problem--pending { --run-prob-color: var(--car-neutral); }
-.run-map-problem--assigned { --run-prob-color: var(--car-primary); }
+.run-map-problem--judging { --run-prob-color: var(--car-neutral); }
+.run-map-problem--assigning { --run-prob-color: var(--car-primary); }
+.run-map-problem--pending { --run-prob-color: var(--car-warning); }
 .run-map-problem--processing { --run-prob-color: var(--car-warning); }
+.run-map-problem--review { --run-prob-color: var(--car-primary); }
 .run-map-problem--done { --run-prob-color: var(--car-success); }
+.run-map-cluster { position: absolute; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; transform: translate(-50%,-50%); border: 4px solid rgba(255,255,255,0.9); border-radius: 50%; background: var(--car-danger); color: #fff; font-family: var(--car-font-num); font-size: var(--car-fs-body); font-weight: 700; box-shadow: 0 3px 10px rgba(20,40,70,0.25); pointer-events: auto; }
+.run-map-facilities { position: absolute; inset: 0; z-index: 6; display: none; pointer-events: none; }
+.run-map-facilities.is-visible { display: block; }
+.run-map-facility { position: absolute; display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: var(--car-surface); font-size: 12px; box-shadow: 0 2px 6px rgba(20,40,70,0.12); }
+.run-map-facility::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--car-success); }
+.car-main-split.is-map-fullscreen { position: fixed; inset: var(--car-topbar-height) 0 0; z-index: 80; display: block; padding: var(--car-gap); background: var(--car-page-bg); }
+.car-main-split.is-map-fullscreen > .car-map { width: 100%; height: 100%; }
+.car-main-split.is-map-fullscreen > .run-side-panel { display: none; }
+.car-map.is-resetting { animation: run-map-reset 0.34s ease-out; }
+@keyframes run-map-reset { 50% { box-shadow: inset 0 0 0 4px rgba(22,119,255,0.3); } }
 .run-side-panel .car-task-context { padding: 14px var(--car-pad); }
 .run-side-panel .car-task-context__eyebrow { color: var(--car-primary); font-weight: 500; }
 
@@ -66,9 +76,9 @@
 .run-drawer.is-open { transform: translateY(0); opacity: 1; visibility: visible; }
 .run-drawer__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px var(--car-pad); border-bottom: 1px solid var(--car-border); }
 .run-drawer__title { font-size: var(--car-fs-panel); font-weight: 600; }
-.run-drawer__close { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: var(--car-fs-aux); color: var(--car-primary); border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: var(--car-surface); }
+.run-drawer__close { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 88px; height: var(--car-touch); padding: 0 14px; font-size: var(--car-fs-body); color: var(--car-primary); border: 1px solid var(--car-border); border-radius: var(--car-radius); background: var(--car-surface); }
 .run-drawer__body { flex: 1; min-height: 0; overflow-y: auto; }
-.run-task-item { display: flex; flex-direction: column; gap: 6px; padding: 14px var(--car-pad); border-bottom: 1px solid var(--car-border); cursor: pointer; transition: background-color 0.18s ease-out; position: relative; }
+.run-task-item { width: 100%; display: flex; flex-direction: column; gap: 6px; min-height: 96px; padding: 14px var(--car-pad); border: 0; border-bottom: 1px solid var(--car-border); background: var(--car-surface); color: var(--car-text); text-align: left; cursor: pointer; transition: background-color 0.18s ease-out; position: relative; }
 .run-task-item:last-child { border-bottom: none; }
 .run-task-item:active { background: var(--car-surface-soft); }
 .run-task-item.is-current { background: var(--car-primary-soft); }
@@ -79,7 +89,8 @@
 .run-task-item__r2 .car-sep { color: var(--car-border); }
 .run-task-item__r2 .car-mono { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
 .run-group { padding: 10px var(--car-pad) 4px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); background: var(--car-surface-soft); }
-/* 跨任务问题清单：状态筛选 + 所属任务信息 */
+.run-issue-group { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 8px var(--car-pad); background: var(--car-surface-soft); color: var(--car-text-secondary); font-size: var(--car-fs-aux); }
+/* 跨任务事件清单：状态筛选 + 所属任务信息 */
 .run-issue-filters { display: flex; gap: 8px; padding: 12px var(--car-pad); overflow-x: auto; border-bottom: 1px solid var(--car-border); background: var(--car-surface); }
 .run-issue-filter { flex: 0 0 auto; min-height: var(--car-touch); padding: 0 12px; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: var(--car-surface); color: var(--car-text-secondary); font-size: var(--car-fs-aux); }
 .run-issue-filter.is-active { border-color: var(--car-primary); background: var(--car-primary-soft); color: var(--car-primary); font-weight: 500; }
@@ -106,7 +117,16 @@
                 品质巡查
             </div>
         </div>
-        <div class="car-topbar__spacer"></div>
+        <div class="car-topbar__center">
+            <div class="car-task-notice car-hidden" id="js-task-notice" role="status" aria-live="polite" aria-atomic="true">
+                <span class="car-task-notice__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+                <span class="car-task-notice__lead">新任务已派发</span>
+                <span class="car-task-notice__summary" data-task-notice-summary>巡查任务 · 解放南路沿线 · 13:30-15:00</span>
+                <span class="car-task-notice__more" data-task-notice-more aria-label="另有1条新任务">+1</span>
+                <button type="button" class="car-task-notice__action" data-task-notice-view>查看任务</button>
+                <button type="button" class="car-task-notice__close" data-task-notice-close aria-label="关闭新任务提醒" title="关闭新任务提醒"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </div>
+        </div>
         <div class="car-topbar__meta">
             <span class="car-pill"><span class="car-status-dot is-running"></span>作业中</span>
             <span class="car-pill car-mono" id="js-vehNo">粤B·D2856</span>
@@ -141,19 +161,30 @@
                 <svg class="run-track" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <path id="js-track" d="" fill="none" stroke="#ff4d4f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" stroke-dasharray="0"/>
                 </svg>
+                <svg class="run-track run-phone-track" id="js-phone-track-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="巡查员手机轨迹">
+                    <path id="js-phone-track" d="" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+                </svg>
                 <!-- 重点点位 -->
                 <div class="run-keypoints" id="js-keypoints" aria-label="重点点位">
                     <span class="run-keypoint" style="left:35%;top:55%" title="中央广场北门"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M480 0A416 416 0 0 0 64 416c0 224 377.6 576 396.8 588.8L480 1024l19.2-19.2C518.4 992 896 640 896 416A416 416 0 0 0 480 0z m0 569.6a172.8 172.8 0 0 1-122.24-50.56l-1.92-1.92A172.8 172.8 0 1 1 652.8 396.8a170.176 170.176 0 0 1-49.28 120.96 11.2 11.2 0 0 0-2.56 3.2 171.584 171.584 0 0 1-119.68 48.64z" fill="#e0620d"/></svg><span>1</span></span>
                     <span class="run-keypoint" style="left:58%;top:61%" title="中央广场南门"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M480 0A416 416 0 0 0 64 416c0 224 377.6 576 396.8 588.8L480 1024l19.2-19.2C518.4 992 896 640 896 416A416 416 0 0 0 480 0z m0 569.6a172.8 172.8 0 0 1-122.24-50.56l-1.92-1.92A172.8 172.8 0 1 1 652.8 396.8a170.176 170.176 0 0 1-49.28 120.96 11.2 11.2 0 0 0-2.56 3.2 171.584 171.584 0 0 1-119.68 48.64z" fill="#e0620d"/></svg><span>2</span></span>
                     <span class="run-keypoint" style="left:48%;top:50%" title="喷泉广场"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M480 0A416 416 0 0 0 64 416c0 224 377.6 576 396.8 588.8L480 1024l19.2-19.2C518.4 992 896 640 896 416A416 416 0 0 0 480 0z m0 569.6a172.8 172.8 0 0 1-122.24-50.56l-1.92-1.92A172.8 172.8 0 1 1 652.8 396.8a170.176 170.176 0 0 1-49.28 120.96 11.2 11.2 0 0 0-2.56 3.2 171.584 171.584 0 0 1-119.68 48.64z" fill="#e0620d"/></svg><span>3</span></span>
                 </div>
-                <!-- 执行中由外设上报的问题点位 -->
-                <div class="run-problem-points" id="js-problemPoints" aria-label="上报问题点位"></div>
-                <!-- 总览图层：今日全部问题点位（点击问题图标时展示，按状态着色） -->
-                <div class="run-map-problems" id="js-all-problems" aria-label="今日问题点位"></div>
+                <!-- 执行中由外设上报的事件点位 -->
+                <div class="run-problem-points" id="js-problemPoints" aria-label="上报事件点位"></div>
+                <!-- 总览图层：今日全部事件点位（点击事件图标时展示，按状态着色） -->
+                <div class="run-map-problems" id="js-all-problems" aria-label="今日事件点位"></div>
                 <!-- 车辆位置 -->
                 <div class="car-map__point" id="js-vehicle" style="left:14%;top:78%">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="#1677ff" style="filter:drop-shadow(0 2px 4px rgba(20,40,70,0.3))"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                </div>
+                <div class="car-map__point run-phone-point" id="js-phone" style="left:12%;top:82%" aria-label="巡查员手机位置">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg>
+                </div>
+                <div class="run-map-facilities" id="js-facilities" aria-label="辅助设施图层">
+                    <span class="run-map-facility" style="left:22%;top:34%">补水点</span>
+                    <span class="run-map-facility" style="left:63%;top:66%">充电站</span>
+                    <span class="run-map-facility" style="left:74%;top:28%">停车区</span>
                 </div>
 
                 <!-- 顶部指标条 -->
@@ -161,25 +192,16 @@
                     <div class="car-task-kpi"><span class="car-task-kpi__label">开始时间</span><span class="car-task-kpi__value"><span class="car-mono" id="js-start">10:31</span></span></div>
                     <div class="car-task-kpi"><span class="car-task-kpi__label">作业里程</span><span class="car-task-kpi__value"><span class="car-mono" id="js-mileage">4.86</span><span class="car-task-kpi__unit">km</span></span></div>
                     <div class="car-task-kpi"><span class="car-task-kpi__label">作业时长</span><span class="car-task-kpi__value"><span class="car-mono" id="js-duration">42</span><span class="car-task-kpi__unit">min</span></span></div>
-                    <div class="car-task-kpi car-task-kpi--problems"><span class="car-task-kpi__label">问题上报</span><span class="car-task-kpi__value"><span class="car-mono" id="js-probCnt">2</span><span class="car-task-kpi__unit">项</span></span></div>
+                    <div class="car-task-kpi car-task-kpi--problems"><span class="car-task-kpi__label">事件上报</span><span class="car-task-kpi__value"><span class="car-mono" id="js-probCnt">2</span><span class="car-task-kpi__unit">项</span></span></div>
                 </div>
 
-                <!-- 普通新任务轻提醒：任务摘要、详情入口与关闭操作 -->
-                <div class="car-map-banner" id="js-banner" role="status" aria-live="polite">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span class="run-task-banner__lead">新任务已派发</span>
-                    <span class="run-task-banner__txt">解放南路沿线 · 13:30-15:00</span>
-                    <button type="button" class="run-task-banner__action" id="js-bannerView">查看任务</button>
-                    <button type="button" class="run-task-banner__close" id="js-bannerClose" aria-label="关闭新任务提醒">×</button>
-                </div>
-
-                <!-- 右侧工具：任务/问题为页面级入口，与地图辅助工具同栏 -->
+                <!-- 右侧工具：任务/事件为页面级入口，与地图辅助工具同栏 -->
                 <div class="run-tools">
                     <button class="car-icon-btn run-tool-btn run-tool-btn--task" id="js-task-tool" aria-label="查看今日任务" title="今日任务">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg>
                         <span class="run-tool-badge" id="js-task-badge">0</span>
                     </button>
-                    <button class="car-icon-btn run-tool-btn run-tool-btn--problem" id="js-problem-tool" aria-label="查看本任务上报问题" title="本任务问题">
+                    <button class="car-icon-btn run-tool-btn run-tool-btn--problem" id="js-problem-tool" aria-label="查看本任务上报事件" title="本任务事件">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>
                         <span class="run-tool-badge" id="js-problem-badge">0</span>
                     </button>
@@ -187,6 +209,9 @@
                     <button class="car-icon-btn" id="js-reset" aria-label="复位" title="复位"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
                     <button class="car-icon-btn" id="js-layer" aria-label="图层" title="辅助设施图层"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></button>
                     <button class="car-icon-btn" id="js-fullscreen" aria-label="全屏" title="全屏"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+                    <button class="car-icon-btn run-handover-btn" id="js-handover" aria-label="交车" title="交车">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h13M12 7l5 5-5 5"/><path d="M18 5h3v14h-3"/></svg><span>交车</span>
+                    </button>
                 </div>
 
                 <!-- 图例 -->
@@ -195,11 +220,11 @@
                     <div class="car-legend__row"><span class="car-legend__mark" style="background:#e0620d;border-radius:50%"></span>重点点位</div>
                     <div class="car-legend__row"><span class="car-legend__mark" style="background:#1677ff;border-radius:50%"></span>车辆位置</div>
                     <div class="car-legend__row"><span class="car-legend__mark" style="width:16px;height:3px;background:#ff4d4f;border-radius:2px"></span>实际轨迹</div>
-                    <div class="car-legend__row"><span class="car-legend__mark" style="background:#ff4d4f;border-radius:50%"></span>上报问题</div>
+                    <div class="car-legend__row"><span class="car-legend__mark" style="background:#ff4d4f;border-radius:50%"></span>上报事件</div>
                 </div>
             </div>
 
-            <!-- 右屏：任务信息 + 问题卡片 -->
+            <!-- 右屏：任务信息 + 事件卡片 -->
             <div class="car-panel run-side-panel">
                 <!-- 当前任务摘要：与首页详情复用字段顺序与状态表达 -->
                 <div class="car-task-context">
@@ -216,7 +241,7 @@
                 </div>
                 <section class="car-task-problems">
                     <div class="car-task-problems__head">
-                        <span class="car-task-problems__title">上报问题</span>
+                        <span class="car-task-problems__title">上报事件</span>
                         <span class="car-task-problems__count" id="js-probTotal">共 2 项</span>
                     </div>
                     <div class="car-task-problem-list" id="js-probList"></div>
@@ -225,7 +250,7 @@
                     <button class="car-btn car-btn--primary" id="js-finish">结束任务</button>
                 </div>
 
-                <!-- 今日清单抽屉（覆盖右屏面板，展示今日全部任务/问题，不影响当前任务执行） -->
+                <!-- 今日清单抽屉（覆盖右屏面板，展示今日全部任务/事件，不影响当前任务执行） -->
                 <div class="run-drawer-mask" id="js-drawerMask"></div>
                 <div class="run-drawer" id="js-drawer" role="dialog" aria-modal="true" aria-label="今日清单">
                     <div class="run-drawer__head">
@@ -251,21 +276,10 @@
     CAR.bindClock();
     CAR.installDebugFab();
 
-    var TASKS = {
-        // 轨迹与车辆点统一采用 0-100 百分比坐标系（x 横、y 纵），与 SVG viewBox 及车辆定位换算一致，杜绝拉伸错位。
-        // 路线按市政巡查实景加长：起点→主干道→广场环行→折返→收尾，覆盖更多位置点。
-        T002: { id: 'T002', area: '中央广场片区', type: '巡查任务', workType: '路面质检', time: '10:30-12:00', start: '10:31', mileage: 4.86, duration: 42, zone: { left: '28%', top: '32%', width: '40%', height: '38%' }, vehicle: { left: '78%', top: '22%' }, track: 'M14,78 Q22,70 30,72 T46,62 Q52,56 58,58 Q64,60 70,52 Q76,44 82,46 Q86,42 88,36 Q86,28 80,26 Q72,24 68,30', points: [{ name: '中央广场北门', left: '35%', top: '42%' }, { name: '中央广场南门', left: '58%', top: '61%' }, { name: '喷泉广场', left: '48%', top: '50%' }, { name: '公交枢纽站', left: '72%', top: '52%' }, { name: '东侧辅路口', left: '82%', top: '46%' }], problemsList: [{ id: 'P002', no: 'Q20260727-0033', status: 'processing', statusText: '待处理', loc: '中央广场北门', currentNode: '责任人处理中' }] },
-        T003: { id: 'T003', area: '解放南路沿线', type: '巡查任务', workType: '路面质检', time: '13:30-15:00', start: '13:31', mileage: 0.36, duration: 4, zone: { left: '18%', top: '40%', width: '52%', height: '36%' }, vehicle: { left: '82%', top: '30%' }, track: 'M12,80 Q20,74 28,76 T44,66 Q52,60 60,62 Q66,58 72,50 Q76,42 82,44 Q86,38 84,30', points: [{ name: '解放南路1号桥', left: '30%', top: '55%' }, { name: '解放南路匝道', left: '52%', top: '42%' }, { name: '文昌路口', left: '65%', top: '63%' }, { name: '解放南路跨线桥', left: '78%', top: '44%' }], problemsList: [] },
-        T004: { id: 'T004', area: '人民东路-文昌路', type: '巡查任务', workType: '路面质检', time: '15:30-17:00', start: '15:31', mileage: 0.18, duration: 2, zone: { left: '24%', top: '22%', width: '44%', height: '48%' }, vehicle: { left: '80%', top: '26%' }, track: 'M18,86 Q26,80 34,82 T50,72 Q58,66 66,68 Q72,60 78,52 Q82,42 80,34 Q74,26 68,28', points: [{ name: '人民东路跨线桥', left: '34%', top: '35%' }, { name: '文昌路小学', left: '55%', top: '52%' }, { name: '文昌路地铁口', left: '43%', top: '67%' }, { name: '人民东路隧道口', left: '72%', top: '52%' }], problemsList: [] }
-    };
-    var TASK_REQUIREMENTS = {
-        T002: '巡查中央广场重点路段，发现问题及时上报',
-        T003: '完成解放南路沿线巡查，重点关注路面破损',
-        T004: '巡查人民东路至文昌路交叉路段，及时上报异常'
-    };
-    var currentTask = TASKS[CAR.query('id')] || TASKS.T002;
-    if (CAR.getTaskStatus(currentTask.id) !== 'running') {
-        CAR.go('car-home.html?task=' + encodeURIComponent(currentTask.id), { toast: '请先在任务详情开始任务', delay: 180 });
+    var currentTask = CAR.getTask(CAR.query('id')) || CAR.getRunningTask();
+    if (!currentTask || currentTask.status !== 'running') {
+        var requestedTaskId = CAR.query('id') || 'T002';
+        CAR.go('car-home.html?task=' + encodeURIComponent(requestedTaskId), { toast: '请先在任务详情开始任务', delay: 180 });
         return;
     }
 
@@ -273,48 +287,53 @@
         var zone = document.getElementById('js-zone');
         zone.style.left = currentTask.zone.left; zone.style.top = currentTask.zone.top; zone.style.width = currentTask.zone.width; zone.style.height = currentTask.zone.height;
         document.getElementById('js-track').setAttribute('d', currentTask.track);
+        document.getElementById('js-phone-track').setAttribute('d', currentTask.phoneTrack || '');
         // 车辆初始位置取 path 起点，与 startRealtimeTrack 首帧一致，避免动画启动瞬间跳变。
         var startMatch = (currentTask.track.match(/^M\s*([0-9.]+)[,\s]+([0-9.]+)/) || []).slice(1);
         document.getElementById('js-vehicle').style.left = (startMatch[0] || currentTask.vehicle.left) + '%';
         document.getElementById('js-vehicle').style.top = (startMatch[1] || currentTask.vehicle.top) + '%';
+        document.getElementById('js-phone').style.left = currentTask.phone.left;
+        document.getElementById('js-phone').style.top = currentTask.phone.top;
         document.getElementById('js-keypoints').innerHTML = currentTask.points.map(function (point, index) {
             return '<span class="run-keypoint" style="left:' + point.left + ';top:' + point.top + '" title="' + point.name + '" aria-label="重点点位' + (index + 1) + '：' + point.name + '"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M480 0A416 416 0 0 0 64 416c0 224 377.6 576 396.8 588.8L480 1024l19.2-19.2C518.4 992 896 640 896 416A416 416 0 0 0 480 0z m0 569.6a172.8 172.8 0 0 1-122.24-50.56l-1.92-1.92A172.8 172.8 0 1 1 652.8 396.8a170.176 170.176 0 0 1-49.28 120.96 11.2 11.2 0 0 0-2.56 3.2 171.584 171.584 0 0 1-119.68 48.64z" fill="#e0620d"/></svg><span>' + (index + 1) + '</span></span>';
         }).join('');
-        document.getElementById('js-start').textContent = currentTask.start;
+        document.getElementById('js-start').textContent = currentTask.start || CAR.hhmm();
         document.getElementById('js-mileage').textContent = currentTask.mileage.toFixed(2);
         document.getElementById('js-duration').textContent = currentTask.duration;
         document.getElementById('js-probCnt').textContent = currentTask.problemsList.length;
         document.getElementById('js-taskTitle').textContent = currentTask.area;
         document.getElementById('js-taskStatus').textContent = '进行中';
         document.getElementById('js-taskMeta').innerHTML = '<span>' + currentTask.type + '</span><span class="car-sep">·</span><span>' + currentTask.workType + '</span><span class="car-sep">·</span><span class="car-mono">' + currentTask.time + '</span>';
-        document.getElementById('js-taskRequirement').textContent = TASK_REQUIREMENTS[currentTask.id] || '按计划路线完成巡查，发现问题及时上报';
+        document.getElementById('js-taskRequirement').textContent = currentTask.req;
     }
     renderActiveTask();
 
-    // 问题卡片字段：问题编号、问题状态、问题位置、当前节点。
+    // 事件卡片字段：事件编号、事件状态、事件位置、当前节点。
     var PROBLEMS = currentTask.problemsList.slice();
-    var PROB_STATUS_TAG = { pending: 'car-tag--neutral', assigned: 'car-tag--warning', processing: 'car-tag--warning', done: 'car-tag--success' };
+    var PROB_STATUS_TAG = {};
+    Object.keys(CAR.EVENT_STATUS).forEach(function (key) { PROB_STATUS_TAG[key] = CAR.EVENT_STATUS[key].tag; });
     var reportedProblemIds = {};
+    PROBLEMS.forEach(function (problem) { reportedProblemIds[problem.id] = true; });
     var LIVE_PROBLEMS = [
-        { id: 'P004', no: 'Q20260727-0048', status: 'pending', statusText: '待确认', currentNode: '待确认', reportProgress: 0.28, locationSuffix: '东侧辅路', reportTime: '2026-07-27 11:16', coordinates: '113.273,23.133' },
-        { id: 'P005', no: 'Q20260727-0049', status: 'assigned', statusText: '待分配', currentNode: '待分配', reportProgress: 0.54, locationSuffix: '喷泉广场南侧', reportTime: '2026-07-27 11:19', coordinates: '113.274,23.132' },
-        { id: 'P006', no: 'Q20260727-0050', status: 'processing', statusText: '待处理', currentNode: '责任人处理中', reportProgress: 0.78, locationSuffix: '南门辅路', reportTime: '2026-07-27 11:22', coordinates: '113.275,23.131' }
+        { id: 'P004', no: 'Q20260730-0048', status: 'judging', reportProgress: 0.38, locationSuffix: '东侧辅路', reportTime: '2026-07-30 11:16', coordinates: '113.273,23.133', discoveryType: 'AI', problemType: '路面抛洒物', description: '东侧辅路发现袋装抛洒物，等待事件判别。' },
+        { id: 'P005', no: 'Q20260730-0049', status: 'review', reportProgress: 0.72, locationSuffix: '喷泉广场南侧', reportTime: '2026-07-30 11:19', coordinates: '113.274,23.132', discoveryType: '人工', problemType: '路面破损', description: '喷泉广场南侧路面修补后等待巡查核查。' }
     ];
-    try { sessionStorage.removeItem('car-live-problems'); } catch (e) {}
 
     function renderProblems() {
         var html = '';
         PROBLEMS.forEach(function (p) {
-            html += '<button type="button" class="car-task-problem car-task-problem--compact" data-pid="' + p.id + '" aria-label="查看问题' + p.no + '详情">' +
+            html += '<button type="button" class="car-task-problem car-task-problem--compact" data-pid="' + p.id + '" aria-label="查看事件' + p.no + '详情">' +
                 '<div class="car-task-problem__head"><span class="car-task-problem__no">' + p.no + '</span><span class="car-tag ' + (PROB_STATUS_TAG[p.status] || 'car-tag--neutral') + '">' + p.statusText + '</span></div>' +
                 '<svg class="car-task-problem__chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>' +
-                '<div class="car-task-problem__field"><span class="car-task-problem__label">问题位置</span><strong>' + p.loc + '</strong></div>' +
-                '<div class="car-task-problem__field"><span class="car-task-problem__label">当前节点</span><span>' + p.currentNode + '</span></div>' +
+                '<div class="car-task-problem__field"><span class="car-task-problem__label">事件地点</span><strong>' + p.location + '</strong></div>' +
+                '<div class="car-task-problem__field"><span class="car-task-problem__label">上报信息</span><span>' + p.reportTime.slice(11) + ' · ' + p.discoveryType + '</span></div>' +
+                '<div class="car-task-problem__field"><span class="car-task-problem__label">问题类型</span><span>' + p.problemType + '</span></div>' +
+                '<div class="car-task-problem__field"><span class="car-task-problem__label">事件描述</span><span>' + p.description + '</span></div>' +
                 '</button>';
         });
-        document.getElementById('js-probList').innerHTML = html || '<div class="car-empty"><span class="car-empty__txt">当前任务暂无上报问题</span></div>';
+        document.getElementById('js-probList').innerHTML = html || '<div class="car-empty"><span class="car-empty__txt">当前任务暂无上报事件</span></div>';
         document.getElementById('js-probTotal').textContent = '共 ' + PROBLEMS.length + ' 项';
-        // 问题角标同步为今日全量问题数（含外设上报的新问题归入后刷新）
+        // 事件角标同步为今日全量事件数（含外设上报的新事件归入后刷新）
         if (typeof updateToolBadges === 'function') updateToolBadges();
         document.querySelectorAll('.car-task-problem').forEach(function (el) {
             el.addEventListener('click', function () { openProblem(el.dataset.pid); });
@@ -324,7 +343,8 @@
 
     function renderProblemPoint(problem) {
         var container = document.getElementById('js-problemPoints');
-        container.insertAdjacentHTML('beforeend', '<button type="button" class="run-problem-point is-visible" data-pid="' + problem.id + '" style="left:' + problem.point.left + ';top:' + problem.point.top + '" aria-label="查看上报问题' + problem.no + '：' + problem.loc + '" title="' + problem.loc + '"><span class="run-problem-point__icon"><span>!</span></span></button>');
+        if (container.querySelector('[data-pid="' + problem.id + '"]')) return;
+        container.insertAdjacentHTML('beforeend', '<button type="button" class="run-problem-point is-visible" data-pid="' + problem.id + '" style="left:' + problem.point.left + ';top:' + problem.point.top + '" aria-label="查看上报事件' + problem.no + '：' + problem.location + '" title="' + problem.location + '"><span class="run-problem-point__icon"><span>!</span></span></button>');
         container.lastElementChild.addEventListener('click', function () { openProblem(problem.id); });
     }
 
@@ -333,40 +353,44 @@
         reportedProblemIds[template.id] = true;
         var location = currentTask.area + template.locationSuffix;
         var problem = {
+            taskId: currentTask.id,
             id: template.id,
             no: template.no,
             status: template.status,
-            statusText: template.statusText,
-            loc: location,
-            currentNode: template.currentNode,
+            statusText: CAR.EVENT_STATUS[template.status].text,
+            location: location,
+            detailedLocation: location + '靠近非机动车道',
+            occurrenceTime: template.reportTime,
             reportTime: template.reportTime,
+            source: '车载外设上报',
+            discoveryType: template.discoveryType,
+            discoverer: template.discoveryType === 'AI' ? '巡查车 ' + st.vehicleNo : '巡查员 ' + st.driverName,
             coordinates: template.coordinates,
+            problemType: template.problemType,
+            description: template.description,
+            handler: '—', handlerTime: '—', handlerDesc: '等待业务节点推进。',
             point: { left: point.x.toFixed(2) + '%', top: point.y.toFixed(2) + '%' }
         };
+        problem.currentNode = CAR.EVENT_STATUS[problem.status].node;
         PROBLEMS.unshift(problem);
-        // 同步到今日全量任务的问题清单，供抽屉「今日问题」与角标实时反映
-        var ownerToday = TODAY_TASKS.find(function (t) { return t.id === currentTask.id; });
-        if (ownerToday && !ownerToday.problemsList.some(function (x) { return x.id === problem.id; })) {
-            ownerToday.problemsList.unshift({ id: problem.id, no: problem.no, status: problem.status, statusText: problem.statusText, loc: problem.loc, currentNode: problem.currentNode, point: problem.point });
-        }
-        // 若抽屉正展示问题清单，就地刷新抽屉列表与地图问题点位
+        CAR.addProblem(problem);
+        TODAY_TASKS = CAR.getTasks();
+        // 若抽屉正展示事件清单，就地刷新抽屉列表与地图事件点位
         if (document.getElementById('js-drawer').classList.contains('is-open') && drawerMode === 'problems') { renderProblemList(); renderMapLayers(); }
-        try {
-            var stored = JSON.parse(sessionStorage.getItem('car-live-problems') || '[]');
-            stored.unshift(problem);
-            sessionStorage.setItem('car-live-problems', JSON.stringify(stored));
-        } catch (e) {}
         renderProblemPoint(problem);
         renderProblems();
         document.getElementById('js-probCnt').textContent = PROBLEMS.length;
-        CAR.toast('收到新的问题上报，已加入问题列表');
-        CAR.speak('收到新的问题上报');
+        CAR.toast('收到新的事件上报，已加入事件列表');
+        CAR.speak('收到新的事件上报');
     }
 
     function startRealtimeTrack() {
         var track = document.getElementById('js-track');
+        var phoneTrack = document.getElementById('js-phone-track');
         var vehicle = document.getElementById('js-vehicle');
+        var phone = document.getElementById('js-phone');
         var trackLength = track.getTotalLength();
+        var phoneTrackLength = phoneTrack.getTotalLength();
         var durationMs = 16000;
         var startedAt = null;
         track.style.strokeDasharray = trackLength + ' ' + trackLength;
@@ -386,6 +410,11 @@
             var nextPoint = track.getPointAtLength(Math.min(trackLength, trackLength * progress + 2));
             track.style.strokeDashoffset = trackLength * (1 - progress);
             placeVehicle(point, nextPoint);
+            if (phoneTrackLength) {
+                var phonePoint = phoneTrack.getPointAtLength(phoneTrackLength * progress);
+                phone.style.left = phonePoint.x.toFixed(2) + '%';
+                phone.style.top = phonePoint.y.toFixed(2) + '%';
+            }
             LIVE_PROBLEMS.forEach(function (problem) {
                 if (progress >= problem.reportProgress) reportLiveProblem(problem, point);
             });
@@ -416,53 +445,22 @@
         CAR.go('car-home.html?task=' + encodeURIComponent(taskId), { toast: toast, delay: 500 });
     }
 
-    // 新任务 banner：语音播报（对齐需求 7.3.5：收到新的任务，【任务区域】-【任务计划时间】）
-    setTimeout(function () { CAR.speak('收到新的任务，解放南路沿线，计划时间 13:30 至 15:00'); }, 600);
-    var banner = document.getElementById('js-banner');
-    var bannerTimer;
-    function dismissTaskBanner() {
-        if (banner.classList.contains('car-hidden') || banner.classList.contains('is-dismissing')) return;
-        window.clearTimeout(bannerTimer);
-        banner.classList.add('is-dismissing');
-        window.setTimeout(function () { banner.classList.add('car-hidden'); }, 180);
+    // 新任务通知只在收到派发时出现，正文按“任务类型、区域、时间段”展示。
+    if (CAR.query('notice') === 'new') {
+        document.getElementById('js-task-notice').classList.remove('car-hidden');
+        CAR.bindTaskNotice({
+            summary: '巡查任务 · 解放南路沿线 · 13:30-15:00',
+            moreCount: 1,
+            announcement: '收到新的任务，巡查任务，解放南路沿线，作业时间十三点三十分至十五点',
+            onView: function () { openTaskDetail('T003', '已打开新任务详情'); }
+        });
     }
-    bannerTimer = window.setTimeout(dismissTaskBanner, 60000);
-    document.getElementById('js-bannerView').addEventListener('click', function () {
-        openTaskDetail('T003', '已打开新任务详情');
-    });
-    document.getElementById('js-bannerClose').addEventListener('click', function () {
-        dismissTaskBanner();
-    });
 
-    // 右侧工具栏页面级入口：打开今日全量任务/问题抽屉（覆盖整页，不影响当前任务执行）。
-    // 今日全量任务（与 car-home 一致），专供抽屉展示，独立于执行态 TASKS 地图数据。
-    var TODAY_TASKS = [
-        { id: 'T001', area: '滨江路东段', status: 'done', statusText: '已完成', type: '巡查任务', workType: '路面质检', time: '08:00-10:00', zone: { left: '22%', top: '26%', width: '46%', height: '44%' },
-          problemsList: [
-            { id: 'P001', no: 'Q20260727-0014', status: 'done', statusText: '已完成', loc: '滨江路18号路口', currentNode: '处置完成', point: { left: '32%', top: '38%' } },
-            { id: 'P003', no: 'Q20260727-0021', status: 'assigned', statusText: '待分配', loc: '滨江路东段K2+300', currentNode: '等待责任人分配', point: { left: '54%', top: '60%' } }
-          ] },
-        { id: 'T002', area: '中央广场片区', status: 'running', statusText: '进行中', type: '巡查任务', workType: '路面质检', time: '10:30-12:00', zone: { left: '28%', top: '32%', width: '40%', height: '38%' },
-          problemsList: PROBLEMS.map(function (p) { return { id: p.id, no: p.no, status: p.status, statusText: p.statusText, loc: p.loc, currentNode: p.currentNode, point: p.point || { left: '35%', top: '42%' } }; }) },
-        { id: 'T003', area: '解放南路沿线', status: 'todo', statusText: '待开始', type: '巡查任务', workType: '路面质检', time: '13:30-15:00', zone: { left: '18%', top: '40%', width: '52%', height: '36%' }, problemsList: [] },
-        { id: 'T004', area: '人民东路-文昌路', status: 'todo', statusText: '待开始', type: '巡查任务', workType: '路面质检', time: '15:30-17:00', zone: { left: '24%', top: '22%', width: '44%', height: '48%' }, problemsList: [] }
-    ];
-    // 同步执行页写入的外设问题（car-live-problems），归入对应任务并进入跨任务问题清单。
-    try {
-        var storedLive = JSON.parse(sessionStorage.getItem('car-live-problems') || '[]');
-        if (Array.isArray(storedLive)) {
-            var ownerTask = TODAY_TASKS.find(function (t) { return t.id === currentTask.id; }) || TODAY_TASKS.find(function (t) { return t.status === 'running'; });
-            storedLive.forEach(function (p) {
-                if (ownerTask && !ownerTask.problemsList.some(function (x) { return x.id === p.id; })) ownerTask.problemsList.unshift(p);
-            });
-        }
-    } catch (e) {}
-    var STATUS_TAG = { done: 'car-tag--success', running: 'car-tag--info', todo: 'car-tag--warning' };
-    var PROB_TAG = { done: 'car-tag--success', pending: 'car-tag--neutral', processing: 'car-tag--warning', assigned: 'car-tag--info' };
-    var ISSUE_FILTERS = [
-        { key: 'all', label: '全部' }, { key: 'pending', label: '待确认' }, { key: 'assigned', label: '待分配' },
-        { key: 'processing', label: '待处理' }, { key: 'done', label: '已完成' }
-    ];
+    // 右侧工具栏页面级入口：打开今日全量任务/事件抽屉，并同步地图总览图层。
+    var TODAY_TASKS = CAR.getTasks();
+    var STATUS_TAG = {};
+    Object.keys(CAR.TASK_STATUS).forEach(function (key) { STATUS_TAG[key] = CAR.TASK_STATUS[key].tag; });
+    var PROB_TAG = PROB_STATUS_TAG;
     function todayProblems() {
         var list = [];
         TODAY_TASKS.forEach(function (task) {
@@ -470,7 +468,7 @@
         });
         return list.sort(function (a, b) { return a.no < b.no ? 1 : -1; });
     }
-    function groupOrder(s) { return s === 'todo' ? 0 : (s === 'running' ? 1 : 2); }
+    function groupOrder(s) { return (CAR.TASK_STATUS[s] || CAR.TASK_STATUS.invalid).order; }
     function sortedTodayTasks() {
         return TODAY_TASKS.slice().sort(function (a, b) {
             if (groupOrder(a.status) !== groupOrder(b.status)) return groupOrder(a.status) - groupOrder(b.status);
@@ -480,16 +478,15 @@
 
     var drawerMode = 'tasks';
     var mapMode = 'focus';
-    var issueFilter = 'all';
     function updateToolBadges() {
         var taskTotal = TODAY_TASKS.length;
-        var problemTotal = todayProblems().length;
+        var problemTotal = PROBLEMS.length;
         document.getElementById('js-task-badge').textContent = taskTotal;
         document.getElementById('js-problem-badge').textContent = problemTotal;
         document.getElementById('js-task-tool').setAttribute('aria-label', '查看今日任务，共' + taskTotal + '项');
-        document.getElementById('js-problem-tool').setAttribute('aria-label', '查看今日问题，共' + problemTotal + '项');
+        document.getElementById('js-problem-tool').setAttribute('aria-label', '查看当前任务事件，共' + problemTotal + '项');
     }
-    // 地图总览图层切换（与 car-home 点击任务/问题图标效果一致）
+    // 地图总览图层切换（与 car-home 点击任务/事件图标效果一致）
     function renderMapLayers() {
         var isFocus = mapMode === 'focus';
         var isTasks = mapMode === 'tasks';
@@ -497,8 +494,10 @@
         // focus 层：当前任务区域/轨迹/重点点位/车辆/执行中外设上报点
         document.getElementById('js-zone').style.display = isFocus ? '' : 'none';
         document.getElementById('js-track').parentNode.style.display = isFocus ? '' : 'none';
+        document.getElementById('js-phone-track-svg').style.display = isFocus ? '' : 'none';
         document.getElementById('js-keypoints').style.display = isFocus ? '' : 'none';
         document.getElementById('js-vehicle').style.display = isFocus ? '' : 'none';
+        document.getElementById('js-phone').style.display = isFocus ? '' : 'none';
         document.getElementById('js-problemPoints').style.display = isFocus ? '' : 'none';
         // 总览层容器
         var allZones = document.getElementById('js-all-zones');
@@ -506,12 +505,20 @@
         allZones.innerHTML = ''; allProblems.innerHTML = '';
         if (isTasks) {
             allZones.innerHTML = TODAY_TASKS.map(function (t) {
-                return '<span class="run-map-all-zone' + (t.id === currentTask.id ? ' is-current' : '') + '" style="left:' + t.zone.left + ';top:' + t.zone.top + ';width:' + t.zone.width + ';height:' + t.zone.height + '" aria-label="' + t.area + '作业区域"></span>';
+                return '<span class="run-map-all-zone run-map-all-zone--' + t.status + (t.id === currentTask.id ? ' is-current' : '') + '" style="left:' + t.zone.left + ';top:' + t.zone.top + ';width:' + t.zone.width + ';height:' + t.zone.height + '" aria-label="' + t.area + '作业区域，' + t.statusText + '"><span>' + t.area + '</span></span>';
             }).join('');
+            allProblems.innerHTML = TODAY_TASKS.filter(function (task) { return task.problemsList.length; }).map(function (task) {
+                var left = parseFloat(task.zone.left) + parseFloat(task.zone.width) / 2;
+                var top = parseFloat(task.zone.top) + parseFloat(task.zone.height) / 2;
+                return '<button type="button" class="run-map-cluster" data-task-cluster="' + task.id + '" style="left:' + left + '%;top:' + top + '%" aria-label="展开' + task.area + '的' + task.problemsList.length + '个事件">' + task.problemsList.length + '</button>';
+            }).join('');
+            allProblems.querySelectorAll('[data-task-cluster]').forEach(function (el) {
+                el.addEventListener('click', function () { openDrawer('problems'); CAR.toast('已展开任务事件点位'); });
+            });
         }
         if (isProblems) {
             allProblems.innerHTML = todayProblems().filter(function (p) { return p.point; }).map(function (p) {
-                return '<button type="button" class="run-map-problem run-map-problem--' + p.status + '" data-id="' + p.id + '" style="left:' + p.point.left + ';top:' + p.point.top + '" title="' + p.no + ' · ' + p.statusText + '" aria-label="查看问题' + p.no + '，' + p.statusText + '"><span class="run-map-problem__icon"><span>!</span></span></button>';
+                return '<button type="button" class="run-map-problem run-map-problem--' + p.status + '" data-id="' + p.id + '" style="left:' + p.point.left + ';top:' + p.point.top + '" title="' + p.no + ' · ' + p.statusText + '" aria-label="查看事件' + p.no + '，' + p.statusText + '"><span class="run-map-problem__icon"><span>!</span></span></button>';
             }).join('');
             document.querySelectorAll('.run-map-problem').forEach(function (el) {
                 el.addEventListener('click', function () { CAR.go('car-problem-detail.html?id=' + el.dataset.id, { delay: 220 }); });
@@ -523,24 +530,26 @@
         var legend = document.getElementById('js-legend');
         if (mapMode === 'tasks') {
             legend.innerHTML =
-                '<div class="car-legend__row"><span class="car-legend__mark" style="background:rgba(22,119,255,0.05);border:2px dashed rgba(22,119,255,0.34)"></span>全部任务作业区域</div>' +
-                '<div class="car-legend__row"><span class="car-legend__mark" style="background:rgba(22,119,255,0.12);border:2px dashed rgba(22,119,255,0.82)"></span>当前执行任务</div>';
+                '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-warning-soft);border:2px dashed var(--car-warning)"></span>待接收区域</div>' +
+                '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-success-soft);border:2px dashed var(--car-success)"></span>进行中区域</div>' +
+                '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-primary-soft);border:2px dashed var(--car-primary)"></span>已完成区域</div>';
             return;
         }
         if (mapMode === 'problems') {
-            legend.innerHTML =
-                '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-neutral);border-radius:50%"></span>待确认</div>' +
-                '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-primary);border-radius:50%"></span>待分配</div>' +
-                '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-warning);border-radius:50%"></span>待处理</div>' +
-                '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-success);border-radius:50%"></span>已完成</div>';
+            legend.innerHTML = Object.keys(CAR.EVENT_STATUS).map(function (status) {
+                var color = status === 'done' ? 'var(--car-success)' : (status === 'judging' ? 'var(--car-neutral)' : (status === 'pending' || status === 'processing' ? 'var(--car-warning)' : 'var(--car-primary)'));
+                return '<div class="car-legend__row"><span class="car-legend__mark" style="background:' + color + ';border-radius:50%"></span>' + CAR.EVENT_STATUS[status].text + '</div>';
+            }).join('');
             return;
         }
         legend.innerHTML =
             '<div class="car-legend__row"><span class="car-legend__mark" style="background:rgba(22,119,255,0.10);border:2px dashed rgba(22,119,255,0.55)"></span>作业区域</div>' +
             '<div class="car-legend__row"><span class="car-legend__mark" style="background:#e0620d;border-radius:50%"></span>重点点位</div>' +
             '<div class="car-legend__row"><span class="car-legend__mark" style="background:#1677ff;border-radius:50%"></span>车辆位置</div>' +
-            '<div class="car-legend__row"><span class="car-legend__mark" style="width:16px;height:3px;background:#ff4d4f;border-radius:2px"></span>实际轨迹</div>' +
-            '<div class="car-legend__row"><span class="car-legend__mark" style="background:#ff4d4f;border-radius:50%"></span>上报问题</div>';
+            '<div class="car-legend__row"><span class="car-legend__mark" style="background:var(--car-success);border-radius:50%"></span>巡查员手机</div>' +
+            '<div class="car-legend__row"><span class="car-legend__mark" style="width:16px;height:3px;background:#ff4d4f;border-radius:2px"></span>车辆轨迹</div>' +
+            '<div class="car-legend__row"><span class="car-legend__mark" style="width:16px;height:3px;background:var(--car-primary);border-radius:2px"></span>手机轨迹</div>' +
+            '<div class="car-legend__row"><span class="car-legend__mark" style="background:#ff4d4f;border-radius:50%"></span>上报事件</div>';
     }
     function openDrawer(mode) {
         drawerMode = mode || drawerMode;
@@ -573,7 +582,7 @@
     }
     function renderTaskList() {
         document.getElementById('js-drawerTitle').textContent = '今日巡查任务 · ' + TODAY_TASKS.length + '项';
-        var groups = [{ key: 'todo', label: '未开始' }, { key: 'running', label: '进行中' }, { key: 'done', label: '已完成' }];
+        var groups = Object.keys(CAR.TASK_STATUS).map(function (key) { return { key: key, label: CAR.TASK_STATUS[key].text }; });
         var html = '', lastGroup = null;
         sortedTodayTasks().forEach(function (t) {
             if (t.status !== lastGroup) {
@@ -581,11 +590,11 @@
                 html += '<div class="run-group">' + g.label + '</div>';
                 lastGroup = t.status;
             }
-            html += '<div class="run-task-item' + (t.id === currentTask.id ? ' is-current' : '') + '" data-id="' + t.id + '">' +
+            html += '<button type="button" class="run-task-item' + (t.id === currentTask.id ? ' is-current' : '') + '" data-id="' + t.id + '" aria-label="查看' + t.area + '任务详情">' +
                 '<div class="run-task-item__r1"><span class="run-task-item__area">' + t.area + '</span>' +
                 '<span class="car-tag ' + (STATUS_TAG[t.status] || 'car-tag--neutral') + '">' + t.statusText + '</span></div>' +
-                '<div class="run-task-item__r2"><span>' + t.type + '</span><span class="car-sep">·</span><span>' + t.workType + '</span><span class="car-sep">·</span><span class="car-mono">' + t.time + '</span></div>' +
-                '</div>';
+                '<div class="run-task-item__r2"><span class="car-mono">' + t.date + '</span><span class="car-sep">·</span><span class="car-mono">' + t.time + '</span><span class="car-sep">·</span><span>' + t.workType + '</span><span class="car-sep">·</span><span>' + t.resource + '</span></div>' +
+                '</button>';
         });
         document.getElementById('js-drawerBody').innerHTML = html;
         document.querySelectorAll('.run-task-item').forEach(function (el) {
@@ -598,31 +607,28 @@
     }
     function renderProblemList() {
         var all = todayProblems();
-        var visible = issueFilter === 'all' ? all : all.filter(function (p) { return p.status === issueFilter; });
-        document.getElementById('js-drawerTitle').textContent = '今日上报问题 · ' + all.length + '项';
-        var html = '<div class="run-issue-filters">';
-        ISSUE_FILTERS.forEach(function (f) {
-            var c = f.key === 'all' ? all.length : all.filter(function (p) { return p.status === f.key; }).length;
-            html += '<button type="button" class="run-issue-filter' + (issueFilter === f.key ? ' is-active' : '') + '" data-filter="' + f.key + '">' + f.label + ' ' + c + '</button>';
-        });
-        html += '</div>';
-        if (!visible.length) {
-            html += '<div class="run-prob-empty-line">暂无符合条件的问题</div>';
+        document.getElementById('js-drawerTitle').textContent = '今日上报事件 · ' + all.length + '项';
+        var html = '';
+        if (!all.length) {
+            html += '<div class="run-prob-empty-line">暂无符合条件的事件</div>';
         } else {
-            visible.forEach(function (p) {
-                html += '<button type="button" class="run-issue" data-id="' + p.id + '" aria-label="查看问题' + p.no + '详情">' +
-                    '<div class="run-issue__head"><span class="run-issue__no">' + p.no + '</span><span class="car-tag ' + (PROB_TAG[p.status] || 'car-tag--neutral') + '">' + p.statusText + '</span></div>' +
-                    '<svg class="run-issue__chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>' +
-                    '<div class="run-issue__field"><span class="run-issue__label">问题位置</span><strong>' + p.loc + '</strong></div>' +
-                    '<div class="run-issue__field run-issue__field--node"><span class="run-issue__label">当前节点</span><span>' + p.currentNode + '</span></div>' +
-                    '<div class="run-issue__task">所属任务 · ' + p.taskArea + '</div>' +
-                '</button>';
+            Object.keys(CAR.EVENT_STATUS).forEach(function (status) {
+                var group = all.filter(function (p) { return p.status === status; });
+                if (!group.length) return;
+                html += '<div class="run-issue-group"><span>' + CAR.EVENT_STATUS[status].text + '</span><span>' + group.length + ' 项</span></div>';
+                group.forEach(function (p) {
+                    html += '<button type="button" class="run-issue" data-id="' + p.id + '" aria-label="查看事件' + p.no + '详情">' +
+                        '<div class="run-issue__head"><span class="run-issue__no">' + p.location + '</span><span class="car-tag ' + (PROB_TAG[p.status] || 'car-tag--neutral') + '">' + p.statusText + '</span></div>' +
+                        '<svg class="run-issue__chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>' +
+                        '<div class="run-issue__field"><span class="run-issue__label">上报信息</span><strong>' + p.reportTime.slice(11) + ' · ' + p.discoveryType + '</strong></div>' +
+                        '<div class="run-issue__field"><span class="run-issue__label">问题类型</span><span>' + p.problemType + '</span></div>' +
+                        '<div class="run-issue__field"><span class="run-issue__label">事件描述</span><span>' + p.description + '</span></div>' +
+                        '<div class="run-issue__task">所属任务 · ' + p.taskArea + '</div>' +
+                    '</button>';
+                });
             });
         }
         document.getElementById('js-drawerBody').innerHTML = html;
-        document.querySelectorAll('.run-issue-filter').forEach(function (el) {
-            el.addEventListener('click', function () { issueFilter = el.dataset.filter; renderProblemList(); });
-        });
         document.querySelectorAll('.run-issue').forEach(function (el) {
             el.addEventListener('click', function () { CAR.go('car-problem-detail.html?id=' + el.dataset.id, { delay: 220 }); });
         });
@@ -634,23 +640,46 @@
     document.getElementById('js-drawerClose').addEventListener('click', closeDrawer);
     document.getElementById('js-drawerMask').addEventListener('click', closeDrawer);
 
-    document.getElementById('js-reset').addEventListener('click', function () { CAR.toast('已复位至车辆当前位置'); });
-    document.getElementById('js-layer').addEventListener('click', function () { CAR.toast('辅助设施图层已切换'); });
-    document.getElementById('js-fullscreen').addEventListener('click', function () { CAR.toast('已进入地图全屏'); });
+    document.getElementById('js-reset').addEventListener('click', function () {
+        closeDrawer();
+        var map = document.querySelector('.car-map'); map.classList.remove('is-resetting'); void map.offsetWidth; map.classList.add('is-resetting');
+        CAR.toast('已复位至车辆与巡查员当前位置');
+    });
+    document.getElementById('js-layer').addEventListener('click', function () {
+        var layer = document.getElementById('js-facilities');
+        var visible = layer.classList.toggle('is-visible'); this.classList.toggle('is-active', visible);
+        CAR.toast(visible ? '已显示辅助设施图层' : '已隐藏辅助设施图层');
+    });
+    document.getElementById('js-fullscreen').addEventListener('click', function () {
+        var split = document.querySelector('.car-main-split');
+        var active = split.classList.toggle('is-map-fullscreen'); this.classList.toggle('is-active', active);
+        this.setAttribute('aria-label', active ? '退出全屏' : '地图全屏');
+        CAR.toast(active ? '已进入地图全屏' : '已退出地图全屏');
+    });
+    document.getElementById('js-handover').addEventListener('click', function () {
+        var check = CAR.validateHandover();
+        if (!check.ok) { CAR.toast(check.message); return; }
+        CAR.go('car-handover.html', { delay: 300 });
+    });
 
     // 结束任务：任务完成情况校验（含失败分支演示）
     document.getElementById('js-finish').addEventListener('click', function () {
+        var check = CAR.validateFinish(currentTask, mileage);
+        if (!check.ok) { CAR.toast(check.message); return; }
         CAR.confirm({
             title: '结束任务确认',
             content: '将结束当前巡查任务「' + currentTask.area + '」，结束后系统将进行任务完成情况校验。',
             okText: '结束任务',
             onOk: function () {
-                CAR.setTaskStatus(currentTask.id, 'done');
-                CAR.go('car-home.html?finished=' + currentTask.id, { toast: '任务已结束，已返回今日任务列表', delay: 900 });
+                var result = CAR.finishTask(currentTask.id, { mileage: Number(mileage.toFixed(2)), duration: Math.round(duration) });
+                var target = result.next ? result.next.id : currentTask.id;
+                var message = result.next ? '当前任务已结束，下一条任务已推送' : '今日任务均已完成，可在归还车辆后交车';
+                CAR.go('car-home.html?panel=tasks&task=' + target + '&finished=' + currentTask.id, { toast: message, delay: 900 });
             }
         });
     });
 
+    PROBLEMS.forEach(renderProblemPoint);
     renderProblems();
     renderMapLayers();
     startRealtimeTrack();

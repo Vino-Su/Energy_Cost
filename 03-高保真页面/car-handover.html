@@ -82,15 +82,21 @@
 <script>
 (function () {
     var st = CAR.getState();
+    if (!st.bound) { location.replace('car-bind.html'); return; }
+    var entryCheck = CAR.validateHandover();
+    if (!entryCheck.ok) {
+        CAR.go('car-home.html?task=' + entryCheck.focusTaskId, { toast: '存在进行中任务，无法交车', delay: 180 });
+        return;
+    }
     document.getElementById('js-vehNo').textContent = st.vehicleNo;
     document.getElementById('js-vehicleNo').textContent = st.vehicleNo;
     document.getElementById('js-qr').innerHTML = CAR.qrSVG('handover-' + st.vehicleId);
     CAR.bindClock();
     CAR.installDebugFab();
 
-    // 进入交车页即代表已通过未完成任务校验（首页/执行页已拦截）
-    // 演示：点击扫码按钮 → 解绑中 → 跳今日回顾
     document.getElementById('js-scan').addEventListener('click', function () {
+        var check = CAR.validateHandover();
+        if (!check.ok) { CAR.toast('存在进行中任务，无法交车'); return; }
         var btn = this;
         btn.disabled = true; btn.textContent = '正在解绑…';
         CAR.unbindVehicle();

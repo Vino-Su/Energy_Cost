@@ -134,7 +134,7 @@
             font-weight: 700;
             color: #fff;
         }
-        /* 问题点位（PRD 6.1.1-8 / 6.1.1-10） */
+        /* 事件点位（PRD 6.1.1-8 / 6.1.1-10） */
         .problem-point {
             position: absolute;
             z-index: 7;
@@ -394,12 +394,14 @@
         }
         .tool-btn:active { transform: scale(0.92); }
         .tool-btn svg { width: 20px; height: 20px; }
+        .tool-btn.is-active { background: #1677ff; color: #ffffff; }
+        .tool-btn.is-inactive { color: #00000040; }
 
         /* ===== 左下路线图例 ===== */
         .map-legend {
             position: absolute;
             left: 14px;
-            bottom: 232px;
+            bottom: 172px;
             z-index: 9;
             display: flex;
             flex-direction: column;
@@ -410,6 +412,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: bottom 0.24s ease, opacity 0.24s ease;
         }
+        .map-legend.is-hidden { display: none; }
         .workbench.sheet-open .map-legend { opacity: 0; pointer-events: none; }
         .legend-item {
             display: flex;
@@ -803,7 +806,7 @@
         </svg>
         <!-- 重点点位 -->
         <div id="js-keypoints"></div>
-        <!-- 问题点位 -->
+        <!-- 事件点位 -->
         <div id="js-problems"></div>
         <!-- 人员位置 -->
         <div class="person-marker" id="js-person" style="left:50%;top:55%">
@@ -843,9 +846,9 @@
 
     <!-- 右侧辅助工具栏 -->
     <div class="map-tools">
-        <button type="button" class="map-shortcut" id="js-tool-problem" aria-label="查看今日问题">
+        <button type="button" class="map-shortcut" id="js-tool-problem" aria-label="查看今日事件">
             <svg class="map-shortcut__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h3M8 13h3M8 17h3"/><path d="m15 8 1 1 2-2M15 13l1 1 2-2M15 17l1 1 2-2"/></svg>
-            <span>今日问题</span>
+            <span>今日事件</span>
             <span class="map-shortcut__badge" id="js-problem-badge">0</span>
         </button>
         <button type="button" class="map-shortcut" id="js-map-tasks" aria-label="查看今日任务">
@@ -859,6 +862,9 @@
         <button type="button" class="tool-btn" id="js-tool-layer" aria-label="图层">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
         </button>
+        <button type="button" class="tool-btn is-active" id="js-tool-legend" aria-label="图例" aria-pressed="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h16v4H4z"/><path d="M16 12h4"/></svg>
+        </button>
     </div>
 
     <!-- 左下路线图例 -->
@@ -867,7 +873,7 @@
         <div class="legend-item"><span class="legend-mark--kp"></span>重点点位</div>
         <div class="legend-item"><span class="legend-mark track"></span>实际轨迹</div>
         <div class="legend-item"><span class="legend-mark--person"></span>人员位置</div>
-        <div class="legend-item"><span class="legend-mark--problem"></span>问题点位</div>
+        <div class="legend-item"><span class="legend-mark--problem"></span>事件点位</div>
     </div>
 
     <!-- 底部任务控制台 -->
@@ -893,11 +899,11 @@
         <div class="sheet__body" id="js-sheet-body"></div>
     </div>
 
-    <!-- 今日问题抽屉 -->
+    <!-- 今日事件抽屉 -->
     <div class="sheet-mask" id="js-problem-sheet-mask"></div>
-    <div class="sheet sheet-problem" id="js-problem-sheet" role="dialog" aria-modal="true" aria-label="今日问题清单">
+    <div class="sheet sheet-problem" id="js-problem-sheet" role="dialog" aria-modal="true" aria-label="今日事件清单">
         <div class="sheet__head">
-            <span class="sheet__title">今日问题</span>
+            <span class="sheet__title">今日事件</span>
             <button type="button" class="sheet__close" id="js-problem-sheet-close">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 <span>收起</span>
@@ -1061,7 +1067,7 @@
         kpEl.innerHTML = t.points.map(function (p, idx) {
             return '<span class="keypoint" style="left:' + p.left + ';top:' + p.top + '" title="' + p.name + '"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M512 0C229.2 0 0 229.2 0 512c0 229.2 512 819.2 512 819.2S1024 741.2 1024 512C1024 229.2 794.8 0 512 0z" fill="#e0620d"/></svg><span>' + (idx + 1) + '</span></span>';
         }).join('');
-        // 问题点位（执行中/已完成展示）
+        // 事件点位（执行中/已完成展示）
         var probEl = document.getElementById('js-problems');
         if (t.problemsList && t.problemsList.length && (t.status === 'running' || t.status === 'done')) {
             probEl.innerHTML = t.problemsList.map(function (p) {
@@ -1086,7 +1092,7 @@
         var actionsEl = document.getElementById('js-actions');
         var workbench = document.getElementById('workbench');
 
-        // 执行态：沿用待开始的完整多行卡片，底部使用独立巡查操作台（结束任务 / 问题上报）
+        // 执行态：沿用待开始的完整多行卡片，底部使用独立巡查操作台（结束任务 / 事件上报）
         if (t.status === 'running') {
             workbench.classList.add('is-executing');
             card.classList.add('is-executing');
@@ -1116,8 +1122,8 @@
                 '<button type="button" class="exec-action exec-action--finish" id="js-btn-finish" aria-label="结束任务">' +
                     '<span class="exec-action__name">结束任务</span>' +
                 '</button>' +
-                '<button type="button" class="exec-action exec-action--report" id="js-btn-report" aria-label="问题上报，拍照取证">' +
-                    '<span class="exec-action__name">问题上报</span>' +
+                '<button type="button" class="exec-action exec-action--report" id="js-btn-report" aria-label="事件上报，拍照取证">' +
+                    '<span class="exec-action__name">事件上报</span>' +
                 '</button>' +
             '</div>';
             document.getElementById('js-btn-report').addEventListener('click', function () { openReportCapture(t); });
@@ -1143,7 +1149,7 @@
                 '<span class="work-type-tag">' + t.workType + '</span>' +
                 '<span class="mono">' + t.time + '</span>' +
             '</div>';
-        // 已完成展示指标卡（3 列：开始时间/作业里程/作业时长；问题上报作为第4项以链接形式附在第3卡或单独）
+        // 已完成展示指标卡（3 列：开始时间/作业里程/作业时长；事件上报作为第4项以链接形式附在第3卡或单独）
         if (t.status === 'done') {
             html += '<div class="task-line task-kpis">' +
                 '<div class="task-kpi"><span class="task-kpi__label">开始时间</span><span class="task-kpi__value">' + fmt(t.start, '', '—') + '</span></div>' +
@@ -1184,7 +1190,7 @@
         renderAll();
     }
 
-    /* ===== 问题上报：先拍照，再进入上报页 ===== */
+    /* ===== 事件上报：先拍照，再进入上报页 ===== */
     var pendingReportTaskId = null;
     var cameraInput = document.getElementById('js-camera-input');
     function openReportCapture(t) {
@@ -1321,7 +1327,7 @@
         document.getElementById('workbench').classList.remove('sheet-open');
     }
 
-    /* ===== 今日问题抽屉 ===== */
+    /* ===== 今日事件抽屉 ===== */
     function renderProblemSheetStats() {
         var problems = todayProblems();
         var done = problems.filter(function (p) { return p.status === 'done'; }).length;
@@ -1336,7 +1342,7 @@
         var body = document.getElementById('js-problem-sheet-body');
         var problems = todayProblems().sort(function (a, b) { return (b.reportedAt || '').localeCompare(a.reportedAt || ''); });
         if (!problems.length) {
-            body.innerHTML = '<div class="sheet-empty"><div class="sheet-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg></div>暂无今日上报问题</div>';
+            body.innerHTML = '<div class="sheet-empty"><div class="sheet-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg></div>暂无今日上报事件</div>';
             return;
         }
         body.innerHTML = problems.map(function (p) {
@@ -1378,7 +1384,18 @@
         renderMap(t);
         renderTaskCard(t);
         renderSummary();
+        syncLegendPos();
         notifyExecutionShell(t.status === 'running');
+    }
+    // 图例紧贴任务卡片上方，避免重叠
+    function syncLegendPos() {
+        var legend = document.getElementById('js-legend');
+        var console = document.getElementById('js-console');
+        if (!legend || !console) return;
+        requestAnimationFrame(function () {
+            var consoleH = console.offsetHeight;
+            legend.style.bottom = (consoleH + 12) + 'px';
+        });
     }
 
     function notifyExecutionShell(executing) {
@@ -1447,6 +1464,15 @@
     });
     document.getElementById('js-tool-reset').addEventListener('click', function () { toast('已复位至当前位置'); var t = findTask(selectedId); if (t) { var p = document.getElementById('js-person'); p.style.left = t.person.left; p.style.top = t.person.top; } });
     document.getElementById('js-tool-layer').addEventListener('click', function () { toast('辅助设施图层已切换'); });
+    document.getElementById('js-tool-legend').addEventListener('click', function () {
+        var legend = document.getElementById('js-legend');
+        var btn = document.getElementById('js-tool-legend');
+        var hidden = legend.classList.toggle('is-hidden');
+        btn.classList.toggle('is-active', !hidden);
+        btn.classList.toggle('is-inactive', hidden);
+        btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+        toast(hidden ? '已隐藏图例' : '已显示图例');
+    });
     document.getElementById('js-banner-view').addEventListener('click', function () { closeBanner(); openSheet(); });
 
     /* ===== 新任务轻提醒 banner（PRD 6.1.1-9，静态演示） ===== */

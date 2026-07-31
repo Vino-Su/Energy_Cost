@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>问题管理 - 品质巡查</title>
+    <title>事件管理 - 品质巡查</title>
     <link rel="stylesheet" href="components/app-common.css">
+    <link rel="stylesheet" href="components/top-capsule.css">
     <style>
         * { box-sizing: border-box; }
         html { min-height: 100%; max-width: 375px; margin: 0 auto; background: #f5f5f5; }
@@ -15,19 +16,7 @@
         }
         button, input { font: inherit; }
         button { cursor: pointer; }
-        .top-nav {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 30; width: 100%; max-width: 375px;
-            height: 44px; margin: 0 auto; display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,.96); border-bottom: 1px solid #e5e6eb;
-        }
-        .top-nav__back {
-            position: absolute; left: 8px; width: 36px; height: 36px; display: grid; place-items: center;
-            border: 0; border-radius: 6px; background: transparent; color: #1f2329;
-        }
-        .top-nav__back:active { background: #f2f3f5; }
-        .top-nav__back svg { width: 22px; height: 22px; }
-        .top-nav__title { font-size: 16px; font-weight: 600; line-height: 22px; }
-        .page { min-height: 100vh; padding-top: 44px; }
+        .page { min-height: 100vh; }
         .tab-bar {
             position: sticky; top: 44px; z-index: 20; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
             height: 48px; background: #fff; border-bottom: 1px solid #e5e6eb;
@@ -117,14 +106,9 @@
     </style>
 </head>
 <body>
-    <header class="top-nav">
-        <button type="button" class="top-nav__back" id="js-back" aria-label="返回服务页" title="返回">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
-        <h1 class="top-nav__title">问题管理</h1>
-    </header>
+    <div id="js-capsule" data-top-capsule></div>
     <main class="page">
-        <div class="tab-bar" id="js-tabs" role="tablist" aria-label="问题状态">
+        <div class="tab-bar" id="js-tabs" role="tablist" aria-label="事件状态">
             <button type="button" class="status-tab" data-status="pending" role="tab" aria-selected="false">待确认<span class="tab-badge" id="js-count-pending">0</span></button>
             <button type="button" class="status-tab" data-status="assigned" role="tab" aria-selected="false">待分配<span class="tab-badge" id="js-count-assigned">0</span></button>
             <button type="button" class="status-tab" data-status="processing" role="tab" aria-selected="false">待处理<span class="tab-badge" id="js-count-processing">0</span></button>
@@ -163,12 +147,12 @@
             </div>
         </section>
     </div>
+    <script src="components/top-capsule.js"></script>
     <script src="components/inspection-problem-data.js"></script>
     <script>
     (function () {
         'use strict';
 
-        var REFERENCE_DATE = '2026-07-28';
         var STATUS_ORDER = ['pending', 'assigned', 'processing', 'done'];
         var FILTERS = [
             { type: 'today', label: '今天', from: '2026-07-28', to: '2026-07-28' },
@@ -214,7 +198,7 @@
         function renderEmpty() {
             var tab = document.querySelector('.status-tab[data-status="' + currentStatus + '"]');
             var label = tab ? tab.childNodes[0].textContent : '当前状态';
-            return '<div class="empty-state"><div class="empty-state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3 6-7"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div><div class="empty-state__title">暂无' + escapeHtml(label) + '问题</div><div class="empty-state__desc">请切换日期范围后查看</div></div>';
+            return '<div class="empty-state"><div class="empty-state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3 6-7"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div><div class="empty-state__title">暂无' + escapeHtml(label) + '事件</div><div class="empty-state__desc">请切换日期范围后查看</div></div>';
         }
         function updateUrl() {
             var query = new URLSearchParams();
@@ -271,7 +255,17 @@
             location.href = 'inspection-problem-detail.html?' + query.toString();
         }
 
-        document.getElementById('js-back').addEventListener('click', function () { location.href = 'inspection-management.html?tab=service'; });
+        if (window.TopCapsule) {
+            window.TopCapsule.mount(document.getElementById('js-capsule'), {
+                title: '事件管理',
+                back: function () { location.href = 'inspection-management.html?tab=service'; },
+                moreItems: [
+                    { label: '刷新列表', action: function () { render(); } },
+                    { label: '关于', action: function () { alert('品质巡查 v1.0'); } }
+                ],
+                onExit: function () { location.href = 'inspection-management.html?tab=service'; }
+            });
+        }
         document.getElementById('js-tabs').addEventListener('click', function (event) {
             var button = event.target.closest('[data-status]');
             if (!button) return;

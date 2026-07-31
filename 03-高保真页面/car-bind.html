@@ -63,7 +63,7 @@
                 扫码绑定
             </span>
             <h1 class="bind-left__title">请使用手机APP扫描二维码<br>完成人车绑定</h1>
-            <p class="bind-left__desc">机动车巡查任务将在车机端执行，绑定后车机自动同步当前巡查员的今日巡查任务与问题数据。</p>
+            <p class="bind-left__desc">机动车巡查任务将在车机端执行，绑定后车机自动同步当前巡查员的今日巡查任务与事件数据。</p>
             <div class="bind-steps">
                 <div class="bind-step"><span class="bind-step__no">1</span><span class="bind-step__txt">打开手机APP「品质巡查」应用</span></div>
                 <div class="bind-step"><span class="bind-step__no">2</span><span class="bind-step__txt">使用「扫码绑车」扫描右侧二维码</span></div>
@@ -95,9 +95,11 @@
     CAR.installDebugFab();
 
     document.getElementById('js-scan').addEventListener('click', function () {
-        // 演示：人车关系校验通过
+        var result = CAR.validateBind();
+        if (!result.ok) { CAR.toast(result.message); return; }
+        if (result.warning) CAR.toast(result.warning, 2600);
         CAR.bindVehicle(st.driverName);
-        CAR.go('car-home.html', { toast: '绑定成功，正在加载今日任务', delay: 900 });
+        CAR.go('car-home.html', { toast: result.warning || '绑定成功，正在加载今日任务', delay: 900 });
     });
 
     // 已绑定则直接跳首页
