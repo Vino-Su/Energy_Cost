@@ -6,6 +6,7 @@
     <title>事件详情 - 品质巡查</title>
     <link rel="stylesheet" href="components/app-common.css">
     <link rel="stylesheet" href="components/top-capsule.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <style>
         * { box-sizing: border-box; }
         html { max-width: 375px; margin: 0 auto; background: #f5f5f5; }
@@ -30,6 +31,20 @@
                 linear-gradient(156deg, transparent 0 73%, rgba(255,255,255,0.48) 73% 75%, transparent 75%),
                 #dfe7eb;
         }
+        /* Leaflet 地图（替代上方伪底图方案） */
+        .problem-map.is-leaflet { background: #edf2f5; }
+        .pd-leaflet-map { position: absolute; inset: 0; z-index: 0; background: #edf2f5; font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif; }
+        .pd-map-fallback { position: absolute; inset: 0; z-index: 2; display: none; align-items: center; justify-content: center; padding: 16px; background: #edf2f5; color: #00000073; font-size: 13px; text-align: center; }
+        .pd-map-fallback.is-visible { display: flex; }
+        .problem-map.is-leaflet > .map-area,
+        .problem-map.is-leaflet > .map-pin { display: none !important; }
+        .pd-leaflet-map .leaflet-control-zoom { display: none; }
+        .pd-leaflet-map .leaflet-control-attribution { padding: 2px 5px; background: rgba(255,255,255,0.86); color: #00000073; font-size: 10px; }
+        .pd-leaflet-map .leaflet-control-attribution a { color: #1677ff; }
+        .pd-leaflet-map .leaflet-marker-icon { border: 0; background: transparent; }
+        .pd-leaflet-map .leaflet-tile-pane { filter: saturate(0.8) contrast(0.96) brightness(1.03); }
+        .pd-map-marker--problem { width: 38px; height: 38px; display: grid; place-items: center; transform: translate(-50%, -100%); border: 3px solid #fff; border-radius: 50% 50% 50% 0; background: #52c41a; box-shadow: 0 4px 12px rgba(24,39,59,0.25); }
+        .pd-map-marker--problem svg { width: 19px; height: 19px; color: #fff; }
         .problem-map::before {
             content: "";
             position: absolute;
@@ -86,13 +101,30 @@
 
         .summary-band { padding: 14px 16px; background: #ffffff; }
         .summary-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .problem-no { min-width: 0; overflow: hidden; font-family: "DIN", "SF UI Text", sans-serif; font-size: 17px; font-weight: 700; line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+        .problem-type { min-width: 0; overflow: hidden; font-size: 17px; font-weight: 700; line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
         .status-tag { flex: none; display: inline-flex; align-items: center; min-height: 22px; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; line-height: 18px; }
         .status-tag--done { background: #f6ffed; color: #389e0d; }
         .status-tag--pending { background: #fffbe6; color: #d48806; }
         .status-tag--assigned { background: #e6f4ff; color: #0958d9; }
         .status-tag--processing { background: #e6f4ff; color: #1677ff; }
-        .summary-sub { margin-top: 5px; color: #00000073; font-size: 12px; line-height: 18px; }
+        .status-tag--review { background: #f9f0ff; color: #531dab; }
+        .summary-time { margin-top: 6px; color: #00000073; font-size: 13px; line-height: 20px; font-family: "DIN", "SF UI Text", sans-serif; }
+        .summary-source { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0; color: #000000a6; font-size: 13px; line-height: 20px; }
+        .summary-source .src-sep { margin: 0 6px; color: #d9d9d9; }
+
+        /* 处置节点流程条 */
+        .node-flow { padding: 16px; }
+        .node-flow__track { display: flex; align-items: flex-start; justify-content: space-between; position: relative; }
+        .node-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1; min-width: 0; }
+        .node-step__dot { width: 18px; height: 18px; border-radius: 50%; background: #ffffff; border: 2px solid #d9d9d9; display: grid; place-items: center; color: #ffffff; font-size: 11px; }
+        .node-step__name { margin-top: 6px; color: #00000073; font-size: 11px; line-height: 16px; text-align: center; white-space: nowrap; }
+        .node-step.is-done .node-step__dot { background: #52c41a; border-color: #52c41a; }
+        .node-step.is-done .node-step__name { color: #52c41a; }
+        .node-step.is-current .node-step__dot { background: #1677ff; border-color: #1677ff; box-shadow: 0 0 0 4px rgba(22,119,255,0.18); }
+        .node-step.is-current .node-step__name { color: #1677ff; font-weight: 600; }
+        .node-step__line { position: absolute; top: 8px; left: 50%; right: -50%; height: 2px; background: #d9d9d9; z-index: 0; }
+        .node-step.is-done .node-step__line { background: #52c41a; }
+        .node-step:last-child .node-step__line { display: none; }
 
         .section { margin-top: 12px; background: #ffffff; }
         .section__title { padding: 13px 16px 8px; color: #00000073; font-size: 12px; line-height: 18px; }
@@ -140,7 +172,9 @@
     <div id="js-capsule" data-top-capsule></div>
 
     <main>
-        <section class="problem-map" aria-label="事件点位地图">
+        <section class="problem-map" id="js-problem-map" aria-label="事件点位地图">
+            <div class="pd-leaflet-map" id="js-leaflet-map"></div>
+            <div class="pd-map-fallback" id="js-map-fallback">地图服务暂不可用，请检查网络连接</div>
             <div class="map-area"></div>
             <span class="map-pin" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 12.5 10.2 16 17 8.5"/></svg></span>
             <span class="map-label" id="js-map-location"></span>
@@ -148,38 +182,29 @@
 
         <section class="summary-band" aria-label="事件摘要">
             <div class="summary-top">
-                <span class="problem-no" id="js-problem-no"></span>
+                <span class="problem-type" id="js-problem-type"></span>
                 <span class="status-tag" id="js-status"></span>
             </div>
-            <div class="summary-sub" id="js-summary-sub"></div>
+            <div class="summary-time" id="js-occur-time"></div>
+            <div class="summary-source" id="js-source-line"></div>
         </section>
 
         <section class="section" aria-label="事件信息">
             <div class="section__title">事件信息</div>
             <div class="info-list">
                 <div class="info-row"><span class="info-row__label">任务编号</span><span class="info-row__value info-row__value--mono" id="js-task-id"></span></div>
-                <div class="info-row"><span class="info-row__label">事件上报时间</span><span class="info-row__value info-row__value--mono" id="js-reported-at"></span></div>
                 <div class="info-row"><span class="info-row__label">经纬度</span><span class="info-row__value info-row__value--mono" id="js-coordinate"></span></div>
-                <div class="info-row"><span class="info-row__label">事件位置</span><span class="info-row__value" id="js-location"></span></div>
+                <div class="info-row"><span class="info-row__label">事件地点</span><span class="info-row__value" id="js-location"></span></div>
             </div>
-            <div class="section__title">事件照片</div>
+            <div class="section__title">事件图片</div>
             <div class="photo-row" id="js-problem-photos"></div>
             <div class="section__title">事件描述</div>
             <div class="text-block" id="js-description"></div>
-            <div class="section__title">备注</div>
-            <div class="text-block" id="js-remark"></div>
         </section>
 
-        <section class="section" aria-label="事件处置信息">
-            <div class="section__title">事件处置信息</div>
-            <div class="info-list">
-                <div class="info-row"><span class="info-row__label">处置人员</span><span class="info-row__value" id="js-handler"></span></div>
-                <div class="info-row"><span class="info-row__label">处置完成时间</span><span class="info-row__value info-row__value--mono" id="js-handled-at"></span></div>
-            </div>
-            <div class="section__title">处置后照片</div>
-            <div class="photo-row" id="js-handled-photos"></div>
-            <div class="section__title">备注</div>
-            <div class="text-block" id="js-handle-remark"></div>
+        <section class="section" aria-label="处置节点">
+            <div class="section__title">处置节点</div>
+            <div class="node-flow" id="js-node-flow"></div>
         </section>
     </main>
 
@@ -187,6 +212,7 @@
         <button type="button" class="page-actions__back" id="js-back">返回</button>
     </footer>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="components/top-capsule.js"></script>
     <script src="components/inspection-problem-data.js"></script>
     <script>
@@ -199,9 +225,10 @@
         var source = params.get('from');
         var records = window.INSPECTION_PROBLEM_BY_ID || {};
         var item = records[requestedId] || {
-            id: requestedId, no: requestedId, taskId: requestedTaskId, status: 'pending', statusText: '待确认',
-            location: '待确认事件位置', reportedAt: '—', coordinate: '—', description: '暂无事件描述。', remark: '—',
-            handler: '待分配', handledAt: '—', handleRemark: '事件尚未完成处置。', photos: [], handledPhotos: []
+            id: requestedId, no: requestedId, taskId: requestedTaskId, status: 'pending', statusText: '待确认', node: '待判别',
+            problemType: '未知类型', discoveryType: '人工', source: '监控中心', discoverer: '—',
+            location: '待确认事件位置', occurredAt: '—', coordinate: '—', description: '暂无事件描述。',
+            photos: []
         };
         item.taskId = requestedTaskId || item.taskId;
 
@@ -230,22 +257,89 @@
             location.href = 'inspection-management.html?task=' + encodeURIComponent(item.taskId) + '&sheet=problems';
         }
 
+        // ===== Leaflet 小地图：展示事件点位 =====
+        function parseLatLng(str) {
+            if (!str) return null;
+            var parts = String(str).split(',').map(function (s) { return s.trim(); });
+            if (parts.length < 2) return null;
+            var lng = parseFloat(parts[0]);
+            var lat = parseFloat(parts[1]);
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return [lat, lng];
+        }
+        function initProblemMap() {
+            var mapEl = document.getElementById('js-problem-map');
+            if (typeof window.L === 'undefined') { return; }
+            var ll = parseLatLng(item.coordinate);
+            var center = ll || [23.129, 113.265];
+            try {
+                var map = L.map('js-leaflet-map', {
+                    zoomControl: false, attributionControl: true,
+                    preferCanvas: true, minZoom: 12, maxZoom: 19,
+                    dragging: true, scrollWheelZoom: false
+                }).setView(center, 16);
+                var tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                tiles.on('tileerror', function () { /* 静默降级，保留点位 */ });
+                if (ll) {
+                    var icon = L.divIcon({
+                        className: '', iconSize: [38, 38], iconAnchor: [19, 38],
+                        html: '<span class="pd-map-marker--problem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 12.5 10.2 16 17 8.5"/></svg></span>'
+                    });
+                    L.marker(ll, { icon: icon }).addTo(map);
+                }
+                mapEl.classList.add('is-leaflet');
+                // 容器尺寸就绪
+                [0, 60, 200].forEach(function (d) { setTimeout(function () { map.invalidateSize(false); }, d); });
+                window.addEventListener('load', function () { map.invalidateSize(false); });
+            } catch (err) {
+                var fb = document.getElementById('js-map-fallback');
+                if (fb) fb.classList.add('is-visible');
+            }
+        }
+
+        // 处置节点流程：待判别 - 待分配 - 待处理 - 处理中 - 待核查 - 已完成
+        var NODE_FLOW = ['待判别', '待分配', '待处理', '处理中', '待核查', '已完成'];
+        function renderNodeFlow(currentNode) {
+            var idx = NODE_FLOW.indexOf(currentNode);
+            if (idx === -1) idx = 0;
+            var html = '<div class="node-flow__track">';
+            NODE_FLOW.forEach(function (name, i) {
+                var state = i < idx ? 'is-done' : (i === idx ? 'is-current' : '');
+                var check = i < idx ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"/></svg>' : '';
+                html += '<div class="node-step ' + state + '">' +
+                    '<div class="node-step__dot">' + check + '</div>' +
+                    '<div class="node-step__name">' + name + '</div>' +
+                    (i < NODE_FLOW.length - 1 ? '<div class="node-step__line ' + (i < idx ? 'is-done' : '') + '"></div>' : '') +
+                    '</div>';
+            });
+            html += '</div>';
+            document.getElementById('js-node-flow').innerHTML = html;
+        }
+        function statusTagClass(status, node) {
+            if (node === '已完成' || status === 'done') return 'status-tag--done';
+            if (node === '待核查') return 'status-tag--review';
+            if (status === 'processing') return 'status-tag--processing';
+            if (status === 'assigned') return 'status-tag--assigned';
+            return 'status-tag--pending';
+        }
+
         setText('js-map-location', item.location);
-        setText('js-problem-no', item.no);
+        setText('js-problem-type', item.problemType);
         setText('js-status', item.statusText);
-        document.getElementById('js-status').classList.add(item.status === 'done' ? 'status-tag--done' : (item.status === 'processing' ? 'status-tag--processing' : (item.status === 'assigned' ? 'status-tag--assigned' : 'status-tag--pending')));
-        setText('js-summary-sub', item.location + ' · ' + item.reportedAt);
+        document.getElementById('js-status').classList.add(statusTagClass(item.status, item.node));
+        setText('js-occur-time', item.occurredAt || '—');
+        // 事件发现类型 · 事件来源 · 事件发现方 拼接为一行
+        var srcParts = [item.discoveryType, item.source, item.discoverer].filter(Boolean);
+        document.getElementById('js-source-line').innerHTML = srcParts.map(function (s) { return '<span>' + s + '</span>'; }).join('<span class="src-sep">·</span>');
         setText('js-task-id', item.taskId);
-        setText('js-reported-at', item.reportedAt);
         setText('js-coordinate', item.coordinate);
         setText('js-location', item.location);
         setText('js-description', item.description);
-        setText('js-remark', item.remark);
-        setText('js-handler', item.handler);
-        setText('js-handled-at', item.handledAt);
-        setText('js-handle-remark', item.handleRemark);
-        renderPhotoState('js-problem-photos', item.photos, '当前事件未上传现场照片');
-        renderPhotoState('js-handled-photos', item.handledPhotos, '当前事件未上传处置后照片');
+        renderPhotoState('js-problem-photos', item.photos, '当前事件未上传现场图片');
+        renderNodeFlow(item.node);
 
         if (window.TopCapsule) {
             window.TopCapsule.mount(document.getElementById('js-capsule'), {
@@ -258,6 +352,7 @@
             });
         }
         document.getElementById('js-back').addEventListener('click', backToProblemList);
+        initProblemMap();
     })();
     </script>
 </body>

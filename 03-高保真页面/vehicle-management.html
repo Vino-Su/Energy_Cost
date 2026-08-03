@@ -6,6 +6,7 @@
     <title>用车管理 - 城市管家</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="components/app-common.css">
+    <link rel="stylesheet" href="components/top-capsule.css">
     <script src="components/vehicle-demo-state.js"></script>
     <script src="components/app-common.js"></script>
     <style>
@@ -59,47 +60,46 @@
             background: #eef2f5;
         }
 
-        /* 服务 Tab：可滚动，含顶部导航 */
+        /* 服务 Tab：可滚动，含顶部胶囊（top-capsule 组件，sticky 顶栏） */
         #panel-service {
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             background: #ffffff;
             padding-bottom: 16px;
         }
-        .top-nav {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            width: 100%;
-            height: 44px;
+        /* top-capsule 的 .tc-bar 为 sticky，需服务面板作为滚动容器生效 */
+        #panel-service .tc-bar { position: sticky; top: 0; z-index: 10; }
+
+        /* 项目切换行（参照 inspection-management） */
+        .project-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
             background: #ffffff;
-            border-bottom: 1px solid #e8e8e8;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
+            border-bottom: 1px solid #f0f0f0;
         }
-        .top-nav-back {
-            width: 32px;
-            height: 32px;
+        .project-bar__label { color: #00000073; font-size: 13px; line-height: 20px; flex: none; }
+        .project-bar__switch {
+            flex: 1;
+            min-width: 0;
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: #000000d9;
-            background: transparent;
-            border: none;
-            margin-left: -8px;
+            justify-content: space-between;
+            gap: 8px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            background: #f7faff;
+            color: #1677ff;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
+            transition: border-color 0.15s ease, background 0.15s ease;
         }
-        .top-nav-back:active { opacity: 0.6; }
-        .top-nav-back svg { width: 22px; height: 22px; }
-        .top-nav-title {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 16px;
-            font-weight: 600;
-            color: #000000d9;
-        }
+        .project-bar__switch:active { background: #eef6ff; border-color: #91caff; }
+        .project-bar__arrow { width: 16px; height: 16px; flex: none; color: #00000073; }
 
         .section-title {
             font-size: 14px;
@@ -269,11 +269,15 @@
 
         <!-- 服务 Tab：子功能入口 -->
         <section id="panel-service" class="tab-panel" role="tabpanel" aria-label="服务">
-            <div class="top-nav">
-                <button type="button" class="top-nav-back" onclick="requestExit()" aria-label="退出用车管理">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            <div id="js-capsule" data-top-capsule></div>
+
+            <!-- 项目切换行 -->
+            <div class="project-bar">
+                <span class="project-bar__label">当前项目</span>
+                <button type="button" class="project-bar__switch" id="js-project-switch" aria-label="切换项目">
+                    <span class="project-switcher-text">选择项目</span>
+                    <svg class="project-bar__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="top-nav-title">服务</div>
             </div>
 
             <div class="content-area">
@@ -387,6 +391,7 @@
         </div>
     </div>
 
+    <script src="components/top-capsule.js"></script>
     <script>
         /* ===== 演示态透传（便于自测绑定/未绑定） ===== */
         (function () {
@@ -411,6 +416,33 @@
             if (name === 'service') {
                 document.getElementById('panel-service').scrollTop = 0;
             }
+        }
+
+        /* ===== 顶部胶囊挂载（小程序样式：返回 + 标题 + 右上更多/退出） ===== */
+        function mountTopCapsule() {
+            if (!window.TopCapsule) return;
+            window.TopCapsule.mount(document.getElementById('js-capsule'), {
+                title: '服务',
+                back: function () { requestExit(); },
+                moreItems: [
+                    { label: '刷新', action: function () { document.getElementById('panel-service').scrollTop = 0; } },
+                    { label: '退出用车管理', action: function () { requestExit(); } }
+                ],
+                onExit: function () { requestExit(); }
+            });
+        }
+        /* 项目切换：复用 app-common 的项目选择器 */
+        function bindProjectSwitch() {
+            var btn = document.getElementById('js-project-switch');
+            if (btn && window.CityStewardCommon && CityStewardCommon.openProjectPicker) {
+                btn.addEventListener('click', function () { CityStewardCommon.openProjectPicker(); });
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () { mountTopCapsule(); bindProjectSwitch(); });
+        } else {
+            mountTopCapsule();
+            bindProjectSwitch();
         }
 
         /* ===== 退出用车管理（有进行中任务时二次确认） ===== */

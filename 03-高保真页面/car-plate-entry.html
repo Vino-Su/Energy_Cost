@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>车辆牌照 - 车机品质巡查</title>
+<link rel="stylesheet" href="components/car-common.css">
+<style>
+.plate-main { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; padding: var(--car-gap); }
+.plate-form { width: min(100%, 760px); padding: 36px 40px; background: var(--car-surface); border: 1px solid var(--car-border); border-radius: var(--car-radius); }
+.plate-form__eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--car-primary); font-size: var(--car-fs-aux); font-weight: 500; }
+.plate-form__eyebrow svg { width: 18px; height: 18px; }
+.plate-form__title { margin: 16px 0 8px; font-size: var(--car-fs-title); font-weight: 600; line-height: 32px; }
+.plate-form__desc { margin: 0; color: var(--car-text-secondary); font-size: var(--car-fs-body); line-height: 24px; }
+.plate-form__body { margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--car-border); }
+.plate-form__row { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: start; gap: 16px; }
+.plate-form__label { padding-top: 14px; color: var(--car-text); font-size: var(--car-fs-body); font-weight: 500; }
+.plate-form__required { color: var(--car-danger); margin-right: 4px; }
+.plate-field { min-width: 0; }
+.plate-field input { width: 100%; height: 52px; padding: 0 16px; border: 1px solid var(--car-border); border-radius: var(--car-radius); outline: none; background: var(--car-surface); color: var(--car-text); font: inherit; font-size: 20px; font-weight: 500; text-transform: uppercase; transition: border-color 0.15s, box-shadow 0.15s; }
+.plate-field input:focus { border-color: var(--car-primary); box-shadow: 0 0 0 3px rgba(22,119,255,0.12); }
+.plate-field.is-error input { border-color: var(--car-danger); }
+.plate-field__help { display: block; min-height: 40px; margin-top: 8px; color: var(--car-text-secondary); font-size: var(--car-fs-aux); line-height: 20px; }
+.plate-field__help.is-error { color: var(--car-danger); }
+.plate-form__foot { display: flex; justify-content: flex-end; gap: 12px; margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--car-border); }
+.plate-form__foot .car-btn { min-width: 144px; }
+@media (max-width: 1279px) { .plate-form { width: min(100%, 680px); padding: 28px 32px; } .plate-form__body { margin-top: 24px; padding-top: 24px; } .plate-form__foot { margin-top: 28px; } }
+</style>
+</head>
+<body>
+<div class="car-app">
+    <header class="car-topbar">
+        <button class="car-topbar__back" id="js-back" type="button" aria-label="返回车辆绑定" title="返回车辆绑定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="car-topbar__page"><div class="car-topbar__title">车辆牌照</div></div>
+        <div class="car-topbar__spacer"></div>
+        <div class="car-topbar__meta"><span class="car-pill"><span class="car-status-dot is-offline"></span>未绑定</span><span class="car-pill js-clock">--:--</span></div>
+    </header>
+    <main class="plate-main">
+        <form class="plate-form" id="js-plateForm" novalidate>
+            <div class="plate-form__eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h5"/></svg><span id="js-formMode">录入车辆牌照</span></div>
+            <h1 class="plate-form__title" id="js-formTitle">请录入车辆牌照</h1>
+            <p class="plate-form__desc">保存前将校验牌照格式及是否已被其他车辆使用。</p>
+            <div class="plate-form__body">
+                <div class="plate-form__row">
+                    <label class="plate-form__label" for="js-plateNo"><span class="plate-form__required">*</span>车辆牌照</label>
+                    <div class="plate-field" id="js-plateField"><input id="js-plateNo" name="plateNo" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="9" placeholder="例如：粤B·D2856" aria-describedby="js-plateHelp"><span class="plate-field__help" id="js-plateHelp">支持大陆民用普通号牌（7 位）及新能源号牌（8 位），字母 I、O 不可使用。</span></div>
+                </div>
+            </div>
+            <div class="plate-form__foot"><button class="car-btn car-btn--ghost car-btn--lg" id="js-cancel" type="button">取消</button><button class="car-btn car-btn--primary car-btn--lg" type="submit">保存并返回</button></div>
+        </form>
+    </main>
+</div>
+<script src="components/car-common.js"></script>
+<script>
+(function () {
+    var st = CAR.getState();
+    var input = document.getElementById('js-plateNo');
+    var field = document.getElementById('js-plateField');
+    var help = document.getElementById('js-plateHelp');
+    var isEditing = Boolean(st.plateNo);
+    if (isEditing) {
+        document.getElementById('js-formMode').textContent = '修改车辆牌照';
+        document.getElementById('js-formTitle').textContent = '修改车辆牌照';
+        input.value = st.plateNo;
+    }
+    function back() { CAR.go('car-bind.html', { delay: 160 }); }
+    function clearError() {
+        field.classList.remove('is-error');
+        help.classList.remove('is-error');
+        help.textContent = '支持大陆民用普通号牌（7 位）及新能源号牌（8 位），字母 I、O 不可使用。';
+    }
+    document.getElementById('js-back').addEventListener('click', back);
+    document.getElementById('js-cancel').addEventListener('click', back);
+    input.addEventListener('input', clearError);
+    document.getElementById('js-plateForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var result = CAR.savePlateNo(input.value);
+        if (!result.ok) {
+            field.classList.add('is-error');
+            help.classList.add('is-error');
+            help.textContent = result.message;
+            input.focus();
+            return;
+        }
+        input.value = result.plateNo;
+        CAR.go('car-bind.html', { toast: isEditing ? '车辆牌照已修改' : '车辆牌照已录入，可继续绑定', delay: 520 });
+    });
+    CAR.bindClock();
+    CAR.installDebugFab();
+    input.focus();
+})();
+</script>
+</body>
+</html>

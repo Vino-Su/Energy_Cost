@@ -104,17 +104,23 @@ img { display: block; max-width: 100%; }
 .car-topbar__meta .car-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--car-success); }
 .car-topbar__icon-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--car-touch); height: 40px; color: var(--car-text); border-radius: var(--car-radius); transition: background-color 0.15s; }
 .car-topbar__icon-btn:active { background: var(--car-surface-soft); }
-/* 顶栏新任务提醒：全局稳定位置，避免遮挡地图与业务详情。 */
-.car-task-notice { display: flex; align-items: center; gap: 10px; width: min(100%, 640px); min-width: 0; height: 100%; padding-left: 10px; overflow: hidden; background: transparent; border-right: 1px solid var(--car-border); border-left: 1px solid var(--car-border); color: var(--car-text); transition: opacity 0.18s ease-out, transform 0.18s ease-out; }
+/* 顶栏退出登录（交车解绑）入口：置于右上角 meta 右侧，点击进入扫码交车页 */
+.car-topbar__logout { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid var(--car-border); border-radius: 18px; background: var(--car-surface); color: var(--car-text); font-size: var(--car-fs-aux); font-weight: 500; white-space: nowrap; transition: background-color 0.15s, border-color 0.15s, color 0.15s; flex-shrink: 0; }
+.car-topbar__logout:active { background: var(--car-surface-soft); transform: scale(0.98); }
+.car-topbar__logout svg { width: 16px; height: 16px; }
+/* 顶栏新任务提醒：紧凑胶囊，保留行驶中的重要信息与快速入口。 */
+.car-task-notice { display: flex; align-items: center; gap: 7px; width: min(100%, 540px); min-width: 0; height: 40px; margin: auto; padding: 4px 6px 4px 7px; overflow: hidden; border: 1px solid #bae0ff; border-radius: 20px; background: #f7fbff; box-shadow: 0 1px 2px rgba(22, 119, 255, 0.08); color: var(--car-text); transition: opacity 0.18s ease-out, transform 0.18s ease-out; }
 .car-task-notice.is-dismissing { opacity: 0; transform: translateY(-4px); pointer-events: none; }
-.car-task-notice__icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: var(--car-radius); background: var(--car-primary-soft); color: var(--car-primary); }
-.car-task-notice__lead { flex: 0 0 auto; font-size: var(--car-fs-body); font-weight: 600; white-space: nowrap; }
-.car-task-notice__summary { flex: 1 1 auto; min-width: 0; overflow: hidden; color: var(--car-text-secondary); font-size: var(--car-fs-aux); white-space: nowrap; text-overflow: ellipsis; }
-.car-task-notice__more { flex: 0 0 auto; padding: 2px 6px; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: var(--car-surface-soft); color: var(--car-text-secondary); font-family: var(--car-font-num); font-size: 13px; white-space: nowrap; }
-.car-task-notice__action { flex: 0 0 auto; align-self: stretch; min-width: 96px; padding: 0 14px; border-left: 1px solid var(--car-border); background: transparent; color: var(--car-primary); font-size: var(--car-fs-body); font-weight: 500; white-space: nowrap; transition: background-color 0.15s; }
-.car-task-notice__action:active { background: var(--car-primary-soft); }
-.car-task-notice__close { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 var(--car-touch); align-self: stretch; width: var(--car-touch); padding: 0; color: var(--car-text-disabled); transition: background-color 0.15s, color 0.15s; }
-.car-task-notice__close:active { background: var(--car-surface-soft); color: var(--car-text); }
+.car-task-notice__icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%; background: var(--car-primary-soft); color: var(--car-primary); }
+.car-task-notice__icon svg { width: 16px; height: 16px; }
+.car-task-notice__lead { flex: 0 0 auto; color: var(--car-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.car-task-notice__summary { flex: 1 1 auto; min-width: 0; overflow: hidden; color: #4e5969; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.car-task-notice__more { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid #bae0ff; border-radius: 10px; background: var(--car-surface); color: var(--car-primary); font-family: var(--car-font-num); font-size: 12px; line-height: 1; white-space: nowrap; }
+.car-task-notice__action { flex: 0 0 auto; height: 26px; padding: 0 9px; border-radius: 13px; background: var(--car-primary-soft); color: var(--car-primary); font-size: 12px; font-weight: 500; line-height: 26px; white-space: nowrap; transition: background-color 0.15s, color 0.15s; }
+.car-task-notice__action:hover, .car-task-notice__action:active { background: var(--car-primary); color: #fff; }
+.car-task-notice__close { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 26px; width: 26px; height: 26px; padding: 0; border-radius: 50%; color: var(--car-text-disabled); transition: background-color 0.15s, color 0.15s; }
+.car-task-notice__close svg { width: 14px; height: 14px; }
+.car-task-notice__close:hover, .car-task-notice__close:active { background: #eef4fa; color: var(--car-text-secondary); }
 /* 调试入口（隐藏式：右下角小图标，长按触发） */
 .car-debug-fab { position: fixed; right: 12px; bottom: 12px; z-index: 200; width: 20px; height: 20px; opacity: 0.25; transition: opacity 0.2s; }
 .car-debug-fab:hover, .car-debug-fab:active { opacity: 0.6; }
@@ -125,7 +131,7 @@ img { display: block; max-width: 100%; }
 .car-topbar__spacer:has(.car-runtime-alert) { display: flex; align-items: center; justify-content: center; }
 .car-app.is-loading .car-main-split, .car-app.is-loading .pd-grid { opacity: 0.56; }
 .car-app.is-driving .home-detail__body, .car-app.is-driving .car-task-problem-list, .car-app.is-driving .run-drawer__body, .car-app.is-driving .home-drawer__body, .car-app.is-driving .pd-body { overflow: hidden; }
-.car-app.is-driving #js-handover, .car-app.is-driving #js-fullscreen, .car-app.is-driving #js-layer, .car-app.is-driving #js-finish, .car-app.is-driving #js-start, .car-app.is-driving #js-task-tool, .car-app.is-driving #js-problem-tool, .car-app.is-driving [data-detail], .car-app.is-driving .home-task, .car-app.is-driving .run-task-item, .car-app.is-driving .car-task-problem { opacity: 0.42; cursor: not-allowed; }
+.car-app.is-driving #js-handover, .car-app.is-driving #js-fullscreen, .car-app.is-driving #js-layer, .car-app.is-driving #js-finish, .car-app.is-driving #js-start, .car-app.is-driving #js-task-tool, .car-app.is-driving #js-problem-tool, .car-app.is-driving [data-detail], .car-app.is-driving [data-task-info], .car-app.is-driving .home-task, .car-app.is-driving .run-task-item, .car-app.is-driving .car-task-problem { opacity: 0.42; cursor: not-allowed; }
 @keyframes car-runtime-spin { to { transform: rotate(360deg); } }
 
 /* 5. 主区域分屏网格（规范 4.1 主次分屏 64:36 / 4.3 列表详情） */
@@ -140,8 +146,8 @@ img { display: block; max-width: 100%; }
     .car-topbar { gap: 8px; }
     .car-topbar__center { padding: 0 4px; }
     .car-topbar__meta { gap: 8px; }
-    .car-task-notice { gap: 8px; padding-left: 8px; }
-    .car-task-notice__action { min-width: 88px; padding: 0 10px; }
+    .car-task-notice { width: min(100%, 500px); gap: 6px; padding-left: 6px; }
+    .car-task-notice__action { padding: 0 8px; }
 }
 
 /* 6. 卡片 / 面板（规范 8.3） */
@@ -174,6 +180,9 @@ img { display: block; max-width: 100%; }
 .car-tag--warning { background: var(--car-warning-soft); color: var(--car-warning); }  /* 待处理/待开始 */
 .car-tag--neutral { background: var(--car-neutral-soft); color: var(--car-neutral); }   /* 待确认/待分配/已结束 */
 .car-tag--danger { background: var(--car-danger-soft); color: var(--car-danger); }
+.car-tag--discovery { height: 24px; padding: 0 8px; border: 1px solid transparent; font-size: 12px; }
+.car-tag--discovery-ai { border-color: #bae0ff; background: var(--car-primary-soft); color: var(--car-primary); }
+.car-tag--discovery-manual { border-color: #d9dee8; background: var(--car-neutral-soft); color: #4e5969; }
 
 /* 9. 列表项 / 任务卡片（规范 8.3） */
 .car-list-item { display: flex; flex-direction: column; gap: 6px; padding: 14px var(--car-pad); border-bottom: 1px solid var(--car-border); cursor: pointer; transition: background-color 0.15s; }
@@ -237,7 +246,25 @@ img { display: block; max-width: 100%; }
 /* 图例（规范 10，图层组合区分） */
 .car-legend { position: absolute; left: var(--car-gap); bottom: var(--car-gap); display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; background: rgba(255,255,255,0.92); border-radius: var(--car-radius); border: 1px solid var(--car-border); font-size: 13px; color: var(--car-text-secondary); }
 .car-legend__row { display: flex; align-items: center; gap: 8px; }
-.car-legend__mark { width: 18px; height: 12px; border-radius: 3px; }
+.car-legend__mark { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 18px; height: 14px; }
+/* 图例缩略图标：复用地图 marker 的形状与内部图形，仅等比缩小，避免图例与实际图标脱节 */
+.car-legend__dot { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1.5px solid #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(20,40,70,0.22); }
+.car-legend__dot svg { width: 10px; height: 10px; }
+.car-legend__dot--vehicle { background: var(--car-primary); color: #fff; }
+.car-legend__dot--phone { background: var(--car-success); color: #fff; }
+/* 水滴形 marker 缩略（重点点位/上报事件/事件状态点）：圆角 50% 50% 50% 0 并旋转-45°，内部字符反向旋转正立 */
+.car-legend__pin { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border: 1.5px solid #fff; border-radius: 50% 50% 50% 0; box-shadow: 0 1px 3px rgba(20,40,70,0.24); transform: rotate(-45deg); }
+.car-legend__pin > span { transform: rotate(45deg); font-family: var(--car-font-num); font-size: 9px; font-weight: 700; color: #fff; line-height: 1; }
+.car-legend__pin--keypoint { background: #e0620d; }
+.car-legend__pin--problem { background: var(--car-danger); }
+/* 轨迹缩略：实线/虚线线段，对应地图 path 样式 */
+.car-legend__track { width: 18px; height: 0; border-top: 2.5px solid var(--car-danger); border-radius: 2px; }
+.car-legend__track--phone { border-top: 2.5px dashed var(--car-primary); }
+/* 区域缩略：虚线边框 + 浅填充小方块，对齐作业区域/状态区域 */
+.car-legend__zone { width: 16px; height: 12px; border: 1.5px dashed rgba(22,119,255,0.55); background: rgba(22,119,255,0.10); border-radius: 2px; }
+.car-legend__zone--pending { border-color: var(--car-warning); background: var(--car-warning-soft); }
+.car-legend__zone--running { border-color: var(--car-success); background: var(--car-success-soft); }
+.car-legend__zone--done { border-color: var(--car-primary); background: var(--car-primary-soft); }
 
 /* 12. Toast（规范 9.2，顶栏下方居中） */
 .car-toast { position: fixed; top: calc(var(--car-topbar-height) + 16px); left: 50%; transform: translateX(-50%) translateY(-12px); z-index: 3000; display: flex; align-items: center; gap: 8px; min-height: 48px; max-width: 60%; padding: 0 22px; background: rgba(0,0,0,0.82); color: #fff; font-size: var(--car-fs-body); border-radius: var(--car-radius); opacity: 0; visibility: hidden; transition: opacity 0.18s, transform 0.18s; }
@@ -277,10 +304,34 @@ img { display: block; max-width: 100%; }
 .car-task-context { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding-bottom: 16px; border-bottom: 1px solid var(--car-border); }
 .car-task-context__eyebrow { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
 .car-task-context__title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
-.car-task-context__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-title); font-weight: 600; line-height: 32px; color: var(--car-text); }
+.car-task-context__title-group { display: flex; align-items: center; min-width: 0; gap: 4px; }
+.car-task-context__title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-title); font-weight: 600; line-height: 32px; color: var(--car-text); }
 .car-task-context__meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
 .car-task-context__meta .car-sep { color: var(--car-border); }
 .car-task-context__meta .car-mono { font-size: var(--car-fs-body); color: var(--car-text); }
+.car-task-context__actions { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.car-task-info-trigger { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--car-text-secondary); cursor: pointer; transition: background-color 0.15s, color 0.15s; }
+.car-task-info-trigger:hover, .car-task-info-trigger:focus-visible { background: var(--car-primary-soft); color: var(--car-primary); }
+.car-task-info-trigger:active { transform: scale(0.96); }
+.car-task-info-trigger svg { width: 18px; height: 18px; }
+.car-task-summary { display: flex; align-items: center; gap: 0; min-height: 48px; padding: 10px 0; border-bottom: 1px solid var(--car-border); overflow-x: auto; }
+.car-task-summary__item { display: inline-flex; align-items: baseline; flex: 0 0 auto; gap: 6px; padding: 0 14px; border-left: 1px solid var(--car-border); color: var(--car-text-secondary); font-size: var(--car-fs-aux); }
+.car-task-summary__item:first-child { padding-left: 0; border-left: 0; }
+.car-task-summary__item strong { color: var(--car-text); font-family: var(--car-font-num); font-size: var(--car-fs-body); font-weight: 600; }
+.car-task-info-mask { position: absolute; inset: 0; z-index: 40; background: rgba(0,0,0,0.32); opacity: 0; visibility: hidden; transition: opacity 0.22s ease-out, visibility 0.22s; }
+.car-task-info-mask.is-open { opacity: 1; visibility: visible; }
+.car-task-info-panel { position: absolute; inset: 0; z-index: 41; display: flex; flex-direction: column; background: var(--car-surface); opacity: 0; visibility: hidden; transform: translateX(16px); transition: opacity 0.22s ease-out, transform 0.22s ease-out, visibility 0.22s; }
+.car-task-info-panel.is-open { opacity: 1; visibility: visible; transform: translateX(0); }
+.car-task-info-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; padding: 10px var(--car-pad); border-bottom: 1px solid var(--car-border); }
+.car-task-info-panel__title { font-size: var(--car-fs-panel); font-weight: 600; color: var(--car-text); }
+.car-task-info-panel__close { display: inline-flex; align-items: center; justify-content: center; width: var(--car-touch); height: var(--car-touch); padding: 0; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: var(--car-surface); color: var(--car-text-secondary); cursor: pointer; }
+.car-task-info-panel__close:hover, .car-task-info-panel__close:focus-visible { border-color: var(--car-primary); background: var(--car-primary-soft); color: var(--car-primary); }
+.car-task-info-panel__close svg { width: 20px; height: 20px; }
+.car-task-info-panel__body { flex: 1; min-height: 0; padding: var(--car-pad); overflow-y: auto; }
+.car-task-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; }
+.car-task-info-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-bottom: 12px; border-bottom: 1px solid var(--car-border); }
+.car-task-info-field__label { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
+.car-task-info-field__value { overflow: hidden; color: var(--car-text); font-size: var(--car-fs-body); text-overflow: ellipsis; white-space: nowrap; }
 .car-task-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 12px 0; border-bottom: 1px solid var(--car-border); }
 .car-task-kpi { display: flex; flex-direction: column; min-width: 0; gap: 5px; padding: 2px 12px; border-left: 1px solid var(--car-border); }
 .car-task-kpi:first-child { padding-left: 0; border-left: 0; }
@@ -290,22 +341,22 @@ img { display: block; max-width: 100%; }
 .car-task-kpi__value .car-mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 24px; font-weight: 600; line-height: 28px; color: var(--car-text); }
 .car-task-kpi__unit { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
 .car-task-kpi--problems .car-task-kpi__label, .car-task-kpi--problems .car-task-kpi__value .car-mono { color: var(--car-primary); }
-.car-task-requirement { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 2px 14px; border-left: 4px solid var(--car-primary); }
-.car-task-requirement__label { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
-.car-task-requirement__value { margin: 0; font-size: var(--car-fs-body); line-height: 24px; color: var(--car-text); }
-.car-task-requirement--compact { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 10px var(--car-pad); border-left: 0; border-top: 1px solid var(--car-border); background: var(--car-surface-soft); }
-.car-task-requirement--compact .car-task-requirement__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 20px; }
 .car-task-problems { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 .car-task-problems__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 12px var(--car-pad); border-bottom: 1px solid var(--car-border); }
 .car-task-problems__title { font-size: var(--car-fs-panel); font-weight: 600; color: var(--car-text); }
 .car-task-problems__count { font-family: var(--car-font-num); font-size: var(--car-fs-aux); font-weight: 600; color: var(--car-primary); }
 .car-task-problem-list { flex: 1; min-height: 0; overflow-y: auto; }
-.car-task-problem { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 12px; min-height: 96px; padding: 14px var(--car-pad); border: 0; border-bottom: 1px solid var(--car-border); background: var(--car-surface); color: var(--car-text); font: inherit; text-align: left; cursor: pointer; transition: background-color 0.18s ease-out; }
+.car-task-problem { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; min-height: 116px; padding: 14px var(--car-pad); border: 0; border-bottom: 1px solid var(--car-border); background: var(--car-surface); color: var(--car-text); font: inherit; text-align: left; cursor: pointer; transition: background-color 0.18s ease-out; }
 .car-task-problem:last-child { border-bottom: 0; }
 .car-task-problem:active { background: var(--car-primary-soft); }
-.car-task-problem__head { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.car-task-problem__no { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--car-font-num); font-size: var(--car-fs-body); font-weight: 600; }
+.car-task-problem__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.car-task-problem__location { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-body); font-weight: 600; }
+.car-task-problem__tags { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; }
 .car-task-problem__chevron { align-self: center; color: var(--car-text-secondary); }
+.car-task-problem__meta { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--car-text-secondary); font-size: var(--car-fs-aux); }
+.car-task-problem__type { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--car-text); font-size: var(--car-fs-body); font-weight: 500; }
+.car-task-problem__meta .car-sep { color: var(--car-border); }
+.car-task-problem__desc { grid-column: 1 / -1; overflow: hidden; color: var(--car-text-secondary); font-size: var(--car-fs-aux); line-height: 20px; text-overflow: ellipsis; white-space: nowrap; }
 .car-task-problem__field { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 .car-task-problem__label { flex: 0 0 56px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
 .car-task-problem__field strong, .car-task-problem__field span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--car-fs-body); font-weight: 400; }
@@ -320,5 +371,44 @@ img { display: block; max-width: 100%; }
     .car-task-kpis { padding: 10px 0; }
     .car-task-kpi { padding: 2px 8px; }
     .car-task-kpis--overlay .car-task-kpi { padding: 0 12px; }
-    .car-task-problem { min-height: 72px; padding: 12px var(--car-pad); }
+    .car-task-problem { min-height: 108px; padding: 12px var(--car-pad); }
 }
+
+/* 13. 事件照片模拟（CSS 占位图：基类 + 类型变体，供缩略图/大图/详情页复用） */
+.pd-photo { position: relative; overflow: hidden; background: #9eabb4; }
+.pd-photo::before { content: ''; position: absolute; left: -8px; right: -8px; bottom: -18px; height: 64%; border-top: 3px solid rgba(255,255,255,0.75); background: #5c6870; transform: rotate(-7deg); }
+.pd-photo::after { content: attr(data-caption); position: absolute; left: 6px; bottom: 5px; padding: 2px 6px; border-radius: 3px; background: rgba(0,0,0,0.62); color: #fff; font-size: 11px; }
+.pd-photo > span { position: absolute; z-index: 2; }
+.pd-photo--oil span { left: 22%; top: 40%; width: 52%; height: 16%; border-radius: 50%; background: rgba(26,31,34,0.85); transform: rotate(-7deg); box-shadow: -22px 6px 0 -4px rgba(26,31,34,0.7), 24px 10px 0 -6px rgba(26,31,34,0.6); }
+.pd-photo--water span { left: 24%; top: 42%; width: 50%; height: 15%; border-radius: 50%; background: rgba(71,145,194,0.82); transform: rotate(-7deg); box-shadow: 18px 8px 0 -4px rgba(71,145,194,0.7); }
+.pd-photo--breakage span { left: 30%; top: 30%; width: 38%; height: 34%; background: transparent; border: 2px solid rgba(60,46,40,0.7); border-radius: 40% 60% 50% 50%; transform: rotate(-12deg); box-shadow: inset 6px -4px 0 -3px rgba(60,46,40,0.45), -10px 14px 0 -6px rgba(60,46,40,0.5); }
+.pd-photo--spill span { left: 26%; top: 44%; width: 16%; height: 10%; border-radius: 30%; background: rgba(80,70,60,0.7); box-shadow: 22px 4px 0 -2px rgba(80,70,60,0.65), 10px 14px 0 -3px rgba(80,70,60,0.6), -14px 10px 0 -4px rgba(80,70,60,0.55), 34px 16px 0 -5px rgba(80,70,60,0.5); }
+.pd-photo--scene span { display: none; }
+
+/* 14. 事件点位照片缩略图气泡（Leaflet permanent tooltip，仅选中 marker） */
+.car-photo-bubble-tip .leaflet-tooltip-content-wrapper { background: var(--car-surface); border-radius: var(--car-radius); box-shadow: 0 4px 14px rgba(20,40,70,0.22); padding: 6px; border: 1px solid var(--car-border); }
+.car-photo-bubble-tip .leaflet-tooltip-content-wrapper::before { display: none; }
+.car-photo-bubble-tip .leaflet-tooltip-content { margin: 0; }
+.car-photo-bubble-tip.leaflet-tooltip-top::before { border-top-color: var(--car-surface); }
+.car-photo-bubble { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.car-photo-bubble__thumb { width: 92px; height: 64px; padding: 0; border: 2px solid transparent; border-radius: var(--car-radius-sm); overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+.car-photo-bubble__thumb.is-active { border-color: var(--car-primary); }
+.car-photo-bubble__thumb > span { pointer-events: none; }
+.car-photo-bubble__foot { display: flex; align-items: center; gap: 6px; }
+.car-photo-bubble__nav { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--car-surface-soft); color: var(--car-text-secondary); font-size: 14px; line-height: 1; }
+.car-photo-bubble__nav:active { background: var(--car-primary-soft); color: var(--car-primary); }
+.car-photo-bubble__count { font-family: var(--car-font-num); font-size: 12px; color: var(--car-text-secondary); }
+
+/* 15. 全屏照片查看器（大图遮罩 + 左右切换 + 计数 + 关闭） */
+.car-photo-viewer { position: fixed; inset: 0; z-index: 2600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(0,0,0,0.9); opacity: 0; visibility: hidden; transition: opacity 0.2s; }
+.car-photo-viewer.is-show { opacity: 1; visibility: visible; }
+.car-photo-viewer__stage { display: flex; align-items: center; gap: 16px; }
+.car-photo-viewer__photo { width: min(80vw, 720px); height: min(60vh, 480px); border-radius: var(--car-radius); border: 1px solid rgba(255,255,255,0.12); }
+.car-photo-viewer__photo::after { font-size: 14px; padding: 4px 10px; }
+.car-photo-viewer__arrow { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.14); color: #fff; transition: background-color 0.15s; }
+.car-photo-viewer__arrow:active { background: rgba(255,255,255,0.28); }
+.car-photo-viewer__arrow svg { width: 24px; height: 24px; }
+.car-photo-viewer__close { position: absolute; top: 24px; right: 24px; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.14); color: #fff; }
+.car-photo-viewer__close:active { background: rgba(255,255,255,0.28); }
+.car-photo-viewer__close svg { width: 22px; height: 22px; }
+.car-photo-viewer__counter { font-family: var(--car-font-num); font-size: var(--car-fs-aux); color: rgba(255,255,255,0.82); }

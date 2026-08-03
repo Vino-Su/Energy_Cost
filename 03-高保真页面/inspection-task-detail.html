@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>任务详情 - 品质巡查</title>
+    <link rel="stylesheet" href="components/app-common.css">
+    <link rel="stylesheet" href="components/top-capsule.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <style>
+        * { box-sizing: border-box; }
+        html { max-width: 375px; margin: 0 auto; background: #f5f5f5; }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0 0 calc(76px + env(safe-area-inset-bottom));
+            background: #f5f5f5;
+            color: #000000d9;
+            font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+        /* ===== 顶部地图：展示任务区域范围 ===== */
+        .task-map {
+            position: relative;
+            height: 208px;
+            overflow: hidden;
+            background: #edf2f5;
+        }
+        .td-leaflet-map { position: absolute; inset: 0; z-index: 0; background: #edf2f5; font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif; }
+        .td-map-fallback { position: absolute; inset: 0; z-index: 2; display: none; align-items: center; justify-content: center; padding: 16px; background: #edf2f5; color: #00000073; font-size: 13px; text-align: center; }
+        .td-map-fallback.is-visible { display: flex; }
+        .td-leaflet-map .leaflet-control-zoom { display: none; }
+        .td-leaflet-map .leaflet-control-attribution { padding: 2px 5px; background: rgba(255,255,255,0.86); color: #00000073; font-size: 10px; }
+        .td-leaflet-map .leaflet-control-attribution a { color: #1677ff; }
+        .td-leaflet-map .leaflet-tile-pane { filter: saturate(0.8) contrast(0.96) brightness(1.03); }
+        /* 任务区域圆 */
+        .td-leaflet-map .task-area-circle { fill: rgba(22,119,255,0.12); stroke: rgba(22,119,255,0.55); stroke-width: 2; stroke-dasharray: 6 5; }
+        .td-leaflet-map .task-area-circle--running { fill: rgba(22,119,255,0.14); stroke: rgba(22,119,255,0.7); }
+        .td-leaflet-map .task-area-circle--done { fill: rgba(82,196,26,0.12); stroke: rgba(82,196,26,0.55); }
+        .td-leaflet-map .task-area-circle--transferred { fill: rgba(114,46,209,0.10); stroke: rgba(114,46,209,0.5); }
+        .td-leaflet-map .task-area-circle--terminated { fill: rgba(255,77,79,0.10); stroke: rgba(255,77,79,0.5); }
+        .td-leaflet-map .task-area-circle--invalid { fill: rgba(134,144,156,0.10); stroke: rgba(134,144,156,0.5); }
+        .map-label {
+            position: absolute;
+            left: 16px;
+            bottom: 14px;
+            z-index: 3;
+            max-width: calc(100% - 32px);
+            padding: 6px 10px;
+            overflow: hidden;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.94);
+            color: #000000a6;
+            font-size: 12px;
+            line-height: 18px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(24,39,59,0.11);
+        }
+
+        /* ===== 标题摘要 ===== */
+        .summary-band { padding: 14px 16px; background: #ffffff; }
+        .summary-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .area-name { min-width: 0; overflow: hidden; font-size: 17px; font-weight: 700; line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
+        .summary-count { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 2px; color: #ff4d4f; font-size: 13px; line-height: 20px; font-weight: 500; }
+        .summary-count svg { width: 14px; height: 14px; }
+        .summary-count[hidden] { display: none !important; }
+        .status-tag { flex: none; display: inline-flex; align-items: center; min-height: 22px; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; line-height: 18px; }
+        .status-tag--pending { background: #fffbe6; color: #d48806; }
+        .status-tag--running { background: #e6f4ff; color: #1677ff; }
+        .status-tag--done { background: #f6ffed; color: #389e0d; }
+        .status-tag--transferred { background: #f9f0ff; color: #531dab; }
+        .status-tag--terminated { background: #fff2f0; color: #cf1322; }
+        .status-tag--invalid { background: #f2f3f5; color: #86909c; }
+        .summary-time { margin-top: 6px; color: #00000073; font-size: 13px; line-height: 20px; font-family: "DIN", "SF UI Text", sans-serif; }
+
+        /* ===== 信息区 ===== */
+        .section { margin-top: 12px; background: #ffffff; }
+        .section__title { padding: 13px 16px 8px; color: #00000073; font-size: 12px; line-height: 18px; }
+        .info-list { padding: 0 16px; }
+        .info-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; min-height: 48px; padding: 12px 0; border-top: 1px solid #f0f0f0; }
+        .info-row:first-child { border-top: 0; }
+        .info-row__label { flex: none; color: #00000073; font-size: 14px; line-height: 22px; }
+        .info-row__value { min-width: 0; color: #000000d9; font-size: 14px; line-height: 22px; text-align: right; word-break: break-word; }
+        .info-row__value--mono { font-family: "DIN", "SF UI Text", sans-serif; }
+
+        /* ===== 事件上报列表 ===== */
+        .event-list { padding: 0 16px 8px; }
+        .event-card {
+            display: block; width: 100%; margin-top: 10px; padding: 15px 16px; border: 1px solid #e5e6eb; border-left: 3px solid #69b1ff;
+            border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(31,35,41,.04); text-align: left; transition: transform .15s, border-color .15s;
+        }
+        .event-card.pending { border-left-color: #faad14; }
+        .event-card.assigned { border-left-color: #69b1ff; }
+        .event-card.processing { border-left-color: #1677ff; }
+        .event-card.done { border-left-color: #52c41a; }
+        .event-card:active { border-color: #bedaff; transform: scale(.99); }
+        /* 第一行：上报时间 - 事件地点 */
+        .event-card__time-loc { display: flex; align-items: center; gap: 8px; }
+        .event-card__time { flex: 0 0 auto; color: #86909c; font-size: 13px; line-height: 20px; font-family: "DIN", "SF UI Text", sans-serif; }
+        .event-card__sep { width: 1px; height: 12px; flex: 0 0 auto; background: #e5e6eb; }
+        .event-card__loc { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; color: #1f2329; font-size: 14px; line-height: 20px; }
+        .event-card__loc svg { width: 15px; height: 15px; flex: 0 0 auto; color: #86909c; }
+        .event-card__loc span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* 第二行：事件发现类型 - 事件状态 */
+        .event-card__type-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 9px; }
+        .event-card__type { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; background: #f2f3f5; color: #4e5969; font-size: 12px; line-height: 18px; }
+        .event-card__status { flex: 0 0 auto; min-width: 52px; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; line-height: 24px; text-align: center; }
+        .event-card__status.pending { background: #fffbe6; color: #d48806; }
+        .event-card__status.assigned { background: #e6f4ff; color: #0958d9; }
+        .event-card__status.processing { background: #e6f4ff; color: #1677ff; }
+        .event-card__status.done { background: #f6ffed; color: #389e0d; }
+        /* 第三行：事件描述 */
+        .event-card__desc { display: block; margin-top: 9px; padding-top: 9px; border-top: 1px solid #f0f1f2; color: #4e5969; font-size: 13px; line-height: 20px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .event-empty { padding: 28px 16px; color: #00000073; font-size: 13px; line-height: 20px; text-align: center; }
+
+        /* ===== 底部返回栏 ===== */
+        .page-actions {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            z-index: 20;
+            width: min(100%, 375px);
+            padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            background: #ffffff;
+            border-top: 1px solid #e8e8e8;
+        }
+        .page-actions__back { width: 100%; height: 44px; border: none; border-radius: 8px; background: #1677ff; color: #ffffff; font-size: 16px; font-weight: 600; }
+        .page-actions__back:active { opacity: 0.85; }
+
+        @media (prefers-reduced-motion: reduce) { .event-card { animation: none; transition: none; } }
+    </style>
+</head>
+<body>
+    <div id="js-capsule" data-top-capsule></div>
+
+    <main>
+        <section class="task-map" id="js-task-map" aria-label="任务区域地图">
+            <div class="td-leaflet-map" id="js-leaflet-map"></div>
+            <div class="td-map-fallback" id="js-map-fallback">地图服务暂不可用，请检查网络连接</div>
+            <span class="map-label" id="js-map-area"></span>
+        </section>
+
+        <section class="summary-band" aria-label="任务摘要">
+            <div class="summary-top">
+                <span class="area-name" id="js-area"></span>
+                <span class="summary-count" id="js-summary-count" hidden></span>
+                <span class="status-tag" id="js-status"></span>
+            </div>
+            <div class="summary-time" id="js-summary-time"></div>
+        </section>
+
+        <section class="section" aria-label="任务信息">
+            <div class="section__title">任务信息</div>
+            <div class="info-list" id="js-task-info"></div>
+        </section>
+
+        <section class="section" id="js-exec-section" aria-label="任务执行信息">
+            <div class="section__title">任务执行信息</div>
+            <div class="info-list" id="js-exec-info"></div>
+        </section>
+
+        <section class="section" aria-label="事件上报列表">
+            <div class="section__title">事件上报</div>
+            <div class="event-list" id="js-event-list"></div>
+        </section>
+    </main>
+
+    <footer class="page-actions">
+        <button type="button" class="page-actions__back" id="js-back">返回</button>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="components/top-capsule.js"></script>
+    <script src="components/inspection-task-data.js"></script>
+    <script src="components/inspection-problem-data.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        var params = new URLSearchParams(location.search);
+        var requestedId = params.get('id') || 'T001';
+        var source = params.get('from');
+        var group = params.get('group') || 'pending';
+        var records = window.INSPECTION_TASK_BY_ID || {};
+        // 双键查找：先按 id（T0xx）匹配，再按 code（I00x）匹配，兼容地图页与服务列表页两个入口
+        var item = records[requestedId];
+        if (!item) {
+            for (var k in records) {
+                if (records[k] && records[k].code === requestedId) { item = records[k]; break; }
+            }
+        }
+        if (!item) {
+            item = {
+                id: requestedId, no: requestedId, code: '', area: '未知片区', status: 'pending', statusText: '待接收',
+                planDate: '—', workTime: '—', resource: '—', type: '品质巡查', coordinate: '', radius: 280,
+                startAt: '—', mileage: null, duration: null, problemCount: 0, remark: '暂无任务说明。'
+            };
+        }
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+            });
+        }
+        function setText(id, value) { var el = document.getElementById(id); if (el) el.textContent = value || '—'; }
+        function infoRow(label, value, mono) {
+            return '<div class="info-row"><span class="info-row__label">' + escapeHtml(label) + '</span><span class="info-row__value' + (mono ? ' info-row__value--mono' : '') + '">' + escapeHtml(value) + '</span></div>';
+        }
+        function statusTagClass(status) {
+            return {
+                pending: 'status-tag--pending', running: 'status-tag--running', done: 'status-tag--done',
+                transferred: 'status-tag--transferred', terminated: 'status-tag--terminated', invalid: 'status-tag--invalid'
+            }[status] || 'status-tag--pending';
+        }
+        function backToTaskList() {
+            if (source === 'map') {
+                // 地图页（嵌入在 inspection-management 的 iframe 内）来源：优先回退，兜底回到地图页
+                if (history.length > 1) { history.back(); return; }
+                location.href = 'inspection-management.html';
+                return;
+            }
+            if (source === 'service') {
+                var query = new URLSearchParams({ group: group, date: params.get('date') || 'today' });
+                if (params.get('date') === 'custom') {
+                    query.set('start', params.get('start') || '');
+                    query.set('end', params.get('end') || '');
+                }
+                location.href = 'inspection-task-management.html?' + query.toString();
+                return;
+            }
+            location.href = 'inspection-management.html?tab=service';
+        }
+
+        // ===== 渲染基础信息 =====
+        setText('js-map-area', item.area);
+        setText('js-area', item.area);
+        setText('js-status', item.statusText);
+        document.getElementById('js-status').classList.add(statusTagClass(item.status));
+        // 标题摘要：片区名 - 事件上报数（未开始不显示）- 任务状态 / 任务日期 - 作业时间 - 作业资源
+        var countEl = document.getElementById('js-summary-count');
+        // 未开始（无开始时间，含待接收/已转派/已终止/已失效）不显示事件上报数
+        if (item.startAt && item.startAt !== '—') {
+            countEl.hidden = false;
+            countEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>事件上报 ' + escapeHtml(item.problemCount);
+        }
+        setText('js-summary-time', [item.planDate, item.workTime, item.resource].join('  ·  '));
+
+        // 任务信息（PRD 6.1.2：仅任务编号）
+        document.getElementById('js-task-info').innerHTML = infoRow('任务编号', item.no, true);
+
+        // 任务执行信息：待接收状态不显示
+        var execSection = document.getElementById('js-exec-section');
+        if (item.status === 'pending') {
+            execSection.style.display = 'none';
+        } else {
+            var mileageText = (item.mileage == null ? '—' : Number(item.mileage).toFixed(2) + ' km');
+            var durationText = (item.duration == null ? '—' : item.duration + ' 分钟');
+            document.getElementById('js-exec-info').innerHTML =
+                infoRow('开始时间', item.startAt, true) +
+                infoRow('作业里程', mileageText, true) +
+                infoRow('作业时长', durationText, true);
+        }
+
+        // ===== 事件上报列表：按任务 code（短编号）关联事件的 taskId =====
+        function renderEventList() {
+            var allProblems = Array.isArray(window.INSPECTION_PROBLEM_RECORDS) ? window.INSPECTION_PROBLEM_RECORDS : [];
+            var linked = item.code ? allProblems.filter(function (p) { return p.taskId === item.code; }) : [];
+            var holder = document.getElementById('js-event-list');
+            if (!linked.length) {
+                holder.innerHTML = '<div class="event-empty">该任务暂无关联的事件上报</div>';
+                return;
+            }
+            holder.innerHTML = linked.map(function (p) {
+                // 卡片三行（与品质事件列表页 inspection-problem-management 一致，PRD 6.2.4）：
+                // 第一行：上报时间 - 事件地点；第二行：事件发现类型 - 事件状态；第三行：事件描述
+                return '<button type="button" class="event-card ' + escapeHtml(p.status) + '" data-problem="' + escapeHtml(p.id) + '" aria-label="查看事件 ' + escapeHtml(p.no) + '">' +
+                    '<span class="event-card__time-loc">' +
+                        '<span class="event-card__time">' + escapeHtml(p.reportedAt) + '</span>' +
+                        '<i class="event-card__sep" aria-hidden="true"></i>' +
+                        '<span class="event-card__loc">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 10c0 5.2-8 10-8 10S4 15.2 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.4"/></svg>' +
+                            '<span>' + escapeHtml(p.location) + '</span>' +
+                        '</span>' +
+                    '</span>' +
+                    '<span class="event-card__type-status">' +
+                        '<span class="event-card__type">' + escapeHtml(p.discoveryType) + '</span>' +
+                        '<span class="event-card__status ' + escapeHtml(p.status) + '">' + escapeHtml(p.statusText) + '</span>' +
+                    '</span>' +
+                    '<span class="event-card__desc">' + escapeHtml(p.description) + '</span>' +
+                '</button>';
+            }).join('');
+        }
+        renderEventList();
+        document.getElementById('js-event-list').addEventListener('click', function (event) {
+            var card = event.target.closest('[data-problem]');
+            if (!card) return;
+            var query = new URLSearchParams({ problem: card.getAttribute('data-problem'), task: item.code, from: 'service' });
+            location.href = 'inspection-problem-detail.html?' + query.toString();
+        });
+
+        // ===== Leaflet 小地图：展示任务区域范围 =====
+        function parseLatLng(str) {
+            if (!str) return null;
+            var parts = String(str).split(',').map(function (s) { return s.trim(); });
+            if (parts.length < 2) return null;
+            var lng = parseFloat(parts[0]);
+            var lat = parseFloat(parts[1]);
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return [lat, lng];
+        }
+        function initTaskMap() {
+            if (typeof window.L === 'undefined') return;
+            var ll = parseLatLng(item.coordinate);
+            var center = ll || [23.129, 113.265];
+            try {
+                var map = L.map('js-leaflet-map', {
+                    zoomControl: false, attributionControl: true,
+                    preferCanvas: true, minZoom: 12, maxZoom: 19,
+                    dragging: true, scrollWheelZoom: false
+                }).setView(center, 15);
+                var tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                tiles.on('tileerror', function () { /* 静默降级 */ });
+                if (ll) {
+                    var radius = Number(item.radius) || 280;
+                    L.circle(ll, {
+                        radius: Math.max(radius, 120),
+                        className: 'task-area-circle task-area-circle--' + item.status,
+                        color: '#1677ff', weight: 2, opacity: 0.55, fillColor: '#1677ff', fillOpacity: 0.12
+                    }).addTo(map);
+                }
+                [0, 60, 200].forEach(function (d) { setTimeout(function () { map.invalidateSize(false); }, d); });
+                window.addEventListener('load', function () { map.invalidateSize(false); });
+            } catch (err) {
+                var fb = document.getElementById('js-map-fallback');
+                if (fb) fb.classList.add('is-visible');
+            }
+        }
+
+        if (window.TopCapsule) {
+            window.TopCapsule.mount(document.getElementById('js-capsule'), {
+                title: '任务详情',
+                back: backToTaskList,
+                moreItems: [
+                    { label: '关于', action: function () { alert('品质巡查 v1.0'); } }
+                ],
+                onExit: backToTaskList
+            });
+        }
+        document.getElementById('js-back').addEventListener('click', backToTaskList);
+        initTaskMap();
+    })();
+    </script>
+</body>
+</html>

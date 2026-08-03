@@ -99,19 +99,19 @@
         <section class="form-group" aria-label="事件基础信息">
             <div class="group-title">基础信息</div>
             <div class="info-list">
-                <div class="info-row"><span class="info-row__label">任务编号</span><span class="info-row__value info-row__value--mono" id="js-task-no">I003</span></div>
-                <div class="info-row"><span class="info-row__label">事件编号</span><span class="info-row__value info-row__value--mono">Q20260728-0021</span></div>
-                <div class="info-row"><span class="info-row__label">上报时间</span><span class="info-row__value info-row__value--mono">2026-07-28 10:31</span></div>
-                <div class="info-row"><span class="info-row__label">事件位置</span><span class="info-row__value" id="js-location">中央广场北门</span></div>
-                <div class="info-row"><span class="info-row__label">经纬度</span><span class="info-row__value info-row__value--mono">113.9362, 22.5405</span></div>
+                <div class="info-row"><span class="info-row__label">关联任务</span><span class="info-row__value info-row__value--mono" id="js-task-no">I003</span></div>
+                <div class="info-row"><span class="info-row__label">事件发生时间</span><span class="info-row__value info-row__value--mono" id="js-occur-time">2026-07-28 10:31</span></div>
+                <div class="info-row"><span class="info-row__label">经纬度</span><span class="info-row__value info-row__value--mono" id="js-coordinate">113.9362, 22.5405</span></div>
+                <div class="info-row"><span class="info-row__label">事件地点</span><span class="info-row__value" id="js-location">中央广场北门</span></div>
+                <div class="info-row"><span class="info-row__label">详细地点</span><span class="info-row__value" id="js-detail-location">中央广场北门入口东侧约20米</span></div>
             </div>
         </section>
         <section class="form-group" aria-label="事件内容">
             <div class="group-title">事件内容</div>
             <div class="form-body">
-                <div class="field-label"><span class="field-label__required">事件照片</span><span class="field-label__optional">仅支持现场拍照，最多 5 张</span></div>
+                <div class="field-label"><span class="field-label__required">事件图片</span><span class="field-label__optional">仅支持拍照上传，最多 5 张</span></div>
                 <div class="photo-grid" id="js-photo-grid">
-                    <button type="button" class="photo-capture" id="js-photo-capture" aria-label="拍摄事件照片">
+                    <button type="button" class="photo-capture" id="js-photo-capture" aria-label="拍摄事件图片">
                         <span class="photo-capture__empty">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                             <span>拍照</span>
@@ -122,9 +122,9 @@
                 <div class="photo-count" id="js-photo-count">已添加 0/5 张</div>
             </div>
             <div class="form-body">
-                <div class="field-label"><span>事件描述</span><span class="field-label__optional">选填，支持语音</span></div>
+                <div class="field-label"><span>事件描述</span><span class="field-label__optional">选填，支持手写与语音</span></div>
                 <div class="text-field">
-                    <textarea id="js-description" maxlength="200" placeholder="请描述事件情况，或点击右侧按钮语音输入"></textarea>
+                    <textarea id="js-description" maxlength="200" placeholder="手写或点击右侧按钮语音输入事件描述"></textarea>
                     <button type="button" class="voice-btn" id="js-voice" aria-label="点击语音输入">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg>
                         <span class="voice-btn__text">语音</span>
@@ -133,23 +133,11 @@
                 </div>
                 <div class="voice-hint" id="js-voice-hint">点击右侧按钮，说出事件描述即可自动填入</div>
             </div>
-            <div class="form-body">
-                <div class="field-label"><span>备注</span><span class="field-label__optional">选填，支持语音</span></div>
-                <div class="text-field">
-                    <textarea id="js-note" maxlength="200" placeholder="补充说明，或点击右侧按钮语音输入"></textarea>
-                    <button type="button" class="voice-btn" id="js-note-voice" aria-label="备注语音输入">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg>
-                        <span class="voice-btn__text">语音</span>
-                        <span class="voice-dot" hidden></span>
-                    </button>
-                </div>
-                <div class="voice-hint" id="js-note-voice-hint">点击右侧按钮，说出备注即可自动填入</div>
-            </div>
         </section>
     </main>
     <footer class="page-actions">
         <button type="button" class="page-button page-button--cancel" id="js-cancel">取消</button>
-        <button type="button" class="page-button page-button--submit" id="js-submit">提交事件</button>
+        <button type="button" class="page-button page-button--submit" id="js-submit">提交</button>
     </footer>
     <div class="toast" id="js-toast" role="status" aria-live="polite"></div>
     <script src="components/top-capsule.js"></script>
@@ -159,6 +147,13 @@
         var params = new URLSearchParams(location.search);
         var taskId = params.get('task') || 'I002';
         var taskLocations = { I001: '滨江路东段', I002: '中央广场片区', I003: '科苑路南段', I004: '创业路西段' };
+        // 详细地点（自动获取手机当前位置，演示按任务映射）
+        var taskDetailLocations = {
+            I001: '滨江路东段K1+200北侧车道',
+            I002: '中央广场北门入口东侧约20米',
+            I003: '科苑路南段公交站南侧',
+            I004: '创业路西段跨线桥下'
+        };
         var photoList = [];
         var photoMax = 5;
         var photoKey = 'kuwash-inspection-report-photo';
@@ -170,13 +165,14 @@
         var toastTimer = null;
         document.getElementById('js-task-no').textContent = taskId;
         document.getElementById('js-location').textContent = (taskLocations[taskId] || '中央广场') + '北门';
+        document.getElementById('js-detail-location').textContent = taskDetailLocations[taskId] || '当前位置附近';
         function readStoredPhoto() { try { return sessionStorage.getItem(photoKey); } catch (e) { return null; } }
         function renderPhotoGrid() {
             photoGrid.querySelectorAll('.photo-thumb').forEach(function (el) { el.remove(); });
             photoList.forEach(function (src, idx) {
                 var thumb = document.createElement('div');
                 thumb.className = 'photo-thumb';
-                thumb.innerHTML = '<img src="' + src + '" alt="事件照片 ' + (idx + 1) + '">' +
+                thumb.innerHTML = '<img src="' + src + '" alt="事件图片 ' + (idx + 1) + '">' +
                     '<button type="button" class="photo-thumb__del" data-idx="' + idx + '" aria-label="删除照片">' +
                     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
                 thumb.querySelector('.photo-thumb__del').addEventListener('click', function (e) {
@@ -201,7 +197,6 @@
             photoList = [];
             renderPhotoGrid();
             document.getElementById('js-description').value = '';
-            document.getElementById('js-note').value = '';
             showToast('已清空');
         }
         photoCapture.addEventListener('click', function () { photoInput.value = ''; photoInput.click(); });
@@ -270,11 +265,8 @@
         bindVoice('js-voice', 'js-voice-hint', 'js-description',
             '科苑路南段路面有大量散落垃圾，需及时清理',
             '点击右侧按钮，说出事件描述即可自动填入');
-        bindVoice('js-note-voice', 'js-note-voice-hint', 'js-note',
-            '需联系片区负责人现场核实处理',
-            '点击右侧按钮，说出备注即可自动填入');
         document.getElementById('js-submit').addEventListener('click', function () {
-            if (photoList.length === 0) { showToast('请先拍摄事件照片'); return; }
+            if (photoList.length === 0) { showToast('请先拍摄事件图片'); return; }
             showToast('事件已提交，已同步至环卫云');
             try { sessionStorage.removeItem(photoKey); } catch (e) {}
             setTimeout(backToMap, 700);

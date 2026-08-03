@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>品质事件 - 品质巡查</title>
+    <title>巡查任务 - 品质巡查</title>
     <link rel="stylesheet" href="components/app-common.css">
     <link rel="stylesheet" href="components/top-capsule.css">
     <style>
@@ -17,13 +17,15 @@
         button, input { font: inherit; }
         button { cursor: pointer; }
         .page { min-height: 100vh; }
+
+        /* ===== 状态 tab ===== */
         .tab-bar {
-            position: sticky; top: 44px; z-index: 20; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            position: sticky; top: 44px; z-index: 20; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
             height: 48px; background: #fff; border-bottom: 1px solid #e5e6eb;
         }
         .status-tab {
             position: relative; min-width: 0; padding: 0; border: 0; background: transparent; color: #86909c;
-            font-size: 13px; line-height: 48px; white-space: nowrap;
+            font-size: 14px; line-height: 48px; white-space: nowrap;
         }
         .status-tab::after {
             position: absolute; bottom: 0; left: 50%; width: 24px; height: 2px; border-radius: 2px;
@@ -37,6 +39,8 @@
             color: #86909c; font-size: 10px; line-height: 16px; vertical-align: 1px;
         }
         .status-tab.is-active .tab-badge { background: #e6f4ff; color: #1677ff; }
+
+        /* ===== 筛选条 ===== */
         .toolbar { min-height: 52px; padding: 8px 16px; background: #fff; }
         .filter-chip {
             display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 11px;
@@ -45,40 +49,56 @@
         .filter-chip:active { background: #f7f8fa; }
         .filter-chip svg { width: 16px; height: 16px; color: #1677ff; }
         .filter-chip__arrow { color: #86909c; font-size: 11px; }
+
+        /* ===== 列表 ===== */
         .list-area { padding: 4px 16px 28px; }
-        .problem-list { display: grid; gap: 12px; }
-        .problem-card {
-            width: 100%; padding: 15px 16px; overflow: hidden; border: 1px solid #e5e6eb; border-left: 3px solid #69b1ff;
+        .task-list { display: grid; gap: 12px; }
+        .task-card {
+            width: 100%; padding: 15px 16px; overflow: hidden; border: 1px solid #e5e6eb; border-left: 3px solid #1677ff;
             border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(31,35,41,.04); text-align: left;
             transition: transform .15s, border-color .15s;
         }
-        .problem-card.pending { border-left-color: #faad14; }
-        .problem-card.assigned { border-left-color: #69b1ff; }
-        .problem-card.processing { border-left-color: #1677ff; }
-        .problem-card.done { border-left-color: #73d13d; }
-        .problem-card:active { border-color: #bedaff; transform: scale(.99); }
-        /* 第一行：上报时间 - 事件地点 */
-        .problem-card__time-loc { display: flex; align-items: center; gap: 8px; }
-        .problem-card__time { flex: 0 0 auto; color: #86909c; font-size: 13px; line-height: 20px; font-family: "DIN", "SF UI Text", sans-serif; }
-        .problem-card__sep { width: 1px; height: 12px; flex: 0 0 auto; background: #e5e6eb; }
-        .problem-card__loc { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; color: #1f2329; font-size: 14px; line-height: 20px; }
-        .problem-card__loc svg { width: 15px; height: 15px; flex: 0 0 auto; color: #86909c; }
-        .problem-card__loc span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        /* 第二行：事件发现类型 - 事件状态 */
-        .problem-card__type-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 9px; }
-        .problem-card__type { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; background: #f2f3f5; color: #4e5969; font-size: 12px; line-height: 18px; }
+        .task-card.pending { border-left-color: #faad14; }
+        .task-card.running { border-left-color: #1677ff; }
+        .task-card.done { border-left-color: #52c41a; }
+        .task-card.transferred { border-left-color: #722ed1; }
+        .task-card.terminated { border-left-color: #ff4d4f; }
+        .task-card.invalid { border-left-color: #86909c; }
+        .task-card:active { border-color: #bedaff; transform: scale(.99); }
+
+        /* 第一行：片区名称 - 事件上报数 - 任务状态 */
+        .task-card__head { display: flex; align-items: center; gap: 8px; }
+        .task-card__area {
+            min-width: 0; flex: 1; overflow: hidden; color: #1f2329; font-size: 16px; font-weight: 600;
+            line-height: 24px; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .task-card__count {
+            flex: 0 0 auto; display: inline-flex; align-items: center; gap: 2px; color: #ff4d4f; font-size: 12px;
+            line-height: 18px; font-weight: 500;
+        }
+        .task-card__count svg { width: 13px; height: 13px; }
         .status-tag { flex: 0 0 auto; min-width: 52px; height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; line-height: 24px; text-align: center; }
         .status-tag.pending { background: #fffbe6; color: #d48806; }
-        .status-tag.assigned { background: #e6f4ff; color: #0958d9; }
-        .status-tag.processing { background: #e6f4ff; color: #1677ff; }
+        .status-tag.running { background: #e6f4ff; color: #1677ff; }
         .status-tag.done { background: #f6ffed; color: #389e0d; }
-        /* 第三行：事件描述 */
-        .problem-card__desc { display: block; margin-top: 9px; padding-top: 9px; border-top: 1px solid #f0f1f2; color: #4e5969; font-size: 13px; line-height: 20px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .status-tag.transferred { background: #f9f0ff; color: #531dab; }
+        .status-tag.terminated { background: #fff2f0; color: #cf1322; }
+        .status-tag.invalid { background: #f2f3f5; color: #86909c; }
+
+        /* 第二行：任务日期 - 作业时间 - 作业资源 */
+        .task-card__meta { display: flex; align-items: center; gap: 7px; margin-top: 10px; color: #86909c; font-size: 13px; line-height: 20px; }
+        .task-card__meta span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .task-card__sep { width: 1px; height: 12px; flex: 0 0 auto; background: #e5e6eb; }
+        .task-card__meta svg { width: 14px; height: 14px; flex: 0 0 auto; color: #86909c; }
+
+        /* ===== 空状态 ===== */
         .empty-state { min-height: 300px; padding: 72px 24px 40px; border-radius: 8px; background: #fff; text-align: center; }
         .empty-state__icon { width: 60px; height: 60px; display: grid; margin: 0 auto 16px; place-items: center; border-radius: 50%; background: #f2f3f5; color: #86909c; }
         .empty-state__icon svg { width: 28px; height: 28px; }
         .empty-state__title { color: #1f2329; font-size: 15px; font-weight: 600; line-height: 22px; }
         .empty-state__desc { margin-top: 7px; color: #86909c; font-size: 12px; line-height: 19px; }
+
+        /* ===== 日期筛选底部弹窗 ===== */
         .sheet-overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.5); }
         .sheet-overlay.is-open { display: flex; }
         .sheet { width: 100%; max-width: 375px; padding-bottom: env(safe-area-inset-bottom); border-radius: 16px 16px 0 0; background: #fff; animation: sheet-in .2s ease-out; }
@@ -104,34 +124,34 @@
         .custom-button { height: 40px; border: 0; border-radius: 8px; font-size: 14px; }
         .custom-button.secondary { background: #f2f3f5; color: #1f2329; }
         .custom-button.primary { background: #1677ff; color: #fff; }
-        @media (max-width: 340px) { .toolbar, .list-area { padding-left: 12px; padding-right: 12px; } .status-tab { font-size: 12px; } .problem-card { padding: 13px; } }
-        @media (prefers-reduced-motion: reduce) { .problem-card, .sheet { animation: none; transition: none; } }
+
+        @media (max-width: 340px) { .toolbar, .list-area { padding-left: 12px; padding-right: 12px; } .status-tab { font-size: 13px; } .task-card { padding: 13px; } }
+        @media (prefers-reduced-motion: reduce) { .task-card, .sheet { animation: none; transition: none; } }
     </style>
 </head>
 <body>
     <div id="js-capsule" data-top-capsule></div>
     <main class="page">
-        <div class="tab-bar" id="js-tabs" role="tablist" aria-label="事件状态">
-            <button type="button" class="status-tab" data-status="pending" role="tab" aria-selected="false">待判别<span class="tab-badge" id="js-count-pending">0</span></button>
-            <button type="button" class="status-tab" data-status="assigned" role="tab" aria-selected="false">待分配<span class="tab-badge" id="js-count-assigned">0</span></button>
-            <button type="button" class="status-tab" data-status="processing" role="tab" aria-selected="false">待处理<span class="tab-badge" id="js-count-processing">0</span></button>
-            <button type="button" class="status-tab" data-status="done" role="tab" aria-selected="false">已完成<span class="tab-badge" id="js-count-done">0</span></button>
+        <div class="tab-bar" id="js-tabs" role="tablist" aria-label="任务状态">
+            <button type="button" class="status-tab" data-group="pending" role="tab" aria-selected="false">待接收<span class="tab-badge" id="js-count-pending">0</span></button>
+            <button type="button" class="status-tab" data-group="running" role="tab" aria-selected="false">进行中<span class="tab-badge" id="js-count-running">0</span></button>
+            <button type="button" class="status-tab" data-group="ended" role="tab" aria-selected="false">已结束<span class="tab-badge" id="js-count-ended">0</span></button>
         </div>
         <section class="toolbar" aria-label="筛选条件">
-            <button type="button" class="filter-chip" id="js-date-filter" aria-label="选择计划执行日期">
+            <button type="button" class="filter-chip" id="js-date-filter" aria-label="选择任务计划执行日期">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
                 <span id="js-date-label">今天</span><span class="filter-chip__arrow">⌄</span>
             </button>
         </section>
         <section class="list-area" aria-live="polite">
-            <div class="problem-list" id="js-problem-list"></div>
+            <div class="task-list" id="js-task-list"></div>
         </section>
     </main>
     <div class="sheet-overlay" id="js-filter-sheet" aria-hidden="true">
         <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="js-filter-title">
             <div class="sheet__handle"></div>
             <div class="sheet__header">
-                <h2 class="sheet__title" id="js-filter-title">选择计划日期</h2>
+                <h2 class="sheet__title" id="js-filter-title">选择计划执行日期</h2>
                 <button type="button" class="sheet__close" id="js-filter-close" aria-label="关闭日期筛选">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
                 </button>
@@ -151,26 +171,28 @@
         </section>
     </div>
     <script src="components/top-capsule.js"></script>
-    <script src="components/inspection-problem-data.js"></script>
+    <script src="components/inspection-task-data.js"></script>
     <script>
     (function () {
         'use strict';
 
-        var STATUS_ORDER = ['pending', 'assigned', 'processing', 'done'];
+        var GROUPS = window.INSPECTION_TASK_GROUPS || {};
+        var GROUP_ORDER = ['pending', 'running', 'ended'];
         var FILTERS = [
-            { type: 'today', label: '今天', from: '2026-07-28', to: '2026-07-28' },
-            { type: 'tomorrow', label: '明天', from: '2026-07-29', to: '2026-07-29' },
-            { type: 'week', label: '近七天', from: '2026-07-22', to: '2026-07-28' },
+            { type: 'today', label: '今天', from: '2026-08-03', to: '2026-08-03' },
+            { type: 'tomorrow', label: '明天', from: '2026-08-04', to: '2026-08-04' },
+            { type: 'week', label: '近七天', from: '2026-07-28', to: '2026-08-03' },
             { type: 'all', label: '全部', from: null, to: null },
             { type: 'custom', label: '自定义时间段', from: null, to: null }
         ];
+
         var params = new URLSearchParams(location.search);
-        var requestedStatus = params.get('status');
-        var currentStatus = STATUS_ORDER.indexOf(requestedStatus) !== -1 ? requestedStatus : 'pending';
+        var requestedGroup = params.get('group');
+        var currentGroup = GROUP_ORDER.indexOf(requestedGroup) !== -1 ? requestedGroup : 'pending';
         var requestedFilter = params.get('date');
         var currentFilter = FILTERS.filter(function (item) { return item.type === requestedFilter; })[0] || FILTERS[0];
         var customRange = { from: params.get('start') || '', to: params.get('end') || '' };
-        var records = Array.isArray(window.INSPECTION_PROBLEM_RECORDS) ? window.INSPECTION_PROBLEM_RECORDS : [];
+        var records = Array.isArray(window.INSPECTION_TASK_RECORDS) ? window.INSPECTION_TASK_RECORDS : [];
 
         function escapeHtml(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
@@ -186,60 +208,68 @@
             if (!range.from || !range.to) return range.type !== 'custom';
             return item.planDate >= range.from && item.planDate <= range.to;
         }
-        function filtered(status) {
-            return records.filter(function (item) { return item.status === status && dateMatched(item); }).sort(function (a, b) {
-                return String(b.reportedAt).localeCompare(String(a.reportedAt));
+        // 分组内排序：进行中按开始时间倒序，其它按计划作业时间顺序
+        function sortInGroup(list, group) {
+            return list.sort(function (a, b) {
+                if (group === 'running') return String(b.startAt).localeCompare(String(a.startAt));
+                return String(a.workTime).localeCompare(String(b.workTime));
             });
         }
+        function filtered(group) {
+            var statuses = (GROUPS[group] || {}).statuses || [];
+            var list = records.filter(function (item) {
+                return statuses.indexOf(item.status) !== -1 && dateMatched(item);
+            });
+            return sortInGroup(list, group);
+        }
         function renderCard(item) {
-            // 卡片三行（对齐 PRD 6.2.4）：
-            // 第一行：上报时间 - 事件地点
-            // 第二行：事件发现类型 - 事件状态
-            // 第三行：事件描述
-            return '<button type="button" class="problem-card ' + escapeHtml(item.status) + '" data-problem="' + escapeHtml(item.id) + '" aria-label="查看' + escapeHtml(item.no) + '详情">' +
-                '<span class="problem-card__row problem-card__time-loc">' +
-                    '<span class="problem-card__time">' + escapeHtml(item.reportedAt) + '</span>' +
-                    '<i class="problem-card__sep" aria-hidden="true"></i>' +
-                    '<span class="problem-card__loc">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 10c0 5.2-8 10-8 10S4 15.2 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.4"/></svg>' +
-                        '<span>' + escapeHtml(item.location) + '</span>' +
-                    '</span>' +
-                '</span>' +
-                '<span class="problem-card__row problem-card__type-status">' +
-                    '<span class="problem-card__type">' + escapeHtml(item.discoveryType) + '</span>' +
+            // 任务未开始（无开始时间，含待接收/已转派/已终止/已失效）不显示事件上报数
+            var started = item.startAt && item.startAt !== '—';
+            var countHtml = started ?
+                '<span class="task-card__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>事件上报 ' + escapeHtml(item.problemCount) + '</span>' : '';
+            return '<button type="button" class="task-card ' + escapeHtml(item.status) + '" data-task="' + escapeHtml(item.id) + '" aria-label="查看' + escapeHtml(item.area) + '任务详情">' +
+                '<span class="task-card__head">' +
+                    '<span class="task-card__area">' + escapeHtml(item.area) + '</span>' +
+                    countHtml +
                     '<span class="status-tag ' + escapeHtml(item.status) + '">' + escapeHtml(item.statusText) + '</span>' +
                 '</span>' +
-                '<span class="problem-card__desc">' + escapeHtml(item.description) + '</span>' +
+                '<span class="task-card__meta">' +
+                    '<span>' + escapeHtml(item.planDate) + '</span>' +
+                    '<i class="task-card__sep" aria-hidden="true"></i>' +
+                    '<span>' + escapeHtml(item.workTime) + '</span>' +
+                    '<i class="task-card__sep" aria-hidden="true"></i>' +
+                    '<span>' + escapeHtml(item.resource) + '</span>' +
+                '</span>' +
             '</button>';
         }
         function renderEmpty() {
-            var tab = document.querySelector('.status-tab[data-status="' + currentStatus + '"]');
-            var label = tab ? tab.childNodes[0].textContent : '当前状态';
-            return '<div class="empty-state"><div class="empty-state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3 6-7"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div><div class="empty-state__title">暂无' + escapeHtml(label) + '事件</div><div class="empty-state__desc">请切换日期范围后查看</div></div>';
+            var tab = document.querySelector('.status-tab[data-group="' + currentGroup + '"]');
+            var label = tab ? tab.childNodes[0].textContent : '当前分组';
+            return '<div class="empty-state"><div class="empty-state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3 6-7"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div><div class="empty-state__title">暂无' + escapeHtml(label) + '任务</div><div class="empty-state__desc">请切换日期范围后查看</div></div>';
         }
         function updateUrl() {
             var query = new URLSearchParams();
-            query.set('status', currentStatus);
+            query.set('group', currentGroup);
             query.set('date', currentFilter.type);
             if (currentFilter.type === 'custom') {
                 query.set('start', customRange.from);
                 query.set('end', customRange.to);
             }
-            history.replaceState(null, '', 'inspection-problem-management.html?' + query.toString());
+            history.replaceState(null, '', 'inspection-task-management.html?' + query.toString());
         }
         function render() {
-            STATUS_ORDER.forEach(function (status) {
-                var countEl = document.getElementById('js-count-' + status);
-                if (countEl) countEl.textContent = filtered(status).length;
+            GROUP_ORDER.forEach(function (group) {
+                var countEl = document.getElementById('js-count-' + group);
+                if (countEl) countEl.textContent = filtered(group).length;
             });
             document.querySelectorAll('.status-tab').forEach(function (button) {
-                var active = button.getAttribute('data-status') === currentStatus;
+                var active = button.getAttribute('data-group') === currentGroup;
                 button.classList.toggle('is-active', active);
                 button.setAttribute('aria-selected', active ? 'true' : 'false');
             });
             document.getElementById('js-date-label').textContent = activeRange().label;
-            var visible = filtered(currentStatus);
-            document.getElementById('js-problem-list').innerHTML = visible.length ? visible.map(renderCard).join('') : renderEmpty();
+            var visible = filtered(currentGroup);
+            document.getElementById('js-task-list').innerHTML = visible.length ? visible.map(renderCard).join('') : renderEmpty();
             updateUrl();
         }
         function renderFilterOptions() {
@@ -264,17 +294,17 @@
             sheet.setAttribute('aria-hidden', 'true');
         }
         function openDetail(id) {
-            var query = new URLSearchParams({ problem: id, from: 'service', status: currentStatus, date: currentFilter.type });
+            var query = new URLSearchParams({ id: id, from: 'service', group: currentGroup, date: currentFilter.type });
             if (currentFilter.type === 'custom') {
                 query.set('start', customRange.from);
                 query.set('end', customRange.to);
             }
-            location.href = 'inspection-problem-detail.html?' + query.toString();
+            location.href = 'inspection-task-detail.html?' + query.toString();
         }
 
         if (window.TopCapsule) {
             window.TopCapsule.mount(document.getElementById('js-capsule'), {
-                title: '品质事件',
+                title: '巡查任务',
                 back: function () { location.href = 'inspection-management.html?tab=service'; },
                 moreItems: [
                     { label: '刷新列表', action: function () { render(); } },
@@ -284,14 +314,14 @@
             });
         }
         document.getElementById('js-tabs').addEventListener('click', function (event) {
-            var button = event.target.closest('[data-status]');
+            var button = event.target.closest('[data-group]');
             if (!button) return;
-            currentStatus = button.getAttribute('data-status');
+            currentGroup = button.getAttribute('data-group');
             render();
         });
-        document.getElementById('js-problem-list').addEventListener('click', function (event) {
-            var card = event.target.closest('[data-problem]');
-            if (card) openDetail(card.getAttribute('data-problem'));
+        document.getElementById('js-task-list').addEventListener('click', function (event) {
+            var card = event.target.closest('[data-task]');
+            if (card) openDetail(card.getAttribute('data-task'));
         });
         document.getElementById('js-date-filter').addEventListener('click', openFilter);
         document.getElementById('js-filter-close').addEventListener('click', closeFilter);

@@ -10,7 +10,6 @@
 .bind-main { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: var(--car-gap); flex: 1; padding: var(--car-gap); min-height: 0; }
 @media (max-width: 1279px) { .bind-main { grid-template-columns: minmax(0, 1fr) 400px; } }
 .bind-left { display: flex; flex-direction: column; justify-content: center; gap: 24px; padding: 40px; background: var(--car-surface); border-radius: var(--car-radius); border: 1px solid var(--car-border); position: relative; overflow: hidden; }
-.bind-left::before { content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(22,119,255,0.08), transparent 70%); }
 .bind-left__kicker { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; padding: 6px 14px; background: var(--car-primary-soft); color: var(--car-primary); border-radius: 20px; font-size: var(--car-fs-aux); font-weight: 500; }
 .bind-left__title { font-size: var(--car-fs-title); font-weight: 600; line-height: 1.3; }
 .bind-left__desc { font-size: var(--car-fs-body); line-height: 28px; color: var(--car-text-secondary); max-width: 420px; }
@@ -35,6 +34,21 @@
 .bind-demo-hint { margin-top: 4px; font-size: 12px; color: var(--car-text-disabled); }
 .bind-demo-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 14px; font-size: var(--car-fs-aux); color: var(--car-text-secondary); background: transparent; border: 1px dashed var(--car-border); border-radius: var(--car-radius-sm); transition: color 0.15s, border-color 0.15s; }
 .bind-demo-btn:active { color: var(--car-primary); border-color: var(--car-primary); }
+.bind-plate-status { display: flex; align-items: flex-start; gap: 14px; max-width: 520px; padding: 16px 0; border-top: 1px solid var(--car-border); border-bottom: 1px solid var(--car-border); }
+.bind-plate-status__icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--car-warning); background: var(--car-warning-soft); border-radius: var(--car-radius-sm); flex-shrink: 0; }
+.bind-plate-status__main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bind-plate-status__title { display: flex; align-items: center; gap: 8px; font-size: var(--car-fs-body); font-weight: 600; }
+.bind-plate-status__tag { padding: 2px 8px; border-radius: var(--car-radius-sm); color: #ad6800; background: var(--car-warning-soft); font-size: var(--car-fs-aux); font-weight: 500; }
+.bind-plate-status__desc { color: var(--car-text-secondary); font-size: var(--car-fs-aux); line-height: 20px; }
+.bind-left__action { align-self: flex-start; min-width: 220px; }
+.bind-qr-scanbox.is-disabled { display: flex; align-items: center; justify-content: center; width: 220px; height: 220px; padding: 0; border: 1px dashed var(--car-border); border-radius: var(--car-radius); background: var(--car-surface-soft); color: var(--car-text-disabled); }
+.bind-qr-scanbox.is-disabled::before, .bind-qr-scanbox.is-disabled::after, .bind-qr-scanbox.is-disabled > i, .bind-qr-scanbox.is-disabled > b { display: none; }
+.bind-qr-scanbox.is-disabled svg { width: 46px; height: 46px; }
+.bind-right__sub.is-blocking { color: #ad6800; }
+.bind-plate-entry { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border: 1px solid var(--car-border); border-radius: 18px; background: var(--car-surface); color: var(--car-primary); font-size: var(--car-fs-aux); font-weight: 500; white-space: nowrap; }
+.bind-plate-entry:active { background: var(--car-primary-soft); transform: scale(0.98); }
+.bind-plate-entry svg { width: 16px; height: 16px; }
+.bind-steps[hidden], .bind-demo-btn[hidden], .bind-plate-status[hidden], .bind-left__action[hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -49,6 +63,10 @@
         </div>
         <div class="car-topbar__spacer"></div>
         <div class="car-topbar__meta">
+            <button class="bind-plate-entry" id="js-plateAction" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+                <span>录入牌照</span>
+            </button>
             <span class="car-pill"><span class="car-status-dot is-offline"></span>未绑定</span>
             <span class="car-pill js-clock">--:--</span>
         </div>
@@ -58,25 +76,30 @@
     <div class="bind-main">
         <!-- 左：说明 -->
         <section class="bind-left">
-            <span class="bind-left__kicker">
+            <span class="bind-left__kicker" id="js-bindKicker">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7"/></svg>
                 扫码绑定
             </span>
-            <h1 class="bind-left__title">请使用手机APP扫描二维码<br>完成人车绑定</h1>
-            <p class="bind-left__desc">机动车巡查任务将在车机端执行，绑定后车机自动同步当前巡查员的今日巡查任务与事件数据。</p>
-            <div class="bind-steps">
+            <h1 class="bind-left__title" id="js-bindTitle">请使用手机APP扫描二维码<br>完成人车绑定</h1>
+            <p class="bind-left__desc" id="js-bindDesc">机动车巡查任务将在车机端执行，绑定后车机自动同步当前巡查员的今日巡查任务与事件数据。</p>
+            <div class="bind-steps" id="js-bindSteps">
                 <div class="bind-step"><span class="bind-step__no">1</span><span class="bind-step__txt">打开手机APP「品质巡查」应用</span></div>
                 <div class="bind-step"><span class="bind-step__no">2</span><span class="bind-step__txt">使用「扫码绑车」扫描右侧二维码</span></div>
                 <div class="bind-step"><span class="bind-step__no">3</span><span class="bind-step__txt">校验通过后进入今日巡查任务</span></div>
             </div>
+            <div class="bind-plate-status" id="js-plateStatus" hidden>
+                <span class="bind-plate-status__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h5"/></svg></span>
+                <div class="bind-plate-status__main"><div class="bind-plate-status__title">车辆牌照 <span class="bind-plate-status__tag">未录入</span></div><p class="bind-plate-status__desc">完成录入并通过唯一性校验后，方可继续扫码绑定。</p></div>
+            </div>
+            <button class="car-btn car-btn--primary car-btn--lg bind-left__action" id="js-recordPlate" type="button" hidden>录入车辆牌照 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
         </section>
 
         <!-- 右：二维码 -->
-        <aside class="bind-right">
-            <div class="bind-right__cap">车辆绑定二维码</div>
+        <aside class="bind-right" id="js-bindPanel">
+            <div class="bind-right__cap" id="js-bindCaption">车辆绑定二维码</div>
             <div class="bind-vehicle-tag">绑定车辆 <span class="car-mono" id="js-vehicleNo">粤B·D2856</span></div>
-            <div class="bind-qr-scanbox"><i></i><b></b><div class="car-qr-wrap" id="js-qr"></div></div>
-            <span class="bind-demo-hint">演示入口 · 实际由手机端扫码完成</span>
+            <div class="bind-qr-scanbox" id="js-qrPanel"><i></i><b></b><div class="car-qr-wrap" id="js-qr"></div></div>
+            <span class="bind-demo-hint" id="js-bindHint">演示入口 · 实际由手机端扫码完成</span>
             <button class="bind-demo-btn" id="js-scan">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 模拟扫码完成绑定
@@ -93,6 +116,29 @@
     document.getElementById('js-qr').innerHTML = CAR.qrSVG('bind-' + st.vehicleId);
     CAR.bindClock();
     CAR.installDebugFab();
+
+    var hasPlate = Boolean(st.plateNo);
+    var plateAction = document.getElementById('js-plateAction');
+    function openPlateEntry() { CAR.go('car-plate-entry.html', { delay: 160 }); }
+    plateAction.addEventListener('click', openPlateEntry);
+    document.getElementById('js-recordPlate').addEventListener('click', openPlateEntry);
+    if (!hasPlate) {
+        document.getElementById('js-bindKicker').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h5"/></svg> 车辆信息';
+        document.getElementById('js-bindTitle').textContent = '请先录入车辆牌照';
+        document.getElementById('js-bindDesc').textContent = '车辆牌照是绑定车辆的必要信息。录入后系统将校验该牌照是否已被其他车辆使用。';
+        document.getElementById('js-bindSteps').hidden = true;
+        document.getElementById('js-plateStatus').hidden = false;
+        document.getElementById('js-recordPlate').hidden = false;
+        document.getElementById('js-bindCaption').textContent = '待录入车辆牌照';
+        document.getElementById('js-vehicleNo').textContent = '未录入';
+        document.getElementById('js-qrPanel').classList.add('is-disabled');
+        document.getElementById('js-qrPanel').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h5"/></svg>';
+        document.getElementById('js-bindHint').textContent = '录入牌照后生成绑定二维码';
+        document.getElementById('js-bindHint').classList.add('is-blocking');
+        document.getElementById('js-scan').hidden = true;
+        return;
+    }
+    plateAction.querySelector('span').textContent = '修改牌照';
 
     document.getElementById('js-scan').addEventListener('click', function () {
         var result = CAR.validateBind();

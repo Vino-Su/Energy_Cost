@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>巡查地图 - 品质巡查</title>
     <link rel="stylesheet" href="components/app-common.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <script>
         // 嵌入态探测：作为品质巡查「地图」Tab 内容时，站内链接在外壳顶层打开
         (function () {
@@ -17,6 +18,7 @@
         })();
     </script>
     <script src="components/app-common.js"></script>
+    <script src="components/vehicle-demo-state.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
@@ -61,6 +63,43 @@
                 linear-gradient(155deg, transparent 0 54%, rgba(255,255,255,0.45) 54% 56%, transparent 56%),
                 #dfe6ea;
         }
+
+        /* ===== Leaflet 地图（替代上方 SVG/伪底图方案） ===== */
+        .map-shell.is-leaflet { background: #edf2f5; }
+        .insp-leaflet-map { position: absolute; inset: 0; z-index: 0; background: #edf2f5; font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif; }
+        .insp-map-fallback { position: absolute; inset: 0; z-index: 2; display: none; align-items: center; justify-content: center; padding: 24px; background: #edf2f5; color: #00000073; font-size: 14px; text-align: center; }
+        .insp-map-fallback.is-visible { display: flex; }
+        /* Leaflet 成功后隐藏旧 SVG/伪底图层（DOM 保留作降级备份） */
+        .map-shell.is-leaflet > .map-grid,
+        .map-shell.is-leaflet > .map-road,
+        .map-shell.is-leaflet > #js-zones,
+        .map-shell.is-leaflet > .track-layer,
+        .map-shell.is-leaflet > #js-problems,
+        .map-shell.is-leaflet > .person-marker { display: none !important; }
+        /* Leaflet 控件与瓦片视觉调整 */
+        .insp-leaflet-map .leaflet-control-zoom { border: 0 !important; box-shadow: 0 2px 8px rgba(20,40,70,0.16); margin-top: 56px !important; margin-right: 14px !important; }
+        .insp-leaflet-map .leaflet-control-zoom a { width: 36px; height: 36px; line-height: 34px; color: #000000d9; font-size: 20px; border-radius: 8px !important; }
+        .insp-leaflet-map .leaflet-control-zoom a:first-child { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; }
+        .insp-leaflet-map .leaflet-control-zoom a:last-child { border-top: 1px solid #f0f0f0; border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
+        .insp-leaflet-map .leaflet-control-attribution { padding: 2px 5px; background: rgba(255,255,255,0.86); color: #00000073; font-size: 10px; }
+        .insp-leaflet-map .leaflet-control-attribution a { color: #1677ff; }
+        .insp-leaflet-map .leaflet-marker-icon { border: 0; background: transparent; }
+        .insp-leaflet-map .leaflet-tile-pane { filter: saturate(0.8) contrast(0.96) brightness(1.03); }
+        /* Leaflet marker 视觉（巡查端：蓝色人员 / 状态色问题点 / 胶囊设施） */
+        .insp-map-marker { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; font-family: "DIN", "SF UI Text", sans-serif; }
+        .insp-leaflet-map .leaflet-marker-icon.insp-map-marker--person { width: 40px; height: 40px; border: 2px solid #fff; border-radius: 50%; background: #52c41a; color: #fff; box-shadow: 0 3px 13px rgba(82,196,26,0.4); display: grid; place-items: center; }
+        .insp-map-marker--person svg { width: 20px; height: 20px; }
+        .insp-map-marker--person::after { content: ""; position: absolute; inset: -9px; border-radius: inherit; border: 1px solid rgba(82,196,26,0.4); animation: personPulse 1.8s ease-out infinite; }
+        .insp-map-marker--problem { width: 22px; height: 22px; border: 0; background: transparent; transform: translate(-50%, -50%); }
+        .insp-map-marker--problem .problem-pin { position: relative; width: 18px; height: 18px; border: 3px solid #fff; border-radius: 50%; background: var(--insp-problem-color, #1677ff); box-shadow: 0 2px 6px rgba(20,40,70,0.32); }
+        .insp-map-marker--problem.is-selected .problem-pin { box-shadow: 0 0 0 5px #e6f4ff, 0 3px 9px rgba(20,40,70,0.4); transform: scale(1.18); }
+        /* Leaflet 模式下 .is-selected 加在外层 marker div 上，补一条等价光晕 */
+        .leaflet-marker-icon.is-selected .problem-pin { box-shadow: 0 0 0 5px #e6f4ff, 0 3px 9px rgba(20,40,70,0.4); transform: scale(1.18); }
+        .insp-map-marker--facility { min-width: 72px; height: 30px; gap: 5px; padding: 0 8px; border: 1px solid #dfe5ec; border-radius: 4px; background: #ffffff; color: #000000d9; box-shadow: 0 2px 6px rgba(20,40,70,0.16); font-size: 12px; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; }
+        .insp-map-marker--facility::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #52c41a; }
+        .insp-leaflet-map .leaflet-tooltip.insp-map-area-label { padding: 3px 6px; border: 0; border-radius: 4px; background: rgba(255,255,255,0.88); color: #000000d9; box-shadow: none; font-size: 12px; font-weight: 600; }
+        .insp-leaflet-map .leaflet-tooltip.insp-map-area-label::before { display: none; }
+
         .map-grid {
             position: absolute;
             inset: 0;
@@ -114,56 +153,37 @@
             opacity: 0.92;
             filter: drop-shadow(0 1px 2px rgba(255,77,79,0.28));
         }
-        /* 重点点位：橙色 pin，编号居中（PRD 6.1.1-2 / 6.1.1-8） */
-        .keypoint {
-            position: absolute;
-            z-index: 6;
-            width: 30px;
-            height: 38px;
-            transform: translate(-50%, -100%);
-            filter: drop-shadow(0 2px 5px rgba(224,98,13,0.32));
-            pointer-events: none;
-        }
-        .keypoint svg { width: 100%; height: 100%; display: block; }
-        .keypoint > span {
-            position: absolute;
-            left: 50%; top: 42%;
-            transform: translate(-50%, -50%);
-            font-family: "DIN", "SF UI Text", sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-        }
-        /* 事件点位（PRD 6.1.1-8 / 6.1.1-10） */
+        /* 事件点位（PRD 6.1.1-8 / 6.1.1-10，纯色填充圆形） */
         .problem-point {
             position: absolute;
             z-index: 7;
-            width: 30px;
-            height: 38px;
+            width: 22px;
+            height: 22px;
             padding: 0;
             border: 0;
             background: transparent;
-            transform: translate(-50%, -100%);
-            filter: drop-shadow(0 2px 5px rgba(20,40,70,0.28));
+            transform: translate(-50%, -50%);
+            filter: drop-shadow(0 2px 6px rgba(20,40,70,0.32));
             transition: transform 0.15s ease;
         }
-        .problem-point:active { transform: translate(-50%, -100%) scale(0.92); }
+        .problem-point:active { transform: translate(-50%, -50%) scale(0.92); }
         .problem-pin {
             position: relative;
-            width: 26px;
-            height: 26px;
-            margin: 0 auto;
-            border: 2px solid #fff;
-            border-radius: 50% 50% 50% 0;
-            display: grid;
-            place-items: center;
-            transform: rotate(-45deg);
+            width: 18px;
+            height: 18px;
+            border: 3px solid #fff;
+            border-radius: 50%;
         }
-        .problem-pin > span { transform: rotate(45deg); color: #fff; font-size: 14px; font-weight: 700; }
         .problem-point--pending .problem-pin { background: #8c8c8c; }
         .problem-point--assigned .problem-pin { background: #1677ff; }
         .problem-point--processing .problem-pin { background: #faad14; }
         .problem-point--done .problem-pin { background: #52c41a; }
+        .problem-point--unidentified .problem-pin { background: #8c8c8c; }
+        .problem-point--unassigned .problem-pin { background: #1677ff; }
+        .problem-point--unprocessed .problem-pin { background: #faad14; }
+        .problem-point--reviewing .problem-pin { background: #722ed1; }
+        .problem-point.is-selected { z-index: 9; }
+        .problem-point.is-selected .problem-pin { box-shadow: 0 0 0 5px #e6f4ff, 0 3px 9px rgba(20,40,70,0.4); transform: scale(1.18); }
         /* 人员位置（非机动车视角：人员而非车辆） */
         .person-marker {
             position: absolute;
@@ -172,12 +192,12 @@
             height: 40px;
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            background: #ffffff;
-            border: 2px solid #91d5ff;
-            box-shadow: 0 3px 13px rgba(22,119,255,0.35);
+            background: #52c41a;
+            border: 2px solid #fff;
+            box-shadow: 0 3px 13px rgba(82,196,26,0.4);
             display: grid;
             place-items: center;
-            color: #1677ff;
+            color: #fff;
             transition: left 0.42s ease, top 0.42s ease;
         }
         .person-marker::after {
@@ -185,7 +205,7 @@
             position: absolute;
             inset: -9px;
             border-radius: inherit;
-            border: 1px solid rgba(22,119,255,0.35);
+            border: 1px solid rgba(82,196,26,0.4);
             animation: personPulse 1.8s ease-out infinite;
         }
         .person-marker svg { width: 20px; height: 20px; }
@@ -299,9 +319,9 @@
             gap: 10px;
             padding: 8px 10px 8px 12px;
             border-radius: 10px;
-            background: rgba(22, 119, 255, 0.96);
-            color: #fff;
-            box-shadow: 0 8px 22px rgba(22, 119, 255, 0.28);
+            background: rgba(255, 255, 255, 0.96);
+            color: #000000d9;
+            box-shadow: 0 8px 22px rgba(24, 39, 59, 0.14);
             animation: bannerIn 0.3s ease-out;
         }
         .task-banner.show { display: flex; }
@@ -309,23 +329,23 @@
             from { transform: translateY(-12px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        .task-banner__icon { flex: none; display: grid; place-items: center; }
+        .task-banner__icon { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #e6f4ff; color: #1677ff; }
         .task-banner__icon svg { width: 18px; height: 18px; }
-        .task-banner__txt { flex: 1; min-width: 0; font-size: 13px; line-height: 18px; }
+        .task-banner__txt { flex: 1; min-width: 0; font-size: 13px; line-height: 18px; color: #334155; }
         .task-banner__txt strong { font-weight: 600; }
         .task-banner__view {
             flex: none;
             min-height: 28px;
             padding: 0 10px;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.22);
-            color: #fff;
+            border-radius: 15px;
+            background: #f0f7ff;
+            color: #1677ff;
             font-size: 12px;
             font-weight: 500;
             line-height: 28px;
             border: none;
         }
-        .task-banner__view:active { background: rgba(255,255,255,0.35); }
+        .task-banner__view:active { background: #e6f4ff; }
 
         /* ===== 右侧辅助工具栏（PRD 6.1.1-11） ===== */
         .map-tools {
@@ -360,6 +380,9 @@
             transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .map-shortcut:active { transform: scale(0.97); box-shadow: 0 3px 9px rgba(24,39,59,0.12); }
+        .map-shortcut.is-active { background: #1677ff; color: #fff; box-shadow: 0 4px 14px rgba(22,119,255,0.32); }
+        .map-shortcut.is-active .map-shortcut__icon { color: #fff; }
+        .map-shortcut.is-active .map-shortcut__badge { background: #fff; color: #1677ff; }
         .map-shortcut__icon { width: 16px; height: 16px; flex: none; color: #1677ff; }
         .map-shortcut__badge {
             position: absolute;
@@ -425,9 +448,8 @@
         }
         .legend-mark { flex: none; }
         .legend-mark.zone { width: 14px; height: 10px; border: 2px dashed rgba(22,119,255,0.7); border-radius: 3px; background: rgba(22,119,255,0.10); }
-        .legend-mark--kp { width: 12px; height: 12px; background: #e0620d; border-radius: 50%; }
         .legend-mark.track { width: 18px; height: 0; border-top: 2px solid #ff4d4f; }
-        .legend-mark--person { width: 12px; height: 12px; background: #1677ff; border-radius: 50%; }
+        .legend-mark--person { width: 12px; height: 12px; background: #52c41a; border-radius: 50%; }
         .legend-mark--problem { width: 12px; height: 12px; background: #faad14; border-radius: 50%; }
 
         /* ===== 底部任务控制台（任务卡片 + 操作按钮） ===== */
@@ -476,36 +498,85 @@
 
         /* 任务卡片（对齐用车管理 map-workbench 的 task-line 范式，PRD 6.1.1-2） */
         .task-card { padding: 0 16px 12px; }
+        /* 车机连接：任务卡片内的紧凑上下文行，不承载车辆类型等非核心信息 */
+        .connection-row {
+            width: 100%;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0 0 8px;
+            margin-bottom: 8px;
+            border: 0;
+            border-bottom: 1px solid #f0f0f0;
+            background: transparent;
+            color: #000000d9;
+            text-align: left;
+        }
+        .connection-row:active { opacity: 0.7; }
+        .connection-row__label { flex: none; color: #00000073; font-size: 12px; line-height: 18px; }
+        .connection-row__plate {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: "DIN", "SF UI Text", sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 20px;
+        }
+        .connection-row__plate--unbound { color: #00000073; font-family: inherit; font-size: 13px; font-weight: 400; }
+        .connection-row__status,
+        .connection-row__action {
+            flex: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 18px;
+            white-space: nowrap;
+        }
+        .connection-row__status { color: #389e0d; }
+        .connection-row__status::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        .connection-row__action { color: #1677ff; }
+        .connection-row__arrow { width: 15px; height: 15px; flex: none; color: #00000073; }
         .task-line { display: flex; align-items: center; gap: 8px; }
         .task-line + .task-line { margin-top: 8px; }
         /* 第 1 行：区域名 + 状态 + 任务详情（详情为右上角文字链接，非底部按钮） */
         .task-line-head { justify-content: space-between; }
         .task-title-wrap { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
         .task-card__area {
-            flex: 1; min-width: 0;
+            flex: none; max-width: 60%;
             font-size: 16px; font-weight: 700; color: #000000d9; line-height: 22px;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
+        /* 事件上报数（待接收不渲染） */
+        .task-card__count {
+            flex: none; display: inline-flex; align-items: center; gap: 2px;
+            color: #ff4d4f; font-size: 12px; line-height: 18px; font-weight: 500;
+        }
+        .task-card__count svg { width: 13px; height: 13px; }
         .task-head-right { flex: none; display: flex; align-items: center; gap: 8px; }
         .detail-link {
             flex: none; font-size: 12px; line-height: 18px; color: #1677ff;
             text-decoration: none; font-weight: 500; background: none; border: none; padding: 0;
         }
         .detail-link:active { opacity: 0.7; }
-        /* 第 2 行：任务类型 + 作业类型 + 计划时间段 */
+        /* 第 2 行：任务日期 - 作业时间 - 作业资源 */
         .task-card__meta {
             font-size: 12px; line-height: 18px; color: #00000073;
         }
         .task-card__meta .sep { color: #e8e8e8; }
         .task-card__meta .mono { font-family: "DIN", "SF UI Text", sans-serif; color: #000000a6; }
-        .task-type-tag {
-            flex: none; padding: 3px 7px; border-radius: 6px; background: #e6f4ff; color: #1677ff;
-            font-size: 12px; font-weight: 700; white-space: nowrap;
-        }
-        .work-type-tag {
-            flex: none; padding: 3px 7px; border-radius: 6px; background: #e6fffb; color: #08979c;
-            font-size: 12px; font-weight: 700; white-space: nowrap;
-        }
+        .task-card__meta .resource { color: #000000a6; }
         /* 状态标签 */
         .tag {
             flex: none; display: inline-flex; align-items: center;
@@ -515,6 +586,10 @@
         .tag--todo { background: #fffbe6; color: #d48806; }
         .tag--running { background: #e6f4ff; color: #1677ff; }
         .tag--done { background: #f6ffed; color: #389e0d; }
+        .tag--unidentified { background: #f5f5f5; color: #595959; }
+        .tag--unassigned { background: #e6f4ff; color: #1677ff; }
+        .tag--unprocessed { background: #fff7e6; color: #d46b08; }
+        .tag--reviewing { background: #f9f0ff; color: #722ed1; }
         /* 第 3 行：3 列指标卡（对齐用车管理 #f5f8fb 底圆角） */
         .task-kpis {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
@@ -639,6 +714,103 @@
         .finish-dialog__button--confirm { background: #ff4d4f; color: #ffffff; }
         .finish-dialog__button:active { opacity: 0.85; }
 
+        /* ===== 车辆连接详情 ===== */
+        .connection-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 31;
+            display: none;
+            align-items: flex-end;
+            background: rgba(0, 0, 0, 0.48);
+        }
+        .connection-overlay.show { display: flex; }
+        .connection-detail {
+            width: 100%;
+            padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
+            animation: finishDialogIn 0.2s ease-out;
+        }
+        .connection-detail__head { display: flex; align-items: center; justify-content: space-between; }
+        .connection-detail__title { color: #000000d9; font-size: 18px; font-weight: 700; line-height: 26px; }
+        .connection-detail__close {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border: none;
+            border-radius: 50%;
+            background: #f5f5f5;
+            color: #00000073;
+        }
+        .connection-detail__close:active { opacity: 0.7; }
+        .connection-detail__close svg { width: 18px; height: 18px; }
+        .connection-detail__list { margin-top: 14px; border-top: 1px solid #f0f0f0; }
+        .connection-detail__item {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #00000073;
+            font-size: 14px;
+            line-height: 22px;
+        }
+        .connection-detail__item strong {
+            min-width: 0;
+            overflow: hidden;
+            color: #000000d9;
+            font-family: "DIN", "SF UI Text", sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: right;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .connection-detail__state { color: #389e0d !important; }
+        .connection-detail__disconnect {
+            width: 100%;
+            height: 44px;
+            margin-top: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #fff1f0;
+            color: #ff4d4f;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .connection-detail__disconnect:active { opacity: 0.78; }
+
+        /* 断开连接确认：避免在查看连接信息时误触退出车机应用 */
+        .connection-disconnect-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 32;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(0, 0, 0, 0.48);
+        }
+        .connection-disconnect-overlay.show { display: flex; }
+        .connection-disconnect-dialog {
+            width: min(280px, 100%);
+            padding: 22px 20px 18px;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+            animation: connectionConfirmIn 0.18s ease-out;
+        }
+        @keyframes connectionConfirmIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .connection-disconnect-dialog__title { color: #000000d9; font-size: 17px; font-weight: 700; line-height: 24px; text-align: center; }
+        .connection-disconnect-dialog__desc { margin-top: 10px; color: #00000073; font-size: 13px; line-height: 20px; text-align: center; }
+        .connection-disconnect-dialog__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .connection-disconnect-dialog__button { height: 40px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; }
+        .connection-disconnect-dialog__button--cancel { background: #f5f5f5; color: #000000d9; }
+        .connection-disconnect-dialog__button--confirm { background: #ff4d4f; color: #ffffff; }
+        .connection-disconnect-dialog__button:active { opacity: 0.82; }
+
         /* ===== 今日待办抽屉（PRD 6.1.1-4~7，上拉覆盖地图） ===== */
         .sheet-mask {
             position: absolute;
@@ -721,44 +893,68 @@
             background: #1677ff;
         }
         .sheet-task { position: relative; }
-        .sheet-task__r1 { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .sheet-task__area { font-size: 14px; font-weight: 500; color: #000000d9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sheet-task__r1 { display: flex; align-items: center; gap: 8px; }
+        .sheet-task__area { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; color: #000000d9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sheet-task__count { flex: none; color: #ff4d4f; font-size: 12px; line-height: 18px; font-weight: 500; }
         .sheet-task__r2 { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #00000073; flex-wrap: wrap; }
         .sheet-task__r2 .sep { color: #e8e8e8; }
         .sheet-task__r2 .mono { font-family: "DIN", "SF UI Text", sans-serif; }
         .sheet-problem {
             --problem-accent: #ff7a45;
+            max-height: 50vh;
         }
         .problem-sheet-item {
             position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
             width: 100%;
-            padding: 13px 16px;
-            border: none;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 40px;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border: 0;
             border-bottom: 1px solid #f5f5f5;
             background: #fff;
-            color: #000000d9;
-            text-align: left;
+            transition: background-color 0.15s;
         }
-        .problem-sheet-item:active { background: #fff7f2; }
-        .problem-sheet-item__r1,
-        .problem-sheet-item__r2 { display: flex; align-items: center; min-width: 0; gap: 8px; }
-        .problem-sheet-item__no {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-family: "DIN", "SF UI Text", sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            line-height: 20px;
+        .problem-sheet-item:last-child { border-bottom: 0; }
+        .problem-sheet-item.is-selected { background: #e6f4ff; }
+        .problem-sheet-item.is-selected::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #1677ff;
         }
-        .problem-sheet-item__r2 { color: #00000073; font-size: 12px; line-height: 18px; }
-        .problem-sheet-item__location { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .problem-sheet-item__time { flex: none; font-family: "DIN", "SF UI Text", sans-serif; }
-        .problem-sheet-item__chevron { width: 16px; height: 16px; flex: none; color: #00000040; }
+        .problem-sheet-item__summary {
+            display: block; min-width: 0; padding: 0; border: 0; background: transparent;
+            color: inherit; font: inherit; text-align: left; cursor: pointer;
+        }
+        .problem-sheet-item__summary:active { opacity: 0.76; }
+        .problem-sheet-item__content { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .problem-sheet-item__head { display: flex; align-items: center; gap: 7px; min-width: 0; }
+        .problem-sheet-item__time { flex: none; color: #000000a6; font-family: "DIN", "SF UI Text", sans-serif; font-size: 14px; font-weight: 500; }
+        .problem-sheet-item__sep { color: #e8e8e8; }
+        .problem-sheet-item__location { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; color: #000000d9; }
+        .problem-sheet-item__meta { display: flex; align-items: center; gap: 7px; min-width: 0; color: #00000073; font-size: 12px; flex-wrap: wrap; }
+        .problem-sheet-item__type { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #000000d9; font-size: 12px; font-weight: 500; }
+        .problem-sheet-item__tags { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; }
+        .problem-sheet-item__desc { overflow: hidden; color: #00000073; font-size: 12px; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
+        .problem-sheet-item__detail {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; padding: 0;
+            border: 1px solid #1677ff; border-radius: 50%;
+            background: #ffffff; color: #1677ff; cursor: pointer;
+            transition: background-color 0.15s, transform 0.12s;
+        }
+        .problem-sheet-item__detail:hover { background: #e6f4ff; }
+        .problem-sheet-item__detail:active { transform: scale(0.96); }
+        .problem-sheet-item__detail svg { width: 16px; height: 16px; }
+        .problem-discover {
+            flex: none; display: inline-flex; align-items: center; gap: 3px;
+            height: 20px; padding: 0 6px; border-radius: 4px;
+            font-size: 11px; font-weight: 600; line-height: 1;
+        }
+        .problem-discover::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+        .problem-discover--ai { background: #e6f4ff; color: #1677ff; }
+        .problem-discover--ai::before { background: #1677ff; }
+        .problem-discover--manual { background: #f0f5ff; color: #2f54eb; }
+        .problem-discover--manual::before { background: #2f54eb; }
         .sheet-empty {
             padding: 48px 16px;
             text-align: center;
@@ -793,7 +989,10 @@
 <body>
 <div class="workbench" id="workbench">
     <!-- 地图底图 -->
-    <div class="map-shell">
+    <div class="map-shell" id="js-map-shell">
+        <!-- Leaflet 地图容器（OSM 瓦片）；JS 检测 window.L 成功后给 .map-shell 加 is-leaflet 类 -->
+        <div class="insp-leaflet-map" id="js-leaflet-map" aria-label="巡查地图"></div>
+        <div class="insp-map-fallback" id="js-map-fallback">地图服务暂不可用，请检查网络连接后刷新</div>
         <div class="map-grid"></div>
         <div class="map-road main"></div>
         <div class="map-road secondary"></div>
@@ -804,13 +1003,11 @@
         <svg class="track-layer" viewBox="0 0 375 600" preserveAspectRatio="none" id="js-track-layer">
             <path class="actual-track" id="js-track-path" d=""></path>
         </svg>
-        <!-- 重点点位 -->
-        <div id="js-keypoints"></div>
         <!-- 事件点位 -->
         <div id="js-problems"></div>
         <!-- 人员位置 -->
         <div class="person-marker" id="js-person" style="left:50%;top:55%">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.6-1 3-2.5 3.5V20l1 1.5h-5l1-1.5V9.5C10 9 9 7.6 9 6a4 4 0 014-4z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>
         </div>
     </div>
 
@@ -840,21 +1037,21 @@
         <span class="task-banner__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         </span>
-        <span class="task-banner__txt" id="js-banner-txt"><strong>巡查任务</strong> 新任务已派发</span>
+        <span class="task-banner__txt" id="js-banner-txt">新任务 路面质检-中央广场片区-2026-08-03 10:30-12:00</span>
         <button type="button" class="task-banner__view" id="js-banner-view">查看</button>
     </div>
 
     <!-- 右侧辅助工具栏 -->
     <div class="map-tools">
-        <button type="button" class="map-shortcut" id="js-tool-problem" aria-label="查看今日事件">
-            <svg class="map-shortcut__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h3M8 13h3M8 17h3"/><path d="m15 8 1 1 2-2M15 13l1 1 2-2M15 17l1 1 2-2"/></svg>
-            <span>今日事件</span>
-            <span class="map-shortcut__badge" id="js-problem-badge">0</span>
-        </button>
         <button type="button" class="map-shortcut" id="js-map-tasks" aria-label="查看今日任务">
             <svg class="map-shortcut__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 13h8M8 17h5"/><path d="m5.5 8 .8.8 1.7-1.7"/><path d="m5.5 13 .8.8 1.7-1.7"/><path d="m5.5 17 .8.8 1.7-1.7"/></svg>
             <span>今日任务</span>
             <span class="map-shortcut__badge" id="js-map-task-count">0</span>
+        </button>
+        <button type="button" class="map-shortcut" id="js-tool-problem" aria-label="查看今日事件">
+            <svg class="map-shortcut__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h3M8 13h3M8 17h3"/><path d="m15 8 1 1 2-2M15 13l1 1 2-2M15 17l1 1 2-2"/></svg>
+            <span>今日事件</span>
+            <span class="map-shortcut__badge" id="js-problem-badge">0</span>
         </button>
         <button type="button" class="tool-btn" id="js-tool-reset" aria-label="复位">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
@@ -870,9 +1067,8 @@
     <!-- 左下路线图例 -->
     <div class="map-legend" id="js-legend">
         <div class="legend-item"><span class="legend-mark zone"></span>任务作业区域</div>
-        <div class="legend-item"><span class="legend-mark--kp"></span>重点点位</div>
         <div class="legend-item"><span class="legend-mark track"></span>实际轨迹</div>
-        <div class="legend-item"><span class="legend-mark--person"></span>人员位置</div>
+        <div class="legend-item"><span class="legend-mark--person"></span>巡查员手机</div>
         <div class="legend-item"><span class="legend-mark--problem"></span>事件点位</div>
     </div>
 
@@ -909,7 +1105,6 @@
                 <span>收起</span>
             </button>
         </div>
-        <div class="sheet__stats" id="js-problem-sheet-stats"></div>
         <div class="sheet__body" id="js-problem-sheet-body"></div>
     </div>
 
@@ -930,19 +1125,54 @@
         </div>
     </div>
 
+    <!-- 车辆连接详情：已绑定时由任务卡片连接行唤起 -->
+    <div class="connection-overlay" id="js-connection-overlay" role="dialog" aria-modal="true" aria-labelledby="js-connection-title">
+        <div class="connection-detail">
+            <div class="finish-dialog__grip"></div>
+            <div class="connection-detail__head">
+                <div class="connection-detail__title" id="js-connection-title">车机连接</div>
+                <button type="button" class="connection-detail__close" id="js-connection-close" aria-label="关闭车辆连接信息">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="connection-detail__list" id="js-connection-detail-list"></div>
+            <button type="button" class="connection-detail__disconnect" id="js-connection-disconnect">断开连接</button>
+        </div>
+    </div>
+
+    <!-- 断开车机连接确认 -->
+    <div class="connection-disconnect-overlay" id="js-connection-disconnect-overlay" role="dialog" aria-modal="true" aria-labelledby="js-connection-disconnect-title">
+        <div class="connection-disconnect-dialog">
+            <div class="connection-disconnect-dialog__title" id="js-connection-disconnect-title">断开车机连接</div>
+            <div class="connection-disconnect-dialog__desc">断开后，车机APP将退出登录。再次使用时需重新扫码绑定。</div>
+            <div class="connection-disconnect-dialog__actions">
+                <button type="button" class="connection-disconnect-dialog__button connection-disconnect-dialog__button--cancel" id="js-connection-disconnect-cancel">取消</button>
+                <button type="button" class="connection-disconnect-dialog__button connection-disconnect-dialog__button--confirm" id="js-connection-disconnect-confirm">断开连接</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="js-camera-input" accept="image/*" capture="environment" hidden>
 
     <!-- Toast -->
     <div class="toast" id="js-toast"></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 (function () {
     'use strict';
 
     /* ===== 演示任务数据（巡查员-非机动车视角） ===== */
     var TASKS = [
-        { id: 'I001', area: '滨江路东段', status: 'done', type: '巡查任务', workType: '路面质检', time: '08:00-10:00', start: '08:02', mileage: 9.42, duration: 118, problems: 2,
+        { id: 'I001', area: '滨江路东段', status: 'done', type: '巡查任务', workType: '路面质检', time: '08:00-10:00', planDate: '2026-08-03', resource: '巡查员 张明', start: '08:02', mileage: 9.42, duration: 118, problems: 2,
+          // 经纬度（WGS84，广州片区，Leaflet 渲染用）；下方 left/top 百分比字段为旧 SVG 方案降级备份
+          geo: {
+            zone: [[23.1258, 113.2611], [23.1258, 113.2694], [23.1314, 113.2694], [23.1314, 113.2611]],
+            points: [{ name: '滨江路18号路口', latlng: [23.1290, 113.2640] }, { name: '公交枢纽站', latlng: [23.1270, 113.2680] }],
+            track: [[23.1260, 113.2616], [23.1268, 113.2627], [23.1283, 113.2634], [23.1295, 113.2642], [23.1291, 113.2657], [23.1278, 113.2670], [23.1270, 113.2683]],
+            person: [23.1280, 113.2646]
+          },
           zone: { left: '8%', top: '18%', width: '40%', height: '30%' },
           points: [{ name: '滨江路18号路口', left: '20%', top: '32%' }, { name: '中央广场北门', left: '38%', top: '42%' }],
           track: 'M 30 200 C 50 180, 70 160, 90 150 S 130 145, 150 160',
@@ -951,36 +1181,126 @@
             {
                 id: 'P001', no: 'Q20260728-0014', status: 'done', statusText: '已完成',
                 loc: '滨江路18号路口', reportedAt: '2026-07-28 09:18',
-                point: { left: '22%', top: '36%' }
+                coordinate: '113.2640,23.1290',
+                point: { left: '22%', top: '36%' },
+                discoverType: 'manual', problemType: '路面破损',
+                desc: '机动车道靠右侧发现长约 30cm 裂缝，已拍照上报'
+            },
+            {
+                id: 'P002', no: 'Q20260728-0015', status: 'reviewing', statusText: '待核查',
+                loc: '公交枢纽站出入口', reportedAt: '2026-07-28 09:42',
+                coordinate: '113.2680,23.1270',
+                point: { left: '30%', top: '40%' },
+                discoverType: 'AI', problemType: '垃圾堆积',
+                desc: 'AI 识别公交站旁垃圾堆积超 2㎡'
             }
           ]
         },
-        { id: 'I002', area: '中央广场片区', status: 'todo', type: '巡查任务', workType: '路面质检', time: '10:30-12:00', start: null, mileage: null, duration: null, problems: 0,
+        { id: 'I002', area: '中央广场片区', status: 'todo', type: '巡查任务', workType: '路面质检', time: '10:30-12:00', planDate: '2026-08-03', resource: '巡查员 李华', start: null, mileage: null, duration: null, problems: 0,
+          geo: {
+            zone: [[23.1324, 113.2675], [23.1324, 113.2755], [23.1373, 113.2755], [23.1373, 113.2675]],
+            points: [{ name: '中央广场北门', latlng: [23.1350, 113.2710] }, { name: '中央广场南门', latlng: [23.1332, 113.2736] }, { name: '喷泉广场', latlng: [23.1345, 113.2722] }],
+            track: [[23.1329, 113.2680], [23.1338, 113.2694], [23.1345, 113.2708], [23.1350, 113.2722], [23.1361, 113.2735]],
+            person: [23.1348, 113.2721]
+          },
           zone: { left: '42%', top: '40%', width: '38%', height: '32%' },
           points: [{ name: '中央广场北门', left: '52%', top: '52%' }, { name: '喷泉广场', left: '68%', top: '60%' }],
           track: '',
           person: { left: '60%', top: '56%' },
-          problemsList: []
+          problemsList: [
+            {
+                id: 'P003', no: 'Q20260728-0016', status: 'unidentified', statusText: '待判别',
+                loc: '中央广场北门', reportedAt: '2026-07-28 10:05',
+                coordinate: '113.2710,23.1350',
+                point: { left: '52%', top: '52%' },
+                discoverType: 'AI', problemType: '未知',
+                desc: ''
+            },
+            {
+                id: 'P004', no: 'Q20260728-0017', status: 'unassigned', statusText: '待分配',
+                loc: '喷泉广场', reportedAt: '2026-07-28 10:18',
+                coordinate: '113.2722,23.1345',
+                point: { left: '68%', top: '60%' },
+                discoverType: 'AI', problemType: '设施损坏',
+                desc: '喷泉周边护栏缺失 3 处'
+            }
+          ]
         },
-        { id: 'I003', area: '解放南路沿线', status: 'todo', type: '巡查任务', workType: '路面质检', time: '13:30-15:00', start: null, mileage: null, duration: null, problems: 0,
+        { id: 'I003', area: '解放南路沿线', status: 'todo', type: '巡查任务', workType: '路面质检', time: '13:30-15:00', planDate: '2026-08-03', resource: '巡查员 王建国', start: null, mileage: null, duration: null, problems: 0,
+          geo: {
+            zone: [[23.1219, 113.2620], [23.1219, 113.2726], [23.1265, 113.2726], [23.1265, 113.2620]],
+            points: [{ name: '解放南路1号桥', latlng: [23.1240, 113.2644] }, { name: '解放南路匝道', latlng: [23.1250, 113.2670] }, { name: '文昌路口', latlng: [23.1232, 113.2704] }],
+            track: [[23.1222, 113.2626], [23.1228, 113.2644], [23.1236, 113.2660], [23.1245, 113.2678], [23.1238, 113.2694], [23.1249, 113.2710]],
+            person: [23.1240, 113.2672]
+          },
           zone: { left: '10%', top: '52%', width: '50%', height: '26%' },
           points: [{ name: '解放南路1号桥', left: '22%', top: '62%' }, { name: '文昌路口', left: '48%', top: '68%' }],
           track: '',
           person: { left: '30%', top: '62%' },
-          problemsList: []
+          problemsList: [
+            {
+                id: 'P005', no: 'Q20260728-0018', status: 'unprocessed', statusText: '待处理',
+                loc: '解放南路1号桥', reportedAt: '2026-07-28 11:02',
+                coordinate: '113.2644,23.1240',
+                point: { left: '22%', top: '62%' },
+                discoverType: 'manual', problemType: '井盖缺失',
+                desc: '桥面机动车道井盖完全缺失，已设警示'
+            },
+            {
+                id: 'P006', no: 'Q20260728-0019', status: 'processing', statusText: '处理中',
+                loc: '文昌路口', reportedAt: '2026-07-28 11:25',
+                coordinate: '113.2704,23.1232',
+                point: { left: '48%', top: '68%' },
+                discoverType: 'AI', problemType: '积水',
+                desc: '路口低洼处积水面积约 5㎡'
+            }
+          ]
         },
-        { id: 'I004', area: '人民东路-文昌路', status: 'todo', type: '巡查任务', workType: '路面质检', time: '15:30-17:00', start: null, mileage: null, duration: null, problems: 0,
+        { id: 'I004', area: '人民东路-文昌路', status: 'todo', type: '巡查任务', workType: '路面质检', time: '15:30-17:00', planDate: '2026-08-03', resource: '巡查员 赵敏', start: null, mileage: null, duration: null, problems: 0,
+          geo: {
+            zone: [[23.1282, 113.2535], [23.1282, 113.2622], [23.1342, 113.2622], [23.1342, 113.2535]],
+            points: [{ name: '人民东路跨线桥', latlng: [23.1322, 113.2555] }, { name: '文昌路小学', latlng: [23.1305, 113.2592] }, { name: '文昌路地铁口', latlng: [23.1288, 113.2577] }],
+            track: [[23.1286, 113.2542], [23.1294, 113.2555], [23.1308, 113.2570], [23.1316, 113.2588], [23.1324, 113.2602], [23.1334, 113.2614]],
+            person: [23.1308, 113.2587]
+          },
           zone: { left: '40%', top: '14%', width: '42%', height: '24%' },
           points: [{ name: '人民东路跨线桥', left: '52%', top: '22%' }, { name: '文昌路小学', left: '68%', top: '28%' }],
           track: '',
           person: { left: '50%', top: '24%' },
-          problemsList: []
+          problemsList: [
+            {
+                id: 'P007', no: 'Q20260728-0020', status: 'done', statusText: '已完成',
+                loc: '文昌路地铁口', reportedAt: '2026-07-28 12:10',
+                coordinate: '113.2577,23.1288',
+                point: { left: '50%', top: '24%' },
+                discoverType: 'manual', problemType: '绿化损坏',
+                desc: '地铁口绿化带被踩踏成小径'
+            }
+          ]
         }
     ];
 
     var STATUS_TAG = { done: 'tag--done', running: 'tag--running', todo: 'tag--todo' };
     var STATUS_TEXT = { done: '已完成', running: '进行中', todo: '待开始' };
-    var PROB_TAG = { done: 'tag--done', pending: 'tag--todo', processing: 'tag--running', assigned: 'tag--running' };
+    // 事件六类状态及展示顺序（PRD 事件状态机：待判别→待分配→待处理→处理中→待核查→已完成）
+    var PROB_STATUS_ORDER = ['unidentified', 'unassigned', 'unprocessed', 'processing', 'reviewing', 'done'];
+    var PROB_STATUS_TEXT = {
+        unidentified: '待判别', unassigned: '待分配', unprocessed: '待处理',
+        processing: '处理中', reviewing: '待核查', done: '已完成'
+    };
+    var PROB_TAG = {
+        unidentified: 'tag--unidentified', unassigned: 'tag--unassigned',
+        unprocessed: 'tag--unprocessed', processing: 'tag--running',
+        reviewing: 'tag--reviewing', done: 'tag--done',
+        // 兼容旧 key
+        pending: 'tag--unidentified', assigned: 'tag--unassigned'
+    };
+    var PROB_STATUS_COLOR = {
+        unidentified: '#8c8c8c', unassigned: '#1677ff', unprocessed: '#faad14',
+        processing: '#faad14', reviewing: '#722ed1', done: '#52c41a',
+        // 兼容旧 key
+        pending: '#8c8c8c', assigned: '#1677ff'
+    };
 
     // 状态持久化（与车机端 car-common 一致思路，独立键避免污染用车管理）
     var STATE_KEY = 'kuwash-inspection-state';
@@ -1034,6 +1354,19 @@
         });
         return list;
     }
+    // 按六类事件状态分组，组内按上报时间倒序（PRD C02-R5）
+    function groupProblemsByStatus(problems) {
+        var groups = {};
+        PROB_STATUS_ORDER.forEach(function (s) { groups[s] = []; });
+        problems.forEach(function (p) {
+            var key = groups[p.status] ? p.status : 'unidentified';
+            groups[key].push(p);
+        });
+        Object.keys(groups).forEach(function (k) {
+            groups[k].sort(function (a, b) { return (b.reportedAt || '').localeCompare(a.reportedAt || ''); });
+        });
+        return groups;
+    }
     function openProblemDetail(problemId, taskId) {
         var target = 'inspection-problem-detail.html?problem=' + encodeURIComponent(problemId) + '&task=' + encodeURIComponent(taskId || '');
         if (window.parent && window.parent !== window) {
@@ -1054,25 +1387,269 @@
     }
 
     /* ===== 地图渲染 ===== */
+    // Leaflet 实例与图层组（与车机端 car-task-running 同构）
+    var leafletMap = null;
+    var mapReady = false;
+    var tileErrorNotified = false;
+    var mapLayers = null;          // { focus, tasks, problems, facilities }
+    var currentTaskLayer = null;   // 当前任务区域 polygon（聚焦模式）
+    var currentTrackLayer = null;  // 当前已行驶轨迹 polyline（红色实线）
+    var currentPlannedLayer = null; // 计划轨迹 polyline（灰色虚线）
+    var currentPersonMarker = null;
+    // 执行中任务轨迹动画状态
+    var trackAnimTimer = null;     // setInterval 句柄
+    var trackAnimState = null;     // { taskId, track, stepIdx, trackLayer, personMarker }
+    var stateSaveTimer = null;     // 持久化 debounce 句柄
+    var facilitiesVisible = false;
+    // 今日事件抽屉打开时：全部事件点位 marker 引用（Leaflet 模式存 L.marker，降级模式存 HTMLElement）
+    var problemMarkers = {};
+    // 当前聚焦选中的事件 id（点击卡片 toggle 用）
+    var focusedProblemId = null;
+    var MAP_FACILITIES = [
+        { name: '公厕', latlng: [23.1304, 113.2602] },
+        { name: '垃圾转运点', latlng: [23.1336, 113.2718] },
+        { name: '消火栓', latlng: [23.1262, 113.2678] }
+    ];
+
+    // 问题状态色（与 UI_design_APP 色值对齐）
+    function problemStatusColor(status) {
+        return PROB_STATUS_COLOR[status] || '#1677ff';
+    }
+    // 解析 'lng,lat' 字符串为 Leaflet [lat,lng]
+    function parseLatLng(str) {
+        if (!str) return null;
+        var parts = String(str).split(',');
+        if (parts.length < 2) return null;
+        var lng = parseFloat(parts[0]);
+        var lat = parseFloat(parts[1]);
+        if (isNaN(lat) || isNaN(lng)) return null;
+        return [lat, lng];
+    }
+
+    // divIcon 工厂
+    function mapIcon(className, html, size, anchor) {
+        return L.divIcon({ className: className || '', html: html, iconSize: size, iconAnchor: anchor });
+    }
+    function personIcon() {
+        return mapIcon('insp-map-marker insp-map-marker--person',
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>',
+            [40, 40], [20, 20]);
+    }
+    function problemIcon(p) {
+        return mapIcon('insp-map-marker insp-map-marker--problem',
+            '<span class="problem-pin" style="--insp-problem-color:' + problemStatusColor(p.status) + '"></span>',
+            [22, 22], [11, 11]);
+    }
+    function facilityIcon(name) {
+        return mapIcon('insp-map-marker insp-map-marker--facility', name, null, null);
+    }
+
+    // Leaflet 初始化（OSM 瓦片 + 降级 + invalidateSize）
+    function initLeafletMap() {
+        if (mapReady) return;
+        var shell = document.getElementById('js-map-shell');
+        try {
+            leafletMap = L.map('js-leaflet-map', {
+                zoomControl: false, attributionControl: true,
+                preferCanvas: true, minZoom: 12, maxZoom: 19
+            });
+            // 缩放控件置于右上角，下移避开顶部返回按钮条（PRD 6.1.1-11）
+            L.control.zoom({ position: 'topright' }).addTo(leafletMap);
+            var tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+            }).addTo(leafletMap);
+            tiles.on('tileerror', function () {
+                if (tileErrorNotified) return;
+                tileErrorNotified = true;
+                toast('地图底图加载失败，请检查网络连接');
+            });
+            mapLayers = {
+                focus: L.featureGroup().addTo(leafletMap),
+                tasks: L.featureGroup().addTo(leafletMap),
+                problems: L.featureGroup().addTo(leafletMap),
+                facilities: L.featureGroup().addTo(leafletMap)
+            };
+            shell.classList.add('is-leaflet');
+            mapReady = true;
+            setTimeout(function () { leafletMap.invalidateSize(false); }, 0);
+        } catch (err) {
+            var fb = document.getElementById('js-map-fallback');
+            if (fb) fb.classList.add('is-visible');
+            mapReady = false;
+        }
+    }
+
     function renderMap(t) {
-        // 作业区域
+        // 双轨：Leaflet 成功走新路径，失败走旧 SVG/百分比降级路径
+        if (mapReady && leafletMap) { renderMapLeaflet(t); return; }
+        renderMapLegacy(t);
+    }
+
+    // Leaflet 渲染（聚焦当前任务模式）
+    function renderMapLeaflet(t) {
+        var geo = t.geo;
+        // 清空聚焦层
+        mapLayers.focus.clearLayers();
+        currentTaskLayer = null;
+        currentTrackLayer = null;
+        currentPlannedLayer = null;
+        currentPersonMarker = null;
+        // 作业区域：淡蓝虚线填充 polygon + 区域名标签 tooltip
+        if (geo && geo.zone && geo.zone.length) {
+            currentTaskLayer = L.polygon(geo.zone, {
+                color: '#1677ff', weight: 2, dashArray: '8 6',
+                fillColor: '#1677ff', fillOpacity: 0.10,
+                lineCap: 'round', lineJoin: 'round'
+            }).addTo(mapLayers.focus);
+            currentTaskLayer.bindTooltip(t.area, {
+                permanent: true, direction: 'center', className: 'insp-map-area-label'
+            });
+        }
+        // 计划轨迹（灰色虚线，作底，执行中/已完成展示）
+        if (geo && geo.track && geo.track.length > 1 && (t.status === 'running' || t.status === 'done')) {
+            currentPlannedLayer = L.polyline(geo.track, {
+                color: '#bfbfbf', weight: 4, opacity: 0.65, dashArray: '8 8',
+                lineCap: 'round', lineJoin: 'round'
+            }).addTo(mapLayers.focus);
+        }
+        // 已行驶轨迹（红色实线）：已完成画完整；执行中画当前进度 t._traveled（PRD 6.1.1-8）
+        var traveled = (t.status === 'running') ? (t._traveled || (geo && geo.track && geo.track.length ? [geo.track[0]] : [])) : geo.track;
+        if (geo && geo.track && geo.track.length > 1 && traveled && traveled.length > 1) {
+            currentTrackLayer = L.polyline(traveled, {
+                color: '#ff4d4f', weight: 4, opacity: 0.92,
+                lineCap: 'round', lineJoin: 'round'
+            }).addTo(mapLayers.focus);
+        }
+        // 事件点位：执行中/已完成展示，点击进详情
+        if (t.problemsList && t.problemsList.length && (t.status === 'running' || t.status === 'done')) {
+            t.problemsList.forEach(function (p) {
+                var ll = parseLatLng(p.coordinate);
+                if (!ll) return;
+                var marker = L.marker(ll, { icon: problemIcon(p) }).addTo(mapLayers.focus);
+                marker.on('click', function () { openProblemDetail(p.id, t.id); });
+            });
+        }
+        // 人员位置：执行中定位到已行驶轨迹终点，已完成/其他用 geo.person
+        var personLatLng = geo.person;
+        if (t.status === 'running' && t._traveled && t._traveled.length) {
+            personLatLng = t._traveled[t._traveled.length - 1];
+        } else if (t.status === 'running' && geo && geo.track && geo.track.length) {
+            personLatLng = geo.track[0];
+        }
+        if (personLatLng) {
+            currentPersonMarker = L.marker(personLatLng, { icon: personIcon(), zIndexOffset: 1000 })
+                .addTo(mapLayers.focus);
+        }
+        // 聚焦到任务区域
+        if (currentTaskLayer) {
+            leafletMap.fitBounds(currentTaskLayer.getBounds().pad(0.25), { animate: false });
+        } else if (geo && geo.person) {
+            leafletMap.setView(geo.person, 16, { animate: false });
+        }
+        // 设施图层按可见性重绘
+        renderFacilities();
+    }
+
+    // ===== 执行中任务轨迹动画（3秒/步，到达终点停止） =====
+    function startTrackAnimation(t) {
+        if (!mapReady || !leafletMap) return;            // 降级模式不启动地图动画
+        if (!t || !t.geo || !t.geo.track || t.geo.track.length < 2) return;  // 轨迹点不足
+        stopTrackAnimation(false);                       // 先清掉已有动画
+        var track = t.geo.track;
+        // 初始化/恢复进度（_traveled/_stepIdx 存 task 上，刷新或抽屉关闭后重渲染仍可用）
+        if (!t._traveled || !t._traveled.length) {
+            t._traveled = [track[0]];
+            t._stepIdx = 1;
+        }
+        // 创建红色已行驶轨迹 polyline（若 renderMapLeaflet 已建则复用，否则新建）
+        if (!currentTrackLayer) {
+            currentTrackLayer = L.polyline(t._traveled, {
+                color: '#ff4d4f', weight: 4, opacity: 0.92,
+                lineCap: 'round', lineJoin: 'round'
+            }).addTo(mapLayers.focus);
+        }
+        trackAnimState = {
+            taskId: t.id,
+            track: track,
+            stepIdx: t._stepIdx,
+            trackLayer: currentTrackLayer,
+            personMarker: currentPersonMarker
+        };
+        trackAnimTimer = setInterval(stepTrackAnimation, 3000);
+    }
+
+    function stepTrackAnimation() {
+        if (!trackAnimState) return;
+        var st = trackAnimState;
+        var t = findTask(st.taskId);
+        if (!t) { stopTrackAnimation(false); return; }
+        if (st.stepIdx >= st.track.length) { stopTrackAnimation(false); return; }  // 到达终点
+        var prev = st.track[st.stepIdx - 1];
+        var next = st.track[st.stepIdx];
+        // 移动人员 marker
+        if (st.personMarker) { st.personMarker.setLatLng(next); }
+        // 延伸已行驶轨迹
+        t._traveled.push(next);
+        st.trackLayer.setLatLngs(t._traveled);
+        // 累计里程（Leaflet 球面距离，米→公里，2 位小数）
+        var segMeters = L.latLng(prev[0], prev[1]).distanceTo(L.latLng(next[0], next[1]));
+        t.mileage = +(t.mileage + segMeters / 1000).toFixed(2);
+        // 累计时长（3秒/步映射 3 分钟演示节奏）
+        t.duration = t.duration + 3;
+        // 更新 KPI 文本
+        updateRunningKpi(t);
+        // 推进下标（同步到 task）
+        st.stepIdx++;
+        t._stepIdx = st.stepIdx;
+        // 到达终点定格
+        if (st.stepIdx >= st.track.length) { stopTrackAnimation(false); return; }
+        // debounce 持久化
+        if (stateSaveTimer) clearTimeout(stateSaveTimer);
+        stateSaveTimer = setTimeout(function () {
+            state[t.id] = state[t.id] || {};
+            state[t.id].mileage = t.mileage;
+            state[t.id].duration = t.duration;
+            saveState(state);
+        }, 800);
+    }
+
+    function stopTrackAnimation(restoreFull) {
+        if (trackAnimTimer) { clearInterval(trackAnimTimer); trackAnimTimer = null; }
+        if (stateSaveTimer) { clearTimeout(stateSaveTimer); stateSaveTimer = null; }
+        var t = trackAnimState ? findTask(trackAnimState.taskId) : null;
+        trackAnimState = null;
+        // 落盘最终里程/时长
+        if (t) {
+            state[t.id] = state[t.id] || {};
+            state[t.id].mileage = t.mileage;
+            state[t.id].duration = t.duration;
+            saveState(state);
+        }
+        // restoreFull 暂无额外处理：进度已存 task，renderMapLeaflet 重渲染会正确画出
+        void restoreFull;
+    }
+
+    // 更新执行态卡片作业里程/时长 KPI 文本（不重渲染整卡，避免丢失按钮事件绑定）
+    function updateRunningKpi(t) {
+        var mEl = document.getElementById('js-kpi-mileage');
+        var dEl = document.getElementById('js-kpi-duration');
+        if (mEl) mEl.textContent = fmt(t.mileage, '', '—');
+        if (dEl) dEl.textContent = fmt(t.duration, '', '—');
+    }
+
+    // 旧 SVG/百分比降级渲染（Leaflet 加载失败时兜底）
+    function renderMapLegacy(t) {
         var zonesEl = document.getElementById('js-zones');
         zonesEl.innerHTML = '<span class="map-zone is-active" style="left:' + t.zone.left + ';top:' + t.zone.top + ';width:' + t.zone.width + ';height:' + t.zone.height + '">' + t.area + '</span>';
-        // 轨迹
         var trackPath = document.getElementById('js-track-path');
         trackPath.setAttribute('d', t.track || '');
         document.getElementById('js-track-layer').style.display = t.track ? '' : 'none';
-        // 重点点位
-        var kpEl = document.getElementById('js-keypoints');
-        kpEl.innerHTML = t.points.map(function (p, idx) {
-            return '<span class="keypoint" style="left:' + p.left + ';top:' + p.top + '" title="' + p.name + '"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M512 0C229.2 0 0 229.2 0 512c0 229.2 512 819.2 512 819.2S1024 741.2 1024 512C1024 229.2 794.8 0 512 0z" fill="#e0620d"/></svg><span>' + (idx + 1) + '</span></span>';
-        }).join('');
-        // 事件点位（执行中/已完成展示）
         var probEl = document.getElementById('js-problems');
         if (t.problemsList && t.problemsList.length && (t.status === 'running' || t.status === 'done')) {
             probEl.innerHTML = t.problemsList.map(function (p) {
                 if (!p.point) return '';
-                return '<button type="button" class="problem-point problem-point--' + p.status + '" data-id="' + p.id + '" style="left:' + p.point.left + ';top:' + p.point.top + '" title="' + p.no + ' · ' + p.statusText + '"><span class="problem-pin"><span>!</span></span></button>';
+                return '<button type="button" class="problem-point problem-point--' + p.status + '" data-id="' + p.id + '" style="left:' + p.point.left + ';top:' + p.point.top + '" title="' + p.no + ' · ' + p.statusText + '"><span class="problem-pin"></span></button>';
             }).join('');
             probEl.querySelectorAll('.problem-point').forEach(function (el) {
                 el.addEventListener('click', function () { openProblemDetail(el.dataset.id, t.id); });
@@ -1080,44 +1657,279 @@
         } else {
             probEl.innerHTML = '';
         }
-        // 人员位置
         var person = document.getElementById('js-person');
         person.style.left = t.person.left;
         person.style.top = t.person.top;
     }
 
-    /* ===== 任务卡片渲染（PRD 6.1.1-2） ===== */
+    // 今日事件抽屉：渲染当前用户当日全部事件点位（PRD C02-R5 全部事件点位）
+    function renderAllProblemMarkers() {
+        problemMarkers = {};
+        var problems = todayProblems();
+        if (mapReady && leafletMap) {
+            mapLayers.focus.clearLayers();    // 暂隐选中任务区域/轨迹/人员
+            mapLayers.problems.clearLayers();
+            currentTaskLayer = null;
+            currentTrackLayer = null;
+            currentPersonMarker = null;
+            problems.forEach(function (p) {
+                var ll = parseLatLng(p.coordinate);
+                if (!ll) return;
+                var marker = L.marker(ll, { icon: problemIcon(p) }).addTo(mapLayers.problems);
+                marker.on('click', function () { openProblemDetail(p.id, p.taskId); });
+                problemMarkers[p.id] = marker;
+            });
+            var pts = problems.map(function (p) { return parseLatLng(p.coordinate); }).filter(Boolean);
+            if (pts.length) leafletMap.fitBounds(L.latLngBounds(pts).pad(0.25), { animate: true });
+        } else {
+            // 降级：在 js-problems 容器渲染全部任务点位 DOM
+            var probEl = document.getElementById('js-problems');
+            probEl.innerHTML = problems.map(function (p) {
+                if (!p.point) return '';
+                return '<button type="button" class="problem-point problem-point--' + p.status + '" data-id="' + p.id + '" style="left:' + p.point.left + ';top:' + p.point.top + '" title="' + (p.loc || '') + ' · ' + (p.statusText || '') + '"><span class="problem-pin"></span></button>';
+            }).join('');
+            probEl.querySelectorAll('.problem-point').forEach(function (el) {
+                var id = el.dataset.id;
+                problemMarkers[id] = el;
+                el.addEventListener('click', function () {
+                    var p = todayProblems().filter(function (x) { return x.id === id; })[0];
+                    if (p) openProblemDetail(p.id, p.taskId);
+                });
+            });
+        }
+    }
+
+    function clearAllProblemMarkers() {
+        if (mapReady && leafletMap) {
+            mapLayers.problems.clearLayers();
+        } else {
+            var probEl = document.getElementById('js-problems');
+            if (probEl) probEl.innerHTML = '';
+        }
+        problemMarkers = {};
+    }
+
+    // 聚焦某事件点位：地图平移 + 点位/卡片选中态
+    function focusProblem(problemId) {
+        clearProblemFocus();
+        var p = todayProblems().filter(function (x) { return x.id === problemId; })[0];
+        if (!p) return;
+        focusedProblemId = problemId;
+        if (mapReady && leafletMap) {
+            var ll = parseLatLng(p.coordinate);
+            if (ll) leafletMap.setView(ll, 17, { animate: true });
+            var marker = problemMarkers[problemId];
+            if (marker) {
+                var el = marker.getElement && marker.getElement();
+                if (el) el.classList.add('is-selected');   // 触发点位光晕
+            }
+        } else {
+            var domEl = problemMarkers[problemId];
+            if (domEl) domEl.classList.add('is-selected');
+        }
+        var card = document.querySelector('.problem-sheet-item[data-id="' + problemId + '"]');
+        if (card) card.classList.add('is-selected');
+    }
+
+    function clearProblemFocus() {
+        if (!focusedProblemId) return;
+        if (mapReady && leafletMap) {
+            var marker = problemMarkers[focusedProblemId];
+            if (marker) {
+                var el = marker.getElement && marker.getElement();
+                if (el) el.classList.remove('is-selected');
+            }
+        } else {
+            var domEl = problemMarkers[focusedProblemId];
+            if (domEl) domEl.classList.remove('is-selected');
+        }
+        var card = document.querySelector('.problem-sheet-item[data-id="' + focusedProblemId + '"]');
+        if (card) card.classList.remove('is-selected');
+        focusedProblemId = null;
+    }
+
+    // 辅助设施图层渲染（可切换）
+    function renderFacilities() {
+        if (!mapReady || !mapLayers) return;
+        mapLayers.facilities.clearLayers();
+        if (!facilitiesVisible) return;
+        MAP_FACILITIES.forEach(function (f) {
+            L.marker(f.latlng, { icon: facilityIcon(f.name) })
+                .addTo(mapLayers.facilities)
+                .bindTooltip(f.name, { direction: 'top', offset: [0, -16] });
+        });
+    }
+
+    // 复位：聚焦当前任务区域
+    function resetMapView() {
+        if (!mapReady || !leafletMap) return;
+        var t = findTask(selectedId);
+        if (t && t.geo && t.geo.zone && t.geo.zone.length) {
+            var b = L.latLngBounds(t.geo.zone);
+            leafletMap.fitBounds(b.pad(0.25), { animate: true });
+        } else if (t && t.geo && t.geo.person) {
+            leafletMap.setView(t.geo.person, 16);
+        }
+    }
+
+    /* ===== 任务卡片渲染（PRD 6.1.1-2 / 6.1.1-8） ===== */
+    // 第 1 行：片区名 - 事件上报数（未开始不显示）- 任务状态（+ 右侧详情链接）
+    // showCount=false 时强制不显示事件上报数（执行态收起场景）
+    function cardHeadHtml(t, withStatus, showCount) {
+        var statusHtml = withStatus ? '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span>' : '';
+        // 待接收（未开始）或收起态不显示事件上报数
+        var showCountFlag = (showCount !== false) && (t.status !== 'todo');
+        var countHtml = showCountFlag ? '<span class="task-card__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>事件上报 ' + t.problems + '</span>' : '';
+        return '<div class="task-line task-line-head">' +
+                '<div class="task-title-wrap">' +
+                    '<span class="task-card__area">' + t.area + '</span>' +
+                    countHtml +
+                    statusHtml +
+                '</div>' +
+                '<div class="task-head-right">' +
+                    '<button type="button" class="detail-link" id="js-btn-detail">详情</button>' +
+                '</div>' +
+            '</div>';
+    }
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function getVehicleBinding() {
+        try {
+            return (typeof VehicleDemoState !== 'undefined') ? VehicleDemoState.getBinding() : null;
+        } catch (e) {
+            return null;
+        }
+    }
+    function formatBindingTime(timestamp) {
+        if (!timestamp) return '—';
+        var date = new Date(timestamp);
+        if (isNaN(date.getTime())) return '—';
+        function pad(value) { return String(value).padStart(2, '0'); }
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+    }
+    function connectionRowHtml() {
+        var binding = getVehicleBinding();
+        if (binding && binding.plateNo) {
+            return '<button type="button" class="connection-row" id="js-connection-row" aria-label="查看已连接车机信息">' +
+                '<span class="connection-row__label">车机连接</span>' +
+                '<span class="connection-row__plate">' + escapeHtml(binding.plateNo) + '</span>' +
+                '<span class="connection-row__status">已连接</span>' +
+                '<svg class="connection-row__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>' +
+            '</button>';
+        }
+        return '<button type="button" class="connection-row" id="js-connection-row" aria-label="绑定车辆">' +
+            '<span class="connection-row__label">车机连接</span>' +
+            '<span class="connection-row__plate connection-row__plate--unbound">未连接</span>' +
+            '<span class="connection-row__action">去绑定</span>' +
+            '<svg class="connection-row__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>' +
+        '</button>';
+    }
+    function closeConnectionDetail() {
+        document.getElementById('js-connection-overlay').classList.remove('show');
+    }
+    var pendingDisconnectBinding = null;
+    var CAR_APP_LOGOUT_KEY = 'kuwash-car-app-remote-logout';
+    function closeConnectionDisconnectConfirm() {
+        pendingDisconnectBinding = null;
+        document.getElementById('js-connection-disconnect-overlay').classList.remove('show');
+    }
+    function openConnectionDisconnectConfirm() {
+        var binding = getVehicleBinding();
+        if (!binding || !binding.plateNo) {
+            closeConnectionDetail();
+            renderAll();
+            toast('当前未连接车辆');
+            return;
+        }
+        pendingDisconnectBinding = binding;
+        closeConnectionDetail();
+        document.getElementById('js-connection-disconnect-overlay').classList.add('show');
+    }
+    function disconnectVehicleConnection() {
+        var binding = pendingDisconnectBinding || getVehicleBinding();
+        closeConnectionDisconnectConfirm();
+        if (!binding || !binding.plateNo) {
+            renderAll();
+            toast('当前未连接车辆');
+            return;
+        }
+        try {
+            window.localStorage.setItem(CAR_APP_LOGOUT_KEY, JSON.stringify({
+                plateNo: binding.plateNo,
+                disconnectedAt: Date.now()
+            }));
+        } catch (e) {}
+        try {
+            if (typeof VehicleDemoState !== 'undefined') VehicleDemoState.unbind();
+        } catch (e) {}
+        renderAll();
+        toast('已断开连接，车机APP已退出登录');
+    }
+    function openConnectionDetail(binding) {
+        var list = document.getElementById('js-connection-detail-list');
+        list.innerHTML = '<div class="connection-detail__item"><span>车牌号</span><strong>' + escapeHtml(binding.plateNo || '—') + '</strong></div>' +
+            '<div class="connection-detail__item"><span>连接状态</span><strong class="connection-detail__state">已连接</strong></div>' +
+            '<div class="connection-detail__item"><span>绑定时间</span><strong>' + escapeHtml(formatBindingTime(binding.boundAt)) + '</strong></div>';
+        document.getElementById('js-connection-overlay').classList.add('show');
+    }
+    function openVehicleBinding() {
+        var target = 'qrcode.html?scene=bind&returnUrl=inspection-management.html';
+        if (window.parent && window.parent !== window) {
+            window.parent.location.href = target;
+        } else {
+            window.location.href = target;
+        }
+    }
+    function bindConnectionRow() {
+        var row = document.getElementById('js-connection-row');
+        if (!row) return;
+        row.addEventListener('click', function () {
+            var binding = getVehicleBinding();
+            if (binding && binding.plateNo) {
+                openConnectionDetail(binding);
+            } else {
+                openVehicleBinding();
+            }
+        });
+    }
+    // 第 2 行：任务日期 - 作业时间 - 作业资源
+    function cardMetaHtml(t) {
+        return '<div class="task-line task-card__meta">' +
+                '<span class="mono">' + (t.planDate || '—') + '</span>' +
+                '<span class="sep">·</span>' +
+                '<span class="mono">' + t.time + '</span>' +
+                '<span class="sep">·</span>' +
+                '<span class="resource">' + (t.resource || '—') + '</span>' +
+            '</div>';
+    }
+    // 第 3 行：3 列指标卡（开始时间 / 作业里程 km 2 位 / 作业时长 min 整数）
+    function cardKpisHtml(t) {
+        var mileage = (t.mileage == null || t.mileage === '') ? '—' : Number(t.mileage).toFixed(2);
+        var duration = (t.duration == null || t.duration === '') ? '—' : t.duration;
+        return '<div class="task-line task-kpis">' +
+                '<div class="task-kpi"><span class="task-kpi__label">开始时间</span><span class="task-kpi__value">' + fmt(t.start, '', '—') + '</span></div>' +
+                '<div class="task-kpi"><span class="task-kpi__label">作业里程</span><span class="task-kpi__value" id="js-kpi-mileage">' + mileage + '</span><span class="task-kpi__unit"> km</span></div>' +
+                '<div class="task-kpi"><span class="task-kpi__label">作业时长</span><span class="task-kpi__value" id="js-kpi-duration">' + duration + '</span><span class="task-kpi__unit"> min</span></div>' +
+            '</div>';
+    }
+    function bindDetail(t) {
+        var btn = document.getElementById('js-btn-detail');
+        if (btn) btn.addEventListener('click', function () { location.href = 'inspection-task-detail.html?id=' + encodeURIComponent(t.id) + '&from=map'; });
+    }
+
     function renderTaskCard(t) {
         var card = document.getElementById('js-task-card');
         var actionsEl = document.getElementById('js-actions');
         var workbench = document.getElementById('workbench');
 
-        // 执行态：沿用待开始的完整多行卡片，底部使用独立巡查操作台（结束任务 / 事件上报）
+        // 执行态（PRD 6.1.1-8）：卡片收起，仅展示片区名称 + 开始时间/作业里程/作业时长
         if (t.status === 'running') {
             workbench.classList.add('is-executing');
             card.classList.add('is-executing');
-            var html =
-                '<div class="task-line task-line-head">' +
-                    '<div class="task-title-wrap">' +
-                        '<span class="task-card__area">' + t.area + '</span>' +
-                        '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span>' +
-                    '</div>' +
-                    '<div class="task-head-right">' +
-                        '<button type="button" class="detail-link" id="js-btn-detail">详情</button>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="task-line task-card__meta">' +
-                    '<span class="task-type-tag">' + t.type + '</span>' +
-                    '<span class="work-type-tag">' + t.workType + '</span>' +
-                    '<span class="mono">' + t.time + '</span>' +
-                '</div>' +
-                '<div class="task-line task-kpis">' +
-                    '<div class="task-kpi"><span class="task-kpi__label">开始时间</span><span class="task-kpi__value">' + fmt(t.start, '', '—') + '</span></div>' +
-                    '<div class="task-kpi"><span class="task-kpi__label">作业里程</span><span class="task-kpi__value">' + fmt(t.mileage, '', '—') + '<span class="task-kpi__unit"> km</span></span></div>' +
-                    '<div class="task-kpi"><span class="task-kpi__label">作业时长</span><span class="task-kpi__value">' + fmt(t.duration, '', '—') + '<span class="task-kpi__unit"> min</span></span></div>' +
-                '</div>';
-            card.innerHTML = html;
-            document.getElementById('js-btn-detail').addEventListener('click', function () { toast('任务详情页本期暂未开放'); });
+            card.innerHTML = connectionRowHtml() + cardHeadHtml(t, false, false) + cardKpisHtml(t);
+            bindConnectionRow();
+            bindDetail(t);
             actionsEl.innerHTML = '<div class="exec-actions">' +
                 '<button type="button" class="exec-action exec-action--finish" id="js-btn-finish" aria-label="结束任务">' +
                     '<span class="exec-action__name">结束任务</span>' +
@@ -1131,34 +1943,17 @@
             return;
         }
 
-        // 待开始 / 已完成：完整多行任务卡片（对齐用车管理 task-line 范式）
+        // 待开始 / 已完成（PRD 6.1.1-2）：完整多行任务卡片
         workbench.classList.remove('is-executing');
         card.classList.remove('is-executing');
-        var html =
-            '<div class="task-line task-line-head">' +
-                '<div class="task-title-wrap">' +
-                    '<span class="task-card__area">' + t.area + '</span>' +
-                    '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span>' +
-                '</div>' +
-                '<div class="task-head-right">' +
-                    '<button type="button" class="detail-link" id="js-btn-detail">详情</button>' +
-                '</div>' +
-            '</div>' +
-            '<div class="task-line task-card__meta">' +
-                '<span class="task-type-tag">' + t.type + '</span>' +
-                '<span class="work-type-tag">' + t.workType + '</span>' +
-                '<span class="mono">' + t.time + '</span>' +
-            '</div>';
-        // 已完成展示指标卡（3 列：开始时间/作业里程/作业时长；事件上报作为第4项以链接形式附在第3卡或单独）
+        var html = connectionRowHtml() + cardHeadHtml(t, true) + cardMetaHtml(t);
+        // 已完成展示执行指标；待接收（未开始）无执行数据，不展示
         if (t.status === 'done') {
-            html += '<div class="task-line task-kpis">' +
-                '<div class="task-kpi"><span class="task-kpi__label">开始时间</span><span class="task-kpi__value">' + fmt(t.start, '', '—') + '</span></div>' +
-                '<div class="task-kpi"><span class="task-kpi__label">作业里程</span><span class="task-kpi__value">' + fmt(t.mileage, '', '—') + '<span class="task-kpi__unit"> km</span></span></div>' +
-                '<div class="task-kpi"><span class="task-kpi__label">作业时长</span><span class="task-kpi__value">' + fmt(t.duration, '', '—') + '<span class="task-kpi__unit"> min</span></span></div>' +
-            '</div>';
+            html += cardKpisHtml(t);
         }
         card.innerHTML = html;
-        document.getElementById('js-btn-detail').addEventListener('click', function () { toast('任务详情页本期暂未开放'); });
+        bindConnectionRow();
+        bindDetail(t);
 
         // 操作行：任务列表入口已移至地图右侧“今日任务”按钮。
         if (t.status === 'todo') {
@@ -1185,9 +1980,12 @@
         t.start = nowHHMM();
         t.mileage = 0.01;
         t.duration = 1;
+        t._traveled = null;   // 重置动画进度
+        t._stepIdx = 1;
         setStateStatus(t.id, 'running');
         toast('任务已开始');
         renderAll();
+        startTrackAnimation(t);
     }
 
     /* ===== 事件上报：先拍照，再进入上报页 ===== */
@@ -1237,6 +2035,7 @@
     /* ===== 结束任务 → 今日回顾（本期跳占位，PRD 5.1） ===== */
     function onFinish(t) {
         // 静态原型中，任务完成校验已在确认层展示为通过。
+        stopTrackAnimation(false);
         setStateStatus(t.id, 'done');
         var nextTodo = TASKS.find(function (x) { return x.status === 'todo'; });
         if (nextTodo) {
@@ -1299,15 +2098,19 @@
                 html += '<div class="sheet__group">' + g.label + '</div>';
                 lastGroup = t.status;
             }
+            // 卡片两行（对齐 PRD 6.1.2-3）：片区名-事件上报数（未开始不显示）-状态 / 任务日期-作业时间-作业资源
+            var countHtml = (t.status !== 'todo') ? '<span class="sheet-task__count">事件上报 ' + t.problems + '</span>' : '';
             html += '<div class="sheet-task' + (t.id === selectedId ? ' is-selected' : '') + '" data-id="' + t.id + '">' +
                 '<div class="sheet-task__r1"><span class="sheet-task__area">' + t.area + '</span>' +
+                countHtml +
                 '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span></div>' +
-                '<div class="sheet-task__r2"><span>' + t.type + '</span><span class="sep">·</span><span>' + t.workType + '</span><span class="sep">·</span><span class="mono">' + t.time + '</span></div>' +
+                '<div class="sheet-task__r2"><span class="mono">' + (t.planDate || '—') + '</span><span class="sep">·</span><span class="mono">' + t.time + '</span><span class="sep">·</span><span>' + (t.resource || '—') + '</span></div>' +
             '</div>';
         });
         body.innerHTML = html;
         body.querySelectorAll('.sheet-task').forEach(function (el) {
             el.addEventListener('click', function () {
+                stopTrackAnimation(false);
                 selectedId = el.dataset.id;
                 closeSheet();
                 renderAll();
@@ -1328,47 +2131,89 @@
     }
 
     /* ===== 今日事件抽屉 ===== */
-    function renderProblemSheetStats() {
-        var problems = todayProblems();
-        var done = problems.filter(function (p) { return p.status === 'done'; }).length;
-        var processing = problems.filter(function (p) { return p.status === 'processing' || p.status === 'assigned'; }).length;
-        var pending = problems.length - done - processing;
-        document.getElementById('js-problem-sheet-stats').innerHTML =
-            '<span class="stat"><span class="dot" style="background:#ff7a45"></span>今日上报 <span class="num">' + problems.length + '</span></span>' +
-            '<span class="stat"><span class="dot" style="background:#faad14"></span>待处理 <span class="num">' + (pending + processing) + '</span></span>' +
-            '<span class="stat"><span class="dot" style="background:#52c41a"></span>已完成 <span class="num">' + done + '</span></span>';
-    }
     function renderProblemSheetBody() {
         var body = document.getElementById('js-problem-sheet-body');
-        var problems = todayProblems().sort(function (a, b) { return (b.reportedAt || '').localeCompare(a.reportedAt || ''); });
-        if (!problems.length) {
+        var groups = groupProblemsByStatus(todayProblems());
+        var hasAny = PROB_STATUS_ORDER.some(function (s) { return groups[s].length; });
+        if (!hasAny) {
             body.innerHTML = '<div class="sheet-empty"><div class="sheet-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg></div>暂无今日上报事件</div>';
             return;
         }
-        body.innerHTML = problems.map(function (p) {
-            return '<button type="button" class="problem-sheet-item" data-id="' + p.id + '" data-task-id="' + p.taskId + '">' +
-                '<span class="problem-sheet-item__r1"><span class="problem-sheet-item__no">' + p.no + '</span><span class="tag ' + (PROB_TAG[p.status] || 'tag--todo') + '">' + p.statusText + '</span><svg class="problem-sheet-item__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>' +
-                '<span class="problem-sheet-item__r2"><span class="problem-sheet-item__location">' + p.loc + '</span><span class="problem-sheet-item__time">' + (p.reportedAt || '—') + '</span></span>' +
-            '</button>';
-        }).join('');
-        body.querySelectorAll('.problem-sheet-item').forEach(function (el) {
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function renderItem(p) {
+            var time = (p.reportedAt || '').slice(11, 16) || '—';
+            var discoverCls = p.discoverType === 'manual' ? 'problem-discover--manual' : 'problem-discover--ai';
+            var discoverTxt = p.discoverType === 'manual' ? '人工' : 'AI';
+            var descRow = p.desc ? '<span class="problem-sheet-item__desc">' + esc(p.desc) + '</span>' : '';
+            return '<article class="problem-sheet-item" data-id="' + p.id + '" data-task-id="' + p.taskId + '">' +
+                '<button type="button" class="problem-sheet-item__summary" aria-label="在地图定位' + esc(p.loc) + '事件">' +
+                    '<span class="problem-sheet-item__content">' +
+                        '<span class="problem-sheet-item__head">' +
+                            '<span class="problem-sheet-item__time">' + esc(time) + '</span>' +
+                            '<span class="problem-sheet-item__sep">·</span>' +
+                            '<span class="problem-sheet-item__location">' + esc(p.loc) + '</span>' +
+                        '</span>' +
+                        '<span class="problem-sheet-item__meta">' +
+                            '<span class="problem-sheet-item__type">' + esc(p.problemType || '未知') + '</span>' +
+                            '<span class="problem-sheet-item__tags">' +
+                                '<span class="problem-discover ' + discoverCls + '">' + discoverTxt + '</span>' +
+                                '<span class="tag ' + (PROB_TAG[p.status] || 'tag--unidentified') + '">' + esc(p.statusText) + '</span>' +
+                            '</span>' +
+                        '</span>' +
+                        descRow +
+                    '</span>' +
+                '</button>' +
+                '<button type="button" class="problem-sheet-item__detail" data-id="' + p.id + '" data-task-id="' + p.taskId + '" aria-label="进入' + esc(p.loc) + '事件详情" title="进入事件详情">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>' +
+                '</button>' +
+            '</article>';
+        }
+        var html = '';
+        PROB_STATUS_ORDER.forEach(function (s) {
+            if (!groups[s].length) return;   // 空组不展示
+            html += '<div class="sheet__group">' + PROB_STATUS_TEXT[s] + ' · ' + groups[s].length + '</div>';
+            html += groups[s].map(renderItem).join('');
+        });
+        body.innerHTML = html;
+        // 卡片主体点击：聚焦/取消聚焦（toggle）
+        body.querySelectorAll('.problem-sheet-item__summary').forEach(function (el) {
             el.addEventListener('click', function () {
+                var item = el.closest('.problem-sheet-item');
+                var id = item.dataset.id;
+                if (focusedProblemId === id) {
+                    clearProblemFocus();
+                } else {
+                    focusProblem(id);
+                }
+            });
+        });
+        // 右侧详情按钮：打开事件详情（阻止冒泡到主体）
+        body.querySelectorAll('.problem-sheet-item__detail').forEach(function (el) {
+            el.addEventListener('click', function (e) {
+                e.stopPropagation();
                 openProblemDetail(el.dataset.id, el.dataset.taskId);
             });
         });
     }
     function openProblemSheet() {
+        stopTrackAnimation(false);   // 切换到全部事件点位视图，暂停轨迹动画（进度已存 task）
         closeSheet();
-        renderProblemSheetStats();
+        clearProblemFocus();
         renderProblemSheetBody();
         document.getElementById('js-problem-sheet').classList.add('is-open');
         document.getElementById('js-problem-sheet-mask').classList.add('is-open');
         document.getElementById('workbench').classList.add('sheet-open');
+        document.getElementById('js-tool-problem').classList.add('is-active');
+        renderAllProblemMarkers();   // 地图同步展示全部事件点位
     }
     function closeProblemSheet() {
         document.getElementById('js-problem-sheet').classList.remove('is-open');
         document.getElementById('js-problem-sheet-mask').classList.remove('is-open');
         document.getElementById('workbench').classList.remove('sheet-open');
+        document.getElementById('js-tool-problem').classList.remove('is-active');
+        clearProblemFocus();
+        clearAllProblemMarkers();    // 清除全部事件点位
+        renderAll();                 // 恢复选中任务地图
     }
 
     /* ===== 顶部统计 + 控制台计数 ===== */
@@ -1409,7 +2254,13 @@
     document.getElementById('js-sheet-close').addEventListener('click', closeSheet);
     document.getElementById('js-sheet-mask').addEventListener('click', closeSheet);
     document.getElementById('js-map-tasks').addEventListener('click', openSheet);
-    document.getElementById('js-tool-problem').addEventListener('click', openProblemSheet);
+    document.getElementById('js-tool-problem').addEventListener('click', function () {
+        if (this.classList.contains('is-active')) {
+            closeProblemSheet();   // 再次点击收起并恢复地图
+        } else {
+            openProblemSheet();
+        }
+    });
     document.getElementById('js-problem-sheet-close').addEventListener('click', closeProblemSheet);
     document.getElementById('js-problem-sheet-mask').addEventListener('click', closeProblemSheet);
     document.getElementById('js-finish-cancel').addEventListener('click', closeFinishConfirm);
@@ -1420,6 +2271,16 @@
     });
     document.getElementById('js-finish-overlay').addEventListener('click', function (event) {
         if (event.target === this) closeFinishConfirm();
+    });
+    document.getElementById('js-connection-close').addEventListener('click', closeConnectionDetail);
+    document.getElementById('js-connection-overlay').addEventListener('click', function (event) {
+        if (event.target === this) closeConnectionDetail();
+    });
+    document.getElementById('js-connection-disconnect').addEventListener('click', openConnectionDisconnectConfirm);
+    document.getElementById('js-connection-disconnect-cancel').addEventListener('click', closeConnectionDisconnectConfirm);
+    document.getElementById('js-connection-disconnect-confirm').addEventListener('click', disconnectVehicleConnection);
+    document.getElementById('js-connection-disconnect-overlay').addEventListener('click', function (event) {
+        if (event.target === this) closeConnectionDisconnectConfirm();
     });
     // 返回按钮：对齐用车管理 go('home.html')，嵌入态顶到外壳层直接退回工作台
     function goBack(url) {
@@ -1449,7 +2310,16 @@
         morePop.classList.remove('show');
         moreBtn.setAttribute('aria-expanded', 'false');
         if (action === 'today') { toast('今日回顾将在全部任务完成后展示'); }
-        else if (action === 'layer') { toast('辅助设施图层已切换'); }
+        else if (action === 'layer') {
+            if (mapReady) {
+                facilitiesVisible = !facilitiesVisible;
+                renderFacilities();
+                var lb = document.getElementById('js-tool-layer');
+                lb.classList.toggle('is-active', facilitiesVisible);
+                lb.setAttribute('aria-pressed', facilitiesVisible ? 'true' : 'false');
+                toast(facilitiesVisible ? '已显示辅助设施图层' : '已隐藏辅助设施图层');
+            } else { toast('辅助设施图层已切换'); }
+        }
         else if (action === 'about') { toast('品质巡查 v1.0'); }
     });
     document.getElementById('js-top-exit').addEventListener('click', function () {
@@ -1462,8 +2332,18 @@
         } catch (err) {}
         goBack('home.html');
     });
-    document.getElementById('js-tool-reset').addEventListener('click', function () { toast('已复位至当前位置'); var t = findTask(selectedId); if (t) { var p = document.getElementById('js-person'); p.style.left = t.person.left; p.style.top = t.person.top; } });
-    document.getElementById('js-tool-layer').addEventListener('click', function () { toast('辅助设施图层已切换'); });
+    document.getElementById('js-tool-reset').addEventListener('click', function () {
+        if (mapReady && leafletMap) { resetMapView(); toast('已复位至当前任务区域'); }
+        else { toast('已复位至当前位置'); var t = findTask(selectedId); if (t) { var p = document.getElementById('js-person'); p.style.left = t.person.left; p.style.top = t.person.top; } }
+    });
+    document.getElementById('js-tool-layer').addEventListener('click', function () {
+        if (!mapReady) { toast('辅助设施图层已切换'); return; }
+        facilitiesVisible = !facilitiesVisible;
+        renderFacilities();
+        this.classList.toggle('is-active', facilitiesVisible);
+        this.setAttribute('aria-pressed', facilitiesVisible ? 'true' : 'false');
+        toast(facilitiesVisible ? '已显示辅助设施图层' : '已隐藏辅助设施图层');
+    });
     document.getElementById('js-tool-legend').addEventListener('click', function () {
         var legend = document.getElementById('js-legend');
         var btn = document.getElementById('js-tool-legend');
@@ -1477,7 +2357,18 @@
 
     /* ===== 新任务轻提醒 banner（PRD 6.1.1-9，静态演示） ===== */
     var bannerTimer = null;
+    // 文案格式：新任务【作业类型】-【任务区域】-【任务计划时间】
+    function buildBannerText(task) {
+        var t = task || TASKS.find(function (x) { return x.status === 'todo'; }) || TASKS[0];
+        if (!t) { return '新任务已派发'; }
+        var workType = t.workType || '—';
+        var area = t.area || '—';
+        var planTime = (t.planDate || '') + ' ' + (t.time || '');
+        return '新任务 ' + workType + '-' + area + '-' + planTime.replace(/^\s+/, '');
+    }
     function showBanner() {
+        var txtEl = document.getElementById('js-banner-txt');
+        if (txtEl) { txtEl.textContent = buildBannerText(); }
         document.getElementById('js-banner').classList.add('show');
         // PRD：默认显示 1min；演示缩短为 6s
         bannerTimer = setTimeout(closeBanner, 6000);
@@ -1501,11 +2392,21 @@
     /* ===== 项目切换联动（PRD：数据随项目刷新） ===== */
     document.addEventListener('projectChanged', function () {
         toast('项目已切换，任务列表已刷新');
+        stopTrackAnimation(false);
         renderAll();
     });
 
     /* ===== 初始化 ===== */
+    initLeafletMap();
     renderAll();
+    // 双层 iframe 嵌入下容器尺寸可能延迟就绪，需多次 invalidateSize
+    if (mapReady && leafletMap) {
+        [0, 60, 200, 500].forEach(function (delay) {
+            setTimeout(function () { leafletMap.invalidateSize(false); }, delay);
+        });
+        window.addEventListener('load', function () { leafletMap.invalidateSize(false); });
+        window.addEventListener('resize', function () { leafletMap.invalidateSize(false); });
+    }
     if (initialSheet === 'problems') {
         setTimeout(openProblemSheet, 0);
     }
@@ -1516,6 +2417,8 @@
     }
     // 演示：加载后延时弹一次新任务 banner
     setTimeout(showBanner, 1800);
+    // 页面卸载时停止动画并落盘进度
+    window.addEventListener('pagehide', function () { stopTrackAnimation(false); });
 })();
 </script>
 </body>

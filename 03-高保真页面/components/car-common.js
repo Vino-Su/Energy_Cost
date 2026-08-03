@@ -1,6 +1,6 @@
 /* ========================================================================
    车机端 APP 公共脚本 — 品质巡查模块
-   职责：演示状态管理（sessionStorage）、Toast、确认弹窗、语音播报、
+   职责：演示状态管理（sessionStorage）、移动端断开通知、Toast、确认弹窗、语音播报、
    通用 DOM 工具。纯原生 JS，无外部依赖。
    与移动端 vehicle-demo-state.js 同思路，车机专用独立维护。
    ======================================================================== */
@@ -14,9 +14,11 @@
     var TASK_STATE_KEY = 'car-today-task-state';
     var TASK_METRICS_KEY = 'car-today-task-metrics';
     var LIVE_PROBLEM_KEY = 'car-live-problems';
+    var REMOTE_LOGOUT_KEY = 'kuwash-car-app-remote-logout';
     var STATE = {
         vehicleNo: '粤B·D2856',
         vehicleId: 'V-2026-028',
+        plateNo: '',
         driverName: '陈志远',
         bound: false,
         bindTime: null,
@@ -29,6 +31,15 @@
         driverHasOtherVehicle: false,
         driving: false
     };
+    // 演示环境的已占用牌照，用于呈现平台级唯一性校验结果。
+    var PLATE_REGISTRY = [
+        { vehicleId: 'V-2026-011', plateNo: '粤B·K1028' },
+        { vehicleId: 'V-2026-014', plateNo: '粤B·C4013' }
+    ];
+    var PLATE_PROVINCES = '京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼';
+    var NORMAL_PLATE_PATTERN = new RegExp('^[' + PLATE_PROVINCES + '][A-HJ-NP-Z][A-HJ-NP-Z0-9]{5}$');
+    var NEW_ENERGY_SMALL_PATTERN = new RegExp('^[' + PLATE_PROVINCES + '][A-HJ-NP-Z][DF][A-HJ-NP-Z0-9]{5}$');
+    var NEW_ENERGY_LARGE_PATTERN = new RegExp('^[' + PLATE_PROVINCES + '][A-HJ-NP-Z][A-HJ-NP-Z0-9]{5}[DF]$');
 
     var TASK_STATUS = {
         pending: { text: '待接收', tag: 'car-tag--warning', order: 0 },
@@ -54,10 +65,47 @@
         { id: 'T004', no: 'CGRW202607300004', area: '人民东路-文昌路', date: '2026-07-30', time: '15:30-17:00', resource: '陈志远', type: '巡查任务', workType: '品质巡查', status: 'pending', start: null, mileage: 0, duration: 0, req: '关注学校周边路面清洁度和通行安全。', zone: { left: '24%', top: '22%', width: '44%', height: '48%' }, vehicle: { left: '48%', top: '55%' }, phone: { left: '44%', top: '49%' }, track: 'M 20 82 C 29 75, 36 68, 44 65 S 57 55, 66 60 S 75 48, 80 34', phoneTrack: 'M 23 84 C 31 76, 38 71, 45 67 S 52 60, 60 61', points: [{ name: '人民东路跨线桥', left: '34%', top: '35%' }, { name: '文昌路小学', left: '55%', top: '52%' }, { name: '文昌路地铁口', left: '43%', top: '67%' }] }
     ];
 
+    // 车机地图统一使用 WGS84 经纬度，供首页和任务执行页共享。
+    var TASK_MAP_DATA = {
+        T001: {
+            zone: [[23.1258, 113.2611], [23.1258, 113.2694], [23.1314, 113.2694], [23.1314, 113.2611]],
+            vehicle: [23.1280, 113.2646], phone: [23.1270, 113.2630],
+            track: [[23.1260, 113.2616], [23.1268, 113.2627], [23.1283, 113.2634], [23.1295, 113.2642], [23.1291, 113.2657], [23.1278, 113.2670], [23.1270, 113.2683]],
+            phoneTrack: [[23.1262, 113.2618], [23.1269, 113.2626], [23.1278, 113.2634], [23.1284, 113.2646], [23.1270, 113.2630]],
+            points: [{ name: '滨江路18号路口', latlng: [23.1290, 113.2640] }, { name: '公交枢纽站', latlng: [23.1270, 113.2680] }]
+        },
+        T002: {
+            zone: [[23.1324, 113.2675], [23.1324, 113.2755], [23.1373, 113.2755], [23.1373, 113.2675]],
+            vehicle: [23.1348, 113.2721], phone: [23.1340, 113.2710],
+            track: [[23.1329, 113.2680], [23.1338, 113.2694], [23.1345, 113.2708], [23.1350, 113.2722], [23.1361, 113.2735]],
+            phoneTrack: [[23.1331, 113.2683], [23.1338, 113.2695], [23.1344, 113.2704], [23.1340, 113.2710]],
+            points: [{ name: '中央广场北门', latlng: [23.1350, 113.2710] }, { name: '中央广场南门', latlng: [23.1332, 113.2736] }, { name: '喷泉广场', latlng: [23.1345, 113.2722] }]
+        },
+        T003: {
+            zone: [[23.1219, 113.2620], [23.1219, 113.2726], [23.1265, 113.2726], [23.1265, 113.2620]],
+            vehicle: [23.1240, 113.2672], phone: [23.1234, 113.2657],
+            track: [[23.1222, 113.2626], [23.1228, 113.2644], [23.1236, 113.2660], [23.1245, 113.2678], [23.1238, 113.2694], [23.1249, 113.2710]],
+            phoneTrack: [[23.1225, 113.2629], [23.1232, 113.2648], [23.1234, 113.2657], [23.1241, 113.2670]],
+            points: [{ name: '解放南路1号桥', latlng: [23.1240, 113.2644] }, { name: '解放南路匝道', latlng: [23.1250, 113.2670] }, { name: '文昌路口', latlng: [23.1232, 113.2704] }]
+        },
+        T004: {
+            zone: [[23.1282, 113.2535], [23.1282, 113.2622], [23.1342, 113.2622], [23.1342, 113.2535]],
+            vehicle: [23.1308, 113.2587], phone: [23.1300, 113.2574],
+            track: [[23.1286, 113.2542], [23.1294, 113.2555], [23.1308, 113.2570], [23.1316, 113.2588], [23.1324, 113.2602], [23.1334, 113.2614]],
+            phoneTrack: [[23.1288, 113.2545], [23.1298, 113.2558], [23.1300, 113.2574], [23.1309, 113.2587]],
+            points: [{ name: '人民东路跨线桥', latlng: [23.1322, 113.2555] }, { name: '文昌路小学', latlng: [23.1305, 113.2592] }, { name: '文昌路地铁口', latlng: [23.1288, 113.2577] }]
+        }
+    };
+    var MAP_FACILITIES = [
+        { name: '公厕', latlng: [23.1304, 113.2602] },
+        { name: '垃圾转运点', latlng: [23.1336, 113.2718] },
+        { name: '消火栓', latlng: [23.1262, 113.2678] }
+    ];
+
     var BASE_PROBLEMS = [
-        { id: 'P001', taskId: 'T001', no: 'Q20260730-0014', status: 'done', occurrenceTime: '2026-07-30 09:12', reportTime: '2026-07-30 09:12', source: '车载监控采样', discoveryType: 'AI', discoverer: '巡查车 粤B·D2856', coordinates: '113.264,23.129', location: '滨江路18号路口', detailedLocation: '滨江路东段K1+200北侧车道', problemType: '路面油污', description: '路面存在大面积油污，已完成清洗并通过核查。', point: { left: '32%', top: '38%' }, handler: '李建国', handlerTime: '2026-07-30 10:06', handlerDesc: '路面油污已清洗完毕，复检合格。' },
-        { id: 'P002', taskId: 'T002', no: 'Q20260730-0033', status: 'processing', occurrenceTime: '2026-07-30 11:08', reportTime: '2026-07-30 11:08', source: '车载监控采样', discoveryType: 'AI', discoverer: '巡查车 粤B·D2856', coordinates: '113.271,23.135', location: '中央广场北门', detailedLocation: '中央广场北门入口东侧约20米', problemType: '路面积水', description: '广场北门入口路面存在积水，责任人正在现场处置。', point: { left: '35%', top: '42%' }, handler: '王建军', handlerTime: '—', handlerDesc: '已到场排查排水口，正在清理积水。' },
-        { id: 'P003', taskId: 'T001', no: 'Q20260730-0021', status: 'assigning', occurrenceTime: '2026-07-30 09:46', reportTime: '2026-07-30 09:46', source: '车载监控采样', discoveryType: '人工', discoverer: '巡查员 陈志远', coordinates: '113.268,23.127', location: '滨江路东段K2+300', detailedLocation: '滨江路东段公交站南侧', problemType: '路面破损', description: '路段局部路面破损，已完成事件判别，待分配处置责任人。', point: { left: '54%', top: '60%' }, handler: '—', handlerTime: '—', handlerDesc: '等待责任人分配。' }
+        { id: 'P001', taskId: 'T001', status: 'done', occurrenceTime: '2026-07-30 09:12', reportTime: '2026-07-30 09:12', source: '车载监控采样', discoveryType: 'AI', discoverer: '巡查车 粤B·D2856', coordinates: '113.264,23.129', location: '滨江路18号路口', detailedLocation: '滨江路东段K1+200北侧车道', problemType: '路面油污', description: '路面存在大面积油污，已完成清洗并通过核查。', point: { left: '32%', top: '38%' }, photos: [{ type: 'oil', caption: '车载画面 1' }, { type: 'scene', caption: '清洗后复查 2' }] },
+        { id: 'P002', taskId: 'T002', status: 'processing', occurrenceTime: '2026-07-30 11:08', reportTime: '2026-07-30 11:08', source: '车载监控采样', discoveryType: 'AI', discoverer: '巡查车 粤B·D2856', coordinates: '113.271,23.135', location: '中央广场北门', detailedLocation: '中央广场北门入口东侧约20米', problemType: '路面积水', description: '广场北门入口路面存在积水。', point: { left: '35%', top: '42%' }, photos: [{ type: 'water', caption: '车载画面 1' }, { type: 'scene', caption: '现场近景 2' }] },
+        { id: 'P003', taskId: 'T001', status: 'assigning', occurrenceTime: '2026-07-30 09:46', reportTime: '2026-07-30 09:46', source: '车载监控采样', discoveryType: '人工', discoverer: '巡查员 陈志远', coordinates: '113.268,23.127', location: '滨江路东段K2+300', detailedLocation: '滨江路东段公交站南侧', problemType: '路面破损', description: '路段局部路面破损。', point: { left: '54%', top: '60%' }, photos: [{ type: 'breakage', caption: '车载画面 1' }] }
     ];
 
     function loadState() {
@@ -68,6 +116,27 @@
         return STATE;
     }
     function saveState() { try { sessionStorage.setItem(STATE_KEY, JSON.stringify(STATE)); } catch (e) {} }
+    function getRemoteLogoutNotice(raw) {
+        try { return raw ? JSON.parse(raw) : JSON.parse(global.localStorage.getItem(REMOTE_LOGOUT_KEY) || 'null'); } catch (e) { return null; }
+    }
+    function isRemoteLogoutForCurrentVehicle(raw) {
+        var notice = getRemoteLogoutNotice(raw);
+        var currentPlate = normalizePlateNo(STATE.plateNo || STATE.vehicleNo);
+        return Boolean(notice && notice.plateNo && currentPlate && normalizePlateNo(notice.plateNo) === currentPlate);
+    }
+    function clearRemoteLogoutNotice() {
+        if (!isRemoteLogoutForCurrentVehicle()) return;
+        try { global.localStorage.removeItem(REMOTE_LOGOUT_KEY); } catch (e) {}
+    }
+    function applyRemoteLogout(raw) {
+        if (!STATE.bound || !isRemoteLogoutForCurrentVehicle(raw)) return false;
+        unbindVehicle();
+        return true;
+    }
+    function redirectToBindAfterRemoteLogout() {
+        if (global.location.pathname.indexOf('car-bind.html') !== -1) return;
+        global.setTimeout(function () { global.location.replace('car-bind.html'); }, 700);
+    }
     function getTaskStates() {
         try { return JSON.parse(sessionStorage.getItem(TASK_STATE_KEY) || '{}'); } catch (e) { return {}; }
     }
@@ -125,12 +194,15 @@
             item.status = states[task.id] || task.status;
             item.statusText = (TASK_STATUS[item.status] || TASK_STATUS.invalid).text;
             item.statusTag = (TASK_STATUS[item.status] || TASK_STATUS.invalid).tag;
+            item.geo = clone(TASK_MAP_DATA[task.id] || null);
             item.problemsList = getProblems(item.id);
             item.problems = item.problemsList.length;
             return item;
         });
     }
     function getTask(taskId) { return getTasks().find(function (task) { return task.id === taskId; }) || null; }
+    function getTaskMapData(taskId) { return clone(TASK_MAP_DATA[taskId] || null); }
+    function getMapFacilities() { return clone(MAP_FACILITIES); }
     function getProblem(problemId) { return getProblems().find(function (problem) { return problem.id === problemId; }) || null; }
     function sortedTasks(tasks) {
         return (tasks || getTasks()).slice().sort(function (a, b) {
@@ -156,12 +228,38 @@
         STATE.bindTime = formatNow();
         STATE.handoverTime = null; STATE.handoverLocation = null;
         saveState();
+        clearRemoteLogoutNotice();
     }
     function unbindVehicle() {
         STATE.bound = false;
         STATE.handoverTime = formatNow();
         STATE.handoverLocation = STATE.bindLocation;
         saveState();
+    }
+    function normalizePlateNo(value) {
+        return String(value || '').replace(/[\s·.．]/g, '').toUpperCase();
+    }
+    function validatePlateNo(value) {
+        var plateNo = normalizePlateNo(value);
+        if (!plateNo) return { ok: false, message: '请输入车辆牌照' };
+        var isNormal = NORMAL_PLATE_PATTERN.test(plateNo);
+        var isNewEnergy = NEW_ENERGY_SMALL_PATTERN.test(plateNo) || NEW_ENERGY_LARGE_PATTERN.test(plateNo);
+        if (!isNormal && !isNewEnergy) {
+            return { ok: false, message: '请输入合法的大陆民用车辆牌照' };
+        }
+        return { ok: true, plateNo: plateNo };
+    }
+    function savePlateNo(value) {
+        var validation = validatePlateNo(value);
+        if (!validation.ok) return validation;
+        var plateNo = validation.plateNo;
+        var duplicated = PLATE_REGISTRY.some(function (item) {
+            return item.vehicleId !== STATE.vehicleId && normalizePlateNo(item.plateNo) === plateNo;
+        });
+        if (duplicated) return { ok: false, message: '该牌照已被其他车辆录入，请核对后重新输入' };
+        STATE.plateNo = plateNo;
+        saveState();
+        return { ok: true, plateNo: plateNo };
     }
     function startTask(taskId) {
         setTaskStatus(taskId, 'running');
@@ -176,6 +274,8 @@
     function demoMode() { return query('demo') || ''; }
     function validateBind() {
         var st = loadState(), demo = demoMode();
+        if (!st.plateNo) return { ok: false, message: '请先录入车辆牌照' };
+        if (!validatePlateNo(st.plateNo).ok) return { ok: false, message: '请先录入合法的车辆牌照' };
         if (st.boundByOther || demo === 'bind-other') return { ok: false, message: '当前车辆已被【李明】绑定，请绑定其他车辆！' };
         if (st.driverHasOtherVehicle || demo === 'driver-other') return { ok: false, message: '您当前已绑定【粤B·K1028】，请交车后重新绑定！' };
         return { ok: true, warning: (!st.vehicleOnline || demo === 'offline') ? '当前车辆网联装置离线，请检查' : '' };
@@ -269,7 +369,79 @@
         return mask;
     }
 
-    /* ---------- 5. 语音播报（规范：语音不得是唯一方式，屏幕保留摘要） ---------- */
+    /* ---------- 5. 事件照片：缩略图 HTML + 全屏查看器（车机端，CSS 模拟占位图） ---------- */
+    function photoTypeClass(type) { return 'pd-photo--' + (type || 'scene'); }
+    function renderPhotoHtml(photo) {
+        if (!photo) return '';
+        return '<div class="pd-photo ' + photoTypeClass(photo.type) + '" data-caption="' + (photo.caption || '') + '"><span></span></div>';
+    }
+    function renderPhotoBubbleHtml(problem) {
+        var photos = problem && problem.photos ? problem.photos : [];
+        if (!photos.length) return '';
+        var photo = photos[0];
+        // 气泡仅显示第一张照片缩略图，不展示标题；点击打开全屏查看器（多张在查看器内切换）
+        return '<div class="car-photo-bubble" data-problem-id="' + problem.id + '">' +
+            '<button type="button" class="car-photo-bubble__thumb pd-photo ' + photoTypeClass(photo.type) + ' is-active" data-photo-view="0" data-problem-id="' + problem.id + '" aria-label="查看现场照片"><span></span></button>' +
+            '</div>';
+    }
+    var photoViewerState = { index: 0, photos: [], node: null };
+    function renderPhotoViewerPhoto(idx) {
+        var node = photoViewerState.node;
+        if (!node || !photoViewerState.photos.length) return;
+        var len = photoViewerState.photos.length;
+        photoViewerState.index = (idx % len + len) % len;
+        var photo = photoViewerState.photos[photoViewerState.index];
+        var stage = node.querySelector('.car-photo-viewer__photo');
+        stage.className = 'car-photo-viewer__photo pd-photo ' + photoTypeClass(photo.type);
+        stage.setAttribute('data-caption', photo.caption || '');
+        stage.innerHTML = '<span></span>';
+        node.querySelector('.car-photo-viewer__counter').textContent = (photoViewerState.index + 1) + ' / ' + len;
+        var showArrows = len > 1;
+        node.querySelector('.car-photo-viewer__arrow--prev').style.display = showArrows ? '' : 'none';
+        node.querySelector('.car-photo-viewer__arrow--next').style.display = showArrows ? '' : 'none';
+        node.querySelector('.car-photo-viewer__counter').style.display = showArrows ? '' : 'none';
+    }
+    function openPhotoViewer(photos, startIndex) {
+        if (!photos || !photos.length) { toast('暂无现场画面'); return; }
+        closePhotoViewer();
+        var mask = document.createElement('div');
+        mask.className = 'car-photo-viewer';
+        mask.innerHTML =
+            '<button class="car-photo-viewer__close" aria-label="关闭" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+            '<div class="car-photo-viewer__stage">' +
+            '<button class="car-photo-viewer__arrow car-photo-viewer__arrow--prev" data-act="prev" aria-label="上一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>' +
+            '<div class="car-photo-viewer__photo pd-photo"></div>' +
+            '<button class="car-photo-viewer__arrow car-photo-viewer__arrow--next" data-act="next" aria-label="下一张"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg></button>' +
+            '</div>' +
+            '<div class="car-photo-viewer__counter">1 / 1</div>';
+        document.body.appendChild(mask);
+        photoViewerState.node = mask;
+        photoViewerState.photos = photos.slice();
+        var raf = requestAnimationFrame || function (cb) { setTimeout(cb, 16); };
+        raf(function () { mask.classList.add('is-show'); });
+        renderPhotoViewerPhoto(startIndex || 0);
+        mask.querySelector('.car-photo-viewer__close').addEventListener('click', closePhotoViewer);
+        mask.querySelector('.car-photo-viewer__arrow--prev').addEventListener('click', function () { renderPhotoViewerPhoto(photoViewerState.index - 1); });
+        mask.querySelector('.car-photo-viewer__arrow--next').addEventListener('click', function () { renderPhotoViewerPhoto(photoViewerState.index + 1); });
+        mask.addEventListener('click', function (e) { if (e.target === mask) closePhotoViewer(); });
+        function onKey(e) {
+            if (!photoViewerState.node) { document.removeEventListener('keydown', onKey); return; }
+            if (e.key === 'Escape') closePhotoViewer();
+            else if (e.key === 'ArrowLeft') renderPhotoViewerPhoto(photoViewerState.index - 1);
+            else if (e.key === 'ArrowRight') renderPhotoViewerPhoto(photoViewerState.index + 1);
+        }
+        document.addEventListener('keydown', onKey);
+        return mask;
+    }
+    function closePhotoViewer() {
+        var node = photoViewerState.node;
+        if (!node) return;
+        node.classList.remove('is-show');
+        setTimeout(function () { node.remove(); }, 200);
+        photoViewerState.node = null;
+    }
+
+    /* ---------- 6. 语音播报（规范：语音不得是唯一方式，屏幕保留摘要） ---------- */
     function speak(text) {
         try {
             if ('speechSynthesis' in global) {
@@ -396,7 +568,7 @@
         if (app && demo === 'driving') {
             app.classList.add('is-driving');
             document.addEventListener('click', function (event) {
-                var restricted = event.target.closest('#js-handover, #js-fullscreen, #js-layer, #js-finish, #js-start, #js-task-tool, #js-problem-tool, [data-detail], .home-task, .run-task-item, .car-task-problem');
+                var restricted = event.target.closest('#js-handover, #js-fullscreen, #js-layer, #js-finish, #js-start, #js-task-tool, #js-problem-tool, [data-detail], [data-task-info], .home-task, .run-task-item, .car-task-problem');
                 if (!restricted) return;
                 event.preventDefault(); event.stopImmediatePropagation();
                 toast('行驶中暂不可执行该操作');
@@ -432,6 +604,9 @@
     CAR.bindVehicle = bindVehicle;
     CAR.unbindVehicle = unbindVehicle;
     CAR.getState = function () { return loadState(); };
+    CAR.normalizePlateNo = normalizePlateNo;
+    CAR.validatePlateNo = validatePlateNo;
+    CAR.savePlateNo = savePlateNo;
     CAR.getTaskStatus = getTaskStatus;
     CAR.setTaskStatus = setTaskStatus;
     CAR.setTaskMetrics = setTaskMetrics;
@@ -440,6 +615,8 @@
     CAR.EVENT_STATUS = EVENT_STATUS;
     CAR.getTasks = getTasks;
     CAR.getTask = getTask;
+    CAR.getTaskMapData = getTaskMapData;
+    CAR.getMapFacilities = getMapFacilities;
     CAR.sortedTasks = sortedTasks;
     CAR.getRunningTask = getRunningTask;
     CAR.getNextPendingTask = getNextPendingTask;
@@ -464,7 +641,18 @@
     CAR.go = go;
     CAR.bindTaskNotice = bindTaskNotice;
     CAR.installDebugFab = installDebugFab;
+    CAR.renderPhotoHtml = renderPhotoHtml;
+    CAR.renderPhotoBubbleHtml = renderPhotoBubbleHtml;
+    CAR.openPhotoViewer = openPhotoViewer;
+    CAR.closePhotoViewer = closePhotoViewer;
 
     // 初始加载
     loadState();
+    if (applyRemoteLogout()) redirectToBindAfterRemoteLogout();
+    global.addEventListener('storage', function (event) {
+        if (event.key !== REMOTE_LOGOUT_KEY || !event.newValue) return;
+        if (!applyRemoteLogout(event.newValue)) return;
+        toast('移动端已断开连接，车机APP已退出登录');
+        redirectToBindAfterRemoteLogout();
+    });
 })(window);

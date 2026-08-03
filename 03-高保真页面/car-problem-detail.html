@@ -5,53 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>事件详情 - 车机品质巡查</title>
 <link rel="stylesheet" href="components/car-common.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
 /* 与任务执行页一致的主次分屏：左地图 + 右详情 */
 .pd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 36%); gap: var(--car-gap); flex: 1; min-height: 0; }
 .pd-map { position: relative; min-height: 0; overflow: hidden; }
-.pd-body { flex: 1; overflow-y: auto; padding: var(--car-pad); display: flex; flex-direction: column; gap: 20px; }
-.pd-section { display: flex; flex-direction: column; gap: 12px; }
-.pd-section__title { font-size: var(--car-fs-panel); font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.pd-section__title::before { content: ""; width: 4px; height: 18px; background: var(--car-primary); border-radius: 2px; }
-.pd-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.pd-summary__no { font-size: var(--car-fs-panel); font-weight: 600; font-family: var(--car-font-num); }
-.pd-grid-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
-.pd-field { display: flex; flex-direction: column; gap: 4px; }
-.pd-field__label { font-size: var(--car-fs-aux); color: var(--car-text-secondary); }
-.pd-field__value { font-size: var(--car-fs-body); color: var(--car-text); word-break: break-all; }
-.pd-photos { display: flex; gap: 10px; flex-wrap: wrap; }
-.pd-photo { position: relative; width: 116px; height: 78px; overflow: hidden; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: #9eabb4; }
+.pd-map--leaflet { overflow: hidden; }
+.pd-leaflet-map { position: absolute; inset: 0; z-index: 0; background: #edf2f5; font-family: var(--car-font); }
+.pd-map-fallback { position: absolute; inset: 0; z-index: 2; display: none; align-items: center; justify-content: center; padding: 24px; background: #edf2f5; color: var(--car-text-secondary); font-size: var(--car-fs-body); text-align: center; }
+.pd-map-fallback.is-visible { display: flex; }
+.pd-map--leaflet .car-legend { z-index: 20; }
+.pd-leaflet-map .leaflet-control-zoom a { width: 40px; height: 40px; line-height: 38px; color: var(--car-text); font-size: 22px; }
+.pd-leaflet-map .leaflet-control-attribution { padding: 2px 5px; background: rgba(255,255,255,0.86); color: var(--car-text-secondary); font-size: 10px; }
+.pd-leaflet-map .leaflet-control-attribution a { color: var(--car-primary); }
+.pd-leaflet-map .leaflet-marker-icon { border: 0; background: transparent; }
+.pd-map-marker { display: inline-flex; box-sizing: border-box; align-items: center; justify-content: center; font-family: var(--car-font); }
+.pd-map-marker--vehicle { width: 34px; height: 34px; border: 2px solid #fff; border-radius: 50%; background: var(--car-primary); color: #fff; box-shadow: 0 2px 6px rgba(20,40,70,0.3); }
+.pd-map-marker--problem { width: 32px; height: 32px; border: 2px solid #fff; border-radius: 50% 50% 50% 0; background: var(--pd-problem-color, var(--car-danger)); color: #fff; box-shadow: 0 2px 6px rgba(20,40,70,0.32); transform: rotate(-45deg); font-family: var(--car-font-num); font-size: 18px; font-weight: 700; }
+.pd-map-marker--problem > span { transform: rotate(45deg); }
+.pd-body { flex: 1; overflow-y: auto; padding: 12px 18px 0; display: flex; flex-direction: column; gap: 8px; }
+.pd-section { display: flex; flex-direction: column; gap: 6px; }
+.pd-section__title { display: flex; align-items: center; color: var(--car-text-secondary); font-size: var(--car-fs-aux); font-weight: 500; line-height: 20px; }
+.pd-summary { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--car-border); }
+.pd-summary__primary { display: grid; grid-template-columns: minmax(0, 1fr) max-content max-content; align-items: center; gap: 10px; min-width: 0; }
+.pd-summary__title { min-width: 0; overflow: hidden; color: var(--car-text); font-size: var(--car-fs-panel); font-weight: 600; line-height: 28px; text-overflow: ellipsis; white-space: nowrap; }
+.pd-summary__time { color: var(--car-text); font-size: var(--car-fs-body); line-height: 24px; white-space: nowrap; }
+.pd-summary__discovery { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--car-text-secondary); font-size: var(--car-fs-aux); line-height: 20px; }
+.pd-summary__discovery span { white-space: nowrap; }
+.pd-summary__discovery span + span::before { content: "·"; margin-right: 10px; color: var(--car-text-disabled); }
+.pd-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pd-photo { position: relative; aspect-ratio: 16 / 9; min-width: 0; overflow: hidden; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: #9eabb4; }
 .pd-photo::before { content: ''; position: absolute; left: -8px; right: -8px; bottom: -18px; height: 64px; border-top: 3px solid rgba(255,255,255,0.75); background: #5c6870; transform: rotate(-7deg); }
-.pd-photo::after { content: attr(data-caption); position: absolute; left: 6px; bottom: 5px; padding: 2px 5px; border-radius: 3px; background: rgba(0,0,0,0.62); color: #fff; font-size: 11px; }
 .pd-photo--water span, .pd-photo--oil span { position: absolute; z-index: 2; left: 28px; top: 42px; width: 54px; height: 15px; border-radius: 50%; background: rgba(71,145,194,0.8); transform: rotate(-7deg); }
 .pd-photo--oil span { background: rgba(26,31,34,0.88); }
-.pd-desc { font-size: var(--car-fs-body); line-height: 24px; color: var(--car-text); padding: 12px 16px; background: var(--car-surface-soft); border-radius: var(--car-radius-sm); }
-/* 处理日志时间线 */
-.pd-log { display: flex; flex-direction: column; gap: 0; padding: 4px 0 0 8px; }
-.pd-log__item { display: flex; gap: 14px; padding: 8px 0; position: relative; }
-.pd-log__item:not(:last-child)::before { content: ""; position: absolute; left: 7px; top: 22px; bottom: -8px; width: 2px; background: var(--car-border); }
-.pd-log__dot { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--car-border); background: var(--car-surface); flex-shrink: 0; margin-top: 4px; }
-.pd-log__item.is-active .pd-log__dot { border-color: var(--car-primary); background: var(--car-primary); }
-.pd-log__item.is-done .pd-log__dot { border-color: var(--car-success); background: var(--car-success); }
-.pd-log__body { flex: 1; min-width: 0; }
-.pd-log__head { display: flex; align-items: baseline; gap: 10px; }
-.pd-log__action { font-size: var(--car-fs-body); color: var(--car-text); font-weight: 500; }
-.pd-log__time { font-size: var(--car-fs-aux); color: var(--car-text-secondary); font-family: var(--car-font-num); }
-.pd-log__detail { font-size: var(--car-fs-aux); color: var(--car-text-secondary); margin-top: 4px; line-height: 20px; }
-/* 处置节点图 */
-.pd-flow { display: flex; align-items: center; gap: 2px; padding: 16px 2px; }
-.pd-node { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
-.pd-node__dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; background: var(--car-neutral); }
-.pd-node.is-done .pd-node__dot { background: var(--car-success); }
-.pd-node.is-current .pd-node__dot { background: var(--car-warning); box-shadow: 0 0 0 5px rgba(250,173,20,0.20); }
-.pd-node__label { font-size: 12px; color: var(--car-text); white-space: nowrap; }
-.pd-node.is-pending .pd-node__label { color: var(--car-text-disabled); }
-.pd-line { flex: 0 0 10px; height: 2px; background: var(--car-border); }
-.pd-line.is-done { background: var(--car-success); }
-.pd-foot { display: flex; justify-content: flex-end; padding: var(--car-pad); border-top: 1px solid var(--car-border); }
-.pd-problem-pin { z-index: 8; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.pd-problem-pin__icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 2px solid #fff; border-radius: 50% 50% 50% 0; background: var(--car-danger); color: #fff; font-family: var(--car-font-num); font-size: 18px; font-weight: 700; box-shadow: 0 2px 6px rgba(255,77,79,0.36); transform: rotate(-45deg); }
-.pd-problem-pin__icon > span { transform: rotate(45deg); }
+.pd-desc { font-size: var(--car-fs-body); line-height: 24px; color: var(--car-text); }
+.pd-location { display: flex; flex-direction: column; gap: 4px; }
+.pd-location__value { min-width: 0; color: var(--car-text); font-size: var(--car-fs-body); line-height: 24px; word-break: break-all; }
+.pd-location__value--coordinate { font-family: var(--car-font-num); }
+.pd-task-context { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 4px 0; border-top: 1px solid var(--car-border); border-bottom: 1px solid var(--car-border); color: var(--car-text); }
+.pd-task-context__icon { display: inline-flex; width: 32px; height: 32px; flex: 0 0 32px; align-items: center; justify-content: center; border-radius: var(--car-radius-sm); background: var(--car-primary-light); color: var(--car-primary); }
+.pd-task-context__text { min-width: 0; font-size: var(--car-fs-body); line-height: 24px; font-weight: 500; }
+.pd-flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 4px 0 0; }
+.pd-flow__step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; color: var(--car-text-secondary); text-align: center; }
+.pd-flow__step:not(:last-child)::after { content: ""; position: absolute; top: 9px; left: calc(50% + 10px); width: calc(100% - 20px); height: 2px; background: var(--car-border); }
+.pd-flow__step.is-done::after { background: var(--car-success); }
+.pd-flow__dot { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 2px solid var(--car-border); border-radius: 50%; background: var(--car-surface); color: var(--car-text-disabled); font-family: var(--car-font-num); font-size: 11px; font-weight: 600; }
+.pd-flow__label { min-width: 0; overflow: hidden; font-size: var(--car-fs-aux); line-height: 20px; text-overflow: ellipsis; white-space: nowrap; }
+.pd-flow__step.is-done { color: var(--car-success); }
+.pd-flow__step.is-done .pd-flow__dot { border-color: var(--car-success); background: var(--car-success); color: #fff; }
+.pd-flow__step.is-current { color: var(--car-primary); font-weight: 600; }
+.pd-flow__step.is-current .pd-flow__dot { border-color: var(--car-primary); background: var(--car-primary); color: #fff; box-shadow: 0 0 0 4px rgba(22,119,255,0.14); }
+.pd-flow__step.is-current.is-terminal { color: var(--car-success); }
+.pd-flow__step.is-current.is-terminal .pd-flow__dot { border-color: var(--car-success); background: var(--car-success); box-shadow: 0 0 0 4px rgba(82,196,26,0.14); }
+.pd-flow__dot svg { width: 12px; height: 12px; }
+.pd-foot { display: flex; padding: var(--car-pad); border-top: 1px solid var(--car-border); background: var(--car-surface); }
+@media (max-width: 1279px) {
+    .pd-body { padding: 12px 16px 0; gap: 8px; }
+    .pd-section { gap: 6px; }
+    .pd-location { gap: 2px; }
+    .pd-location__value { line-height: 20px; }
+    .pd-task-context { min-height: 40px; padding: 4px 0; }
+}
 </style>
 </head>
 <body>
@@ -67,10 +81,10 @@
         <div class="car-topbar__center">
             <div class="car-task-notice car-hidden" id="js-task-notice" role="status" aria-live="polite" aria-atomic="true">
                 <span class="car-task-notice__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
-                <span class="car-task-notice__lead">新任务已派发</span>
-                <span class="car-task-notice__summary" data-task-notice-summary>巡查任务 · 解放南路沿线 · 13:30-15:00</span>
+                <span class="car-task-notice__lead">新任务</span>
+                <span class="car-task-notice__summary" data-task-notice-summary>品质巡查 - 解放南路沿线 - 13:30-15:00</span>
                 <span class="car-task-notice__more" data-task-notice-more aria-label="另有1条新任务">+1</span>
-                <button type="button" class="car-task-notice__action" data-task-notice-view>查看任务</button>
+                <button type="button" class="car-task-notice__action" data-task-notice-view aria-label="查看新任务" title="查看任务">查看</button>
                 <button type="button" class="car-task-notice__close" data-task-notice-close aria-label="关闭新任务提醒" title="关闭新任务提醒"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             </div>
         </div>
@@ -83,28 +97,13 @@
     <div class="car-main">
         <div class="pd-grid">
             <!-- 左：地图 -->
-            <div class="pd-map car-map">
-                <div class="car-map__base"></div>
-                <div class="car-map__water"></div>
-                <div class="car-map__park car-map__park--1"></div>
-                <div class="car-map__bldg" style="left:25%;top:30%;width:5%;height:8%"></div>
-                <div class="car-map__bldg" style="left:55%;top:24%;width:6%;height:7%"></div>
-                <div class="car-map__bldg" style="left:15%;top:60%;width:7%;height:8%"></div>
-                <div class="car-map__roads"></div>
-                <div class="car-map__road--h2"></div>
-                <div class="car-map__road--v2"></div>
-                <div class="car-map__grid"></div>
-                <span class="car-map__label" style="left:30%;top:51%">滨江路</span>
-                <div class="car-map__zone" style="left:25%;top:30%;width:40%;height:36%"></div>
-                <div class="car-map__point pd-problem-pin" id="js-problemPoint" style="left:45%;top:48%" aria-label="事件点位"><span class="pd-problem-pin__icon"><span>!</span></span></div>
-                <!-- 车辆位置（与首页/执行页地图元素一致） -->
-                <div class="car-map__point" style="left:38%;top:42%">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#1677ff" style="filter:drop-shadow(0 2px 4px rgba(20,40,70,0.3))"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-                </div>
+            <div class="pd-map car-map pd-map--leaflet">
+                <div class="pd-leaflet-map" id="js-leaflet-map" aria-label="事件位置地图"></div>
+                <div class="pd-map-fallback" id="js-map-fallback" role="status">地图服务暂不可用，请检查网络连接后重试。</div>
                 <div class="car-legend">
-                    <div class="car-legend__row"><span class="car-legend__mark" style="background:#ff4d4f;border-radius:50%"></span>事件点位</div>
-                    <div class="car-legend__row"><span class="car-legend__mark" style="background:#1677ff;border-radius:50%"></span>车辆位置</div>
-                    <div class="car-legend__row"><span class="car-legend__mark" style="background:rgba(22,119,255,0.10);border:2px dashed rgba(22,119,255,0.55)"></span>任务作业区域</div>
+                    <div class="car-legend__row"><span class="car-legend__mark"><span class="car-legend__pin car-legend__pin--problem" id="js-problem-legend"><span>!</span></span></span>事件点位</div>
+                    <div class="car-legend__row"><span class="car-legend__mark"><span class="car-legend__dot car-legend__dot--vehicle"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></span></span>车辆位置</div>
+                    <div class="car-legend__row"><span class="car-legend__mark"><span class="car-legend__zone"></span></span>任务作业区域</div>
                 </div>
             </div>
 
@@ -114,68 +113,67 @@
                     <span class="car-panel__title">事件详情</span>
                 </div>
                 <div class="pd-body">
-                    <!-- 标题摘要 -->
+                    <!-- 事件摘要：问题类型、发生时间、状态；发现信息单列展示。 -->
                     <div class="pd-section">
                         <div class="pd-summary">
-                            <span class="pd-summary__no" id="js-title-no">WT20260724-001</span>
-                            <span class="car-tag car-tag--neutral" id="js-status">待确认</span>
-                        </div>
-                    </div>
-
-                    <!-- 事件信息 -->
-                    <div class="pd-section">
-                        <div class="pd-section__title">事件信息</div>
-                        <div class="pd-grid-fields">
-                            <div class="pd-field"><span class="pd-field__label">事件发生时间</span><span class="pd-field__value car-mono" id="js-reportTime">2026-07-24 10:48</span></div>
-                            <div class="pd-field"><span class="pd-field__label">事件来源</span><span class="pd-field__value" id="js-source">车载监控采样</span></div>
-                            <div class="pd-field"><span class="pd-field__label">事件发现类型</span><span class="pd-field__value" id="js-discoveryType">AI</span></div>
-                            <div class="pd-field"><span class="pd-field__label">事件发现方</span><span class="pd-field__value" id="js-discoverer">巡查车</span></div>
-                            <div class="pd-field"><span class="pd-field__label">事件经纬度</span><span class="pd-field__value car-mono" id="js-coordinates">113.264,23.129</span></div>
-                            <div class="pd-field"><span class="pd-field__label">事件位置</span><span class="pd-field__value" id="js-location">滨江路18号路口</span></div>
-                            <div class="pd-field"><span class="pd-field__label">详细位置</span><span class="pd-field__value" id="js-detailedLocation">滨江路东段北侧车道</span></div>
-                            <div class="pd-field"><span class="pd-field__label">问题类型</span><span class="pd-field__value" id="js-problemType">路面油污</span></div>
-                        </div>
-                        <div class="pd-field"><span class="pd-field__label">事件照片</span>
-                            <div class="pd-photos" id="js-photos">
-                                <div class="pd-photo pd-photo--oil" data-caption="车载画面 1"><span></span></div>
-                                <div class="pd-photo pd-photo--water" data-caption="车载画面 2"><span></span></div>
+                            <div class="pd-summary__primary">
+                                <span class="pd-summary__title" id="js-title">路面油污</span>
+                                <span class="pd-summary__time car-mono" id="js-occurrenceTime">2026-07-24 10:48</span>
+                                <span class="car-tag car-tag--neutral" id="js-status">待确认</span>
+                            </div>
+                            <div class="pd-summary__discovery" aria-label="事件发现信息">
+                                <span id="js-discoveryType">AI</span>
+                                <span id="js-source">车载监控采样</span>
+                                <span id="js-discoverer">巡查车</span>
                             </div>
                         </div>
-                        <div class="pd-field"><span class="pd-field__label">事件描述</span><div class="pd-desc" id="js-desc">路面存在大面积油污未清理，影响通行，需尽快安排清洗。</div></div>
-                        <div class="pd-field"><span class="pd-field__label">所属任务</span><div class="pd-desc" id="js-note">滨江路东段品质巡查任务</div></div>
                     </div>
 
-                    <!-- 处置节点图（与状态联动：done/current/pending 由 JS 渲染） -->
+                    <!-- 事件图片 -->
+                    <div class="pd-section">
+                        <div class="pd-section__title">事件图片</div>
+                        <div class="pd-photos" id="js-photos">
+                            <div class="pd-photo pd-photo--oil"><span></span></div>
+                            <div class="pd-photo pd-photo--water"><span></span></div>
+                        </div>
+                    </div>
+
+                    <div class="pd-section">
+                        <div class="pd-section__title">事件描述</div>
+                        <div class="pd-desc" id="js-desc">路面存在大面积油污未清理，影响通行，需尽快安排清洗。</div>
+                    </div>
+
+                    <div class="pd-section">
+                        <div class="pd-section__title">发生位置</div>
+                        <div class="pd-location">
+                            <span class="pd-location__value pd-location__value--coordinate" id="js-coordinates" aria-label="经纬度">113.264,23.129</span>
+                            <span class="pd-location__value" id="js-location" aria-label="事件地点">滨江路18号路口</span>
+                            <span class="pd-location__value" id="js-detailedLocation" aria-label="详细地点">滨江路东段北侧车道</span>
+                        </div>
+                    </div>
+
+                    <div class="pd-section">
+                        <div class="pd-section__title">关联任务</div>
+                        <div class="pd-task-context">
+                            <span class="pd-task-context__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M5.5 10.5V16L12 20l6.5-4v-5.5"/></svg></span>
+                            <span class="pd-task-context__text" id="js-taskContext">滨江路东段 · 品质巡查</span>
+                        </div>
+                    </div>
+
                     <div class="pd-section">
                         <div class="pd-section__title">处置节点</div>
-                        <div class="pd-flow" id="js-flow"></div>
-                    </div>
-
-                    <!-- 处置信息 -->
-                    <div class="pd-section">
-                        <div class="pd-section__title">处置信息</div>
-                        <div class="pd-grid-fields">
-                            <div class="pd-field"><span class="pd-field__label">处置人员</span><span class="pd-field__value" id="js-handler">—</span></div>
-                            <div class="pd-field"><span class="pd-field__label">处置完成时间</span><span class="pd-field__value car-mono" id="js-handlerTime">—</span></div>
-                        </div>
-                        <div class="pd-field"><span class="pd-field__label">处置后照片</span><span class="pd-field__value car-mute" id="js-afterPhoto">暂无</span></div>
-                        <div class="pd-field"><span class="pd-field__label">处置备注</span><div class="pd-desc" id="js-handlerDesc">事件待分配责任人，暂无处置记录。</div></div>
-                    </div>
-
-                    <!-- 处理日志（对齐需求 7.3.4：详情展示处理日志） -->
-                    <div class="pd-section">
-                        <div class="pd-section__title">处理日志</div>
-                        <div class="pd-log" id="js-log"></div>
+                        <div class="pd-flow" id="js-flow" aria-label="事件处置节点"></div>
                     </div>
                 </div>
                 <div class="pd-foot">
-                    <button class="car-btn car-btn--ghost" onclick="history.back()">返回</button>
+                    <button class="car-btn car-btn--ghost car-btn--lg car-btn--block" onclick="history.back()">返回</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="components/car-common.js"></script>
 <script>
 (function () {
@@ -184,70 +182,97 @@
     var pid = CAR.query('id') || 'P001';
     var p = CAR.getProblem(pid) || CAR.getProblem('P001');
     var statusMeta = CAR.EVENT_STATUS[p.status] || CAR.EVENT_STATUS.judging;
-    p.current = statusMeta.order;
-    p.tag = statusMeta.tag;
-    p.afterPhoto = p.status === 'done' ? '已上传 2 张' : '暂无';
-    document.getElementById('js-title-no').textContent = p.no;
+    var task = CAR.getTask(p.taskId);
+    document.getElementById('js-title').textContent = p.problemType || '未知事件';
     var sEl = document.getElementById('js-status');
     sEl.textContent = statusMeta.text;
-    sEl.className = 'car-tag ' + p.tag;
-    document.getElementById('js-reportTime').textContent = p.occurrenceTime;
-    document.getElementById('js-source').textContent = p.source;
-    document.getElementById('js-discoveryType').textContent = p.discoveryType;
-    document.getElementById('js-discoverer').textContent = p.discoverer;
-    document.getElementById('js-coordinates').textContent = p.coordinates;
+    sEl.className = 'car-tag ' + statusMeta.tag;
+    document.getElementById('js-occurrenceTime').textContent = p.occurrenceTime;
+    document.getElementById('js-discoveryType').textContent = p.discoveryType || '未知';
+    document.getElementById('js-source').textContent = p.source || '来源未知';
+    document.getElementById('js-discoverer').textContent = String(p.discoverer || '发现方未知').replace(/^巡查员\s+/, '');
+    document.getElementById('js-coordinates').textContent = p.coordinates || '坐标未知';
     document.getElementById('js-location').textContent = p.location;
     document.getElementById('js-detailedLocation').textContent = p.detailedLocation;
-    document.getElementById('js-problemType').textContent = p.problemType;
     document.getElementById('js-desc').textContent = p.description;
-    document.getElementById('js-note').textContent = p.taskArea + ' · ' + p.taskId;
-    document.getElementById('js-problemPoint').style.left = p.point.left;
-    document.getElementById('js-problemPoint').style.top = p.point.top;
+    document.getElementById('js-taskContext').textContent = task ? task.area + ' · ' + task.workType : p.taskArea;
 
-    // 处置节点联动渲染
-    var NODES = Object.keys(CAR.EVENT_STATUS).map(function (status) { return CAR.EVENT_STATUS[status].text; });
-    var html = '';
-    NODES.forEach(function (n, i) {
-        if (i > 0) {
-            var lineDone = i <= p.current ? ' is-done' : '';
-            html += '<div class="pd-line' + lineDone + '"></div>';
-        }
-        var cls = i < p.current ? 'is-done' : (i === p.current ? 'is-current' : 'is-pending');
-        var inner = i < p.current
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>'
-            : (i + 1);
-        html += '<div class="pd-node ' + cls + '"><span class="pd-node__dot">' + inner + '</span><span class="pd-node__label">' + n + '</span></div>';
-    });
-    document.getElementById('js-flow').innerHTML = html;
-
-    // 处理日志联动渲染（按 current 节点截取已发生日志，current 节点为 active）
-    var LOGS = [
-        { action: '事件上报', time: p.reportTime, detail: p.source + '生成事件，记录位置与图片。', node: 0 },
-        { action: '完成判别', time: p.reportTime, detail: '事件判别有效，进入责任分配。', node: 1 },
-        { action: '责任分配', time: p.reportTime, detail: '事件已进入责任人待接收队列。', node: 2 },
-        { action: '开始处理', time: p.reportTime, detail: '责任人已接收并开展现场处置。', node: 3 },
-        { action: '等待核查', time: p.reportTime, detail: '处置结果已提交，等待巡查核查。', node: 4 },
-        { action: '处置完成', time: p.handlerTime, detail: p.handlerDesc, node: 5 }
+    var FLOW_NODES = [
+        { status: 'judging', label: '待判别' },
+        { status: 'assigning', label: '待分配' },
+        { status: 'pending', label: '待处理' },
+        { status: 'processing', label: '处理中' },
+        { status: 'checking', label: '待核查' },
+        { status: 'done', label: '已完成' }
     ];
-    var logHtml = '';
-    LOGS.forEach(function (l, i) {
-        if (l.node > p.current) return;
-        var itemCls = l.node < p.current ? 'is-done' : (l.node === p.current ? 'is-active' : '');
-        logHtml += '<div class="pd-log__item ' + itemCls + '">' +
-            '<span class="pd-log__dot"></span>' +
-            '<div class="pd-log__body">' +
-                '<div class="pd-log__head"><span class="pd-log__action">' + l.action + '</span><span class="pd-log__time">' + l.time + '</span></div>' +
-                '<div class="pd-log__detail">' + l.detail + '</div>' +
-            '</div>' +
-        '</div>';
-    });
-    document.getElementById('js-log').innerHTML = logHtml || '<div class="pd-log__detail">暂无处理日志。</div>';
+    var currentNode = FLOW_NODES.findIndex(function (node) { return node.status === p.status; });
+    if (currentNode < 0) currentNode = 0;
+    document.getElementById('js-flow').innerHTML = FLOW_NODES.map(function (node, index) {
+        var isCurrent = index === currentNode;
+        var isDone = index < currentNode || (p.status === 'done' && isCurrent);
+        var classes = 'pd-flow__step' + (isDone ? ' is-done' : '') + (isCurrent ? ' is-current' : '') + (isCurrent && p.status === 'done' ? ' is-terminal' : '');
+        var dot = isDone ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>' : (index + 1);
+        return '<div class="' + classes + '"' + (isCurrent ? ' aria-current="step"' : '') + '><span class="pd-flow__dot">' + dot + '</span><span class="pd-flow__label">' + node.label + '</span></div>';
+    }).join('');
 
-    // 处置信息联动
-    document.getElementById('js-handler').textContent = p.handler;
-    document.getElementById('js-handlerTime').textContent = p.handlerTime;
-    document.getElementById('js-afterPhoto').textContent = p.afterPhoto;
-    document.getElementById('js-handlerDesc').textContent = p.handlerDesc;
+    function toLatLng(problem) {
+        var coordinates = String(problem.coordinates || '').split(',').map(Number);
+        return coordinates.length === 2 && isFinite(coordinates[0]) && isFinite(coordinates[1]) ? [coordinates[1], coordinates[0]] : null;
+    }
+    function mapIcon(className, html, size, anchor) {
+        return L.divIcon({ className: '', html: '<span class="pd-map-marker ' + className + '">' + html + '</span>', iconSize: size, iconAnchor: anchor });
+    }
+    function vehicleIcon() {
+        return mapIcon('pd-map-marker--vehicle', '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>', [34, 34], [17, 17]);
+    }
+    function statusColor(status) {
+        if (status === 'done') return '#52c41a';
+        if (status === 'pending' || status === 'processing') return '#faad14';
+        if (status === 'judging') return '#86909c';
+        return '#1677ff';
+    }
+    function problemIcon(problem) {
+        return L.divIcon({
+            className: '',
+            html: '<span class="pd-map-marker pd-map-marker--problem" style="--pd-problem-color:' + statusColor(problem.status) + '"><span>!</span></span>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32]
+        });
+    }
+    function showMapFallback() { document.getElementById('js-map-fallback').classList.add('is-visible'); }
+    function initLeafletMap() {
+        if (!window.L) { showMapFallback(); return; }
+        try {
+            var map = L.map('js-leaflet-map', { zoomControl: true, attributionControl: true, preferCanvas: true, minZoom: 12, maxZoom: 19 });
+            var tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            tiles.on('tileerror', showMapFallback);
+
+            var bounds = [];
+            var geo = task && task.geo;
+            if (geo && geo.zone && geo.zone.length) {
+                L.polygon(geo.zone, { color: '#1677ff', weight: 2, dashArray: '7 5', fillColor: '#1677ff', fillOpacity: 0.1 }).addTo(map);
+                bounds = bounds.concat(geo.zone);
+            }
+            if (geo && geo.vehicle) {
+                L.marker(geo.vehicle, { icon: vehicleIcon(), title: '当前车辆位置' }).addTo(map).bindTooltip('当前车辆位置', { direction: 'top', offset: [0, -16] });
+                bounds.push(geo.vehicle);
+            }
+            var problemLatLng = toLatLng(p);
+            if (problemLatLng) {
+                L.marker(problemLatLng, { icon: problemIcon(p), title: p.location }).addTo(map).bindTooltip(p.location, { direction: 'top', offset: [0, -28] });
+                bounds.push(problemLatLng);
+            }
+            if (bounds.length) map.fitBounds(bounds, { padding: [56, 56], maxZoom: 17 });
+            else map.setView([23.129, 113.265], 14);
+        } catch (error) {
+            showMapFallback();
+        }
+    }
+    document.getElementById('js-problem-legend').style.background = statusColor(p.status);
+    initLeafletMap();
 })();
 </script>
 </body>

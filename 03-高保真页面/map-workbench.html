@@ -232,12 +232,83 @@
             0% { transform: scale(0.7); opacity: 0.55; }
             100% { transform: scale(1.18); opacity: 0; }
         }
+        /* ===== 顶部悬浮胶囊条（小程序样式：返回 / 退出） ===== */
+        .top-bar {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            top: 12px;
+            z-index: 12;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .top-bar__btn {
+            height: 32px;
+            min-width: 32px;
+            padding: 0 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 4px 12px rgba(15, 35, 70, 0.12);
+            color: #000000d9;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 18px;
+            text-decoration: none;
+            transition: transform 0.15s ease, background 0.15s ease;
+            cursor: pointer;
+        }
+        .top-bar__btn:active { transform: scale(0.92); background: #f5f5f5; }
+        .top-bar__btn svg { width: 16px; height: 16px; }
+        .top-bar__btn--icon { padding: 0; width: 32px; border-radius: 50%; }
+        .top-bar__capsule {
+            position: relative;
+            width: 88px;
+            height: 32px;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 4px 12px rgba(15, 35, 70, 0.12);
+        }
+        .top-bar__mini-action {
+            width: 43px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 15px;
+            background: transparent;
+            color: #1f1f1f;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .top-bar__mini-action:active { transform: scale(0.92); background: #f5f5f5; }
+        .top-bar__mini-action svg { width: 20px; height: 20px; }
+        /* 更多按钮占位：仅展示，无交互 */
+        .top-bar__mini-action--placeholder { cursor: default; }
+        .top-bar__mini-action--placeholder:active { transform: none; background: transparent; }
+        .top-bar__capsule-divider {
+            width: 1px;
+            height: 18px;
+            flex: 0 0 1px;
+            background: #e8e8e8;
+        }
+
         /* 顶部车辆执行状态条 */
         .top-card {
             position: absolute;
             left: 16px;
             right: 16px;
-            top: 14px;
+            top: 54px;
             min-height: 60px;
             display: flex;
             align-items: center;
@@ -432,6 +503,47 @@
             transform: rotate(-45deg);
         }
         .legend-dynamic-icon svg { width: 9px; height: 9px; transform: rotate(45deg); }
+        /* 今日任务快捷入口（胶囊形 + 任务数角标，参照品质巡查移动端 map-shortcut） */
+        .map-shortcut {
+            position: relative;
+            width: 104px;
+            height: 32px;
+            padding: 0 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.98);
+            color: #1f2937;
+            box-shadow: 0 4px 12px rgba(24,39,59,0.14);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 18px;
+            white-space: nowrap;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            cursor: pointer;
+        }
+        .map-shortcut:active { transform: scale(0.97); box-shadow: 0 3px 9px rgba(24,39,59,0.12); }
+        .map-shortcut__icon { width: 16px; height: 16px; flex: none; color: #1677ff; }
+        .map-shortcut__badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            display: grid;
+            place-items: center;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            background: #ff7a45;
+            color: #fff;
+            font-family: "DIN", "SF UI Text", sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 12px;
+        }
         .tool-btn {
             width: 46px;
             height: 46px;
@@ -453,7 +565,7 @@
             position: absolute;
             left: 16px;
             right: 16px;
-            top: 94px;
+            top: 134px;
             z-index: 8;
             min-height: 48px;
             display: none;
@@ -560,41 +672,6 @@
             background: #d8dadf;
             transform: translateX(-50%);
         }
-        .task-list-entry {
-            min-height: 36px;
-            padding: 0 10px;
-            border: 0;
-            border-radius: 8px;
-            background: transparent;
-            color: #4e5969;
-            display: inline-flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
-            font-size: 12px;
-            line-height: 18px;
-            cursor: pointer;
-        }
-        .task-list-entry:active { background: #f2f3f5; }
-        .task-list-entry-label { color: #4e5969; }
-        .task-list-entry-count { color: #86909c; }
-        .task-list-entry svg {
-            width: 16px;
-            height: 16px;
-            color: #86909c;
-            transition: transform 0.2s ease;
-        }
-        .workbench:not(.sheet-open) .task-list-entry svg { transform: rotate(180deg); }
-        .task-list-entry-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 40px;
-            margin: 8px -16px -6px;
-            padding: 4px 16px 0;
-            border-top: 1px solid #f0f1f2;
-        }
-        .workbench.sheet-open .task-list-entry-row { margin-bottom: 0; }
         /* 当前任务卡片：标题 / 副标题 / 作业要求+任务详情 / 3 列指标 / 导航+主操作 */
         .task-line {
             display: flex;
@@ -1246,7 +1323,7 @@
         @media (max-width: 360px) {
             .top-card { left: 12px; right: 12px; padding: 10px; }
             .vehicle-icon { display: none; }
-            .dynamic-task-banner { left: 12px; right: 12px; top: 90px; }
+            .dynamic-task-banner { left: 12px; right: 12px; top: 130px; }
             .actions { grid-template-columns: 86px 44px 1fr; gap: 8px; }
         }
 
@@ -1798,6 +1875,22 @@
 </head>
 <body>
     <main class="workbench" id="workbench" aria-label="地图工作台执行态控制台">
+        <!-- 顶部悬浮胶囊条（小程序样式：返回 / 退出） -->
+        <div class="top-bar">
+            <button type="button" class="top-bar__btn top-bar__btn--icon" id="jsTopBack" aria-label="返回">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="top-bar__capsule">
+                <span class="top-bar__mini-action top-bar__mini-action--placeholder" aria-hidden="true">
+                    <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="14" r="2.2" fill="currentColor"/><circle cx="14" cy="14" r="2.8" fill="currentColor"/><circle cx="22" cy="14" r="2.2" fill="currentColor"/></svg>
+                </span>
+                <span class="top-bar__capsule-divider" aria-hidden="true"></span>
+                <button type="button" class="top-bar__mini-action" id="jsTopExit" aria-label="退出用车管理">
+                    <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="9.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="14" cy="14" r="3.25" fill="currentColor"/></svg>
+                </button>
+            </div>
+        </div>
+
         <section class="map-shell" id="mapShell" data-testid="svg-map-shell" aria-label="地图区域">
             <div class="map-grid"></div>
             <div class="map-road main"></div>
@@ -1837,9 +1930,6 @@
         </section>
 
         <header class="top-card glass" id="topCard">
-            <button type="button" class="top-back" onclick="onAppExit()" aria-label="退出用车管理">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
             <span class="vehicle-icon" id="topVehicleIcon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14l-1.6-5.2A2.5 2.5 0 0 0 15 10H9a2.5 2.5 0 0 0-2.4 1.8L5 17Z"/><path d="M7 17v2M17 17v2M8 14h8"/></svg>
             </span>
@@ -1864,6 +1954,11 @@
         </header>
 
         <nav class="map-tools" id="mapTools" aria-label="地图工具">
+            <button class="map-shortcut" id="taskShortcut" type="button" onclick="toggleTaskList()" aria-label="查看今日任务">
+                <svg class="map-shortcut__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 13h8M8 17h5"/><path d="m5.5 8 .8.8 1.7-1.7"/><path d="m5.5 13 .8.8 1.7-1.7"/><path d="m5.5 17 .8.8 1.7-1.7"/></svg>
+                <span>今日任务</span>
+                <span class="map-shortcut__badge" id="taskShortcutBadge">0</span>
+            </button>
             <button class="tool-btn" type="button" onclick="centerMap()" aria-label="定位回正">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
             </button>
@@ -1985,15 +2080,7 @@
                 <button class="primary-action" id="primaryAction" type="button">开始任务</button>
             </div>
 
-            <div class="task-list-entry-row">
-                <button class="task-list-entry" id="taskSheetTrigger" type="button" aria-controls="taskSheet" aria-expanded="false" aria-label="展开今日任务列表" onclick="toggleTaskList()">
-                    <span class="task-list-entry-label" id="taskListEntryLabel">今日任务</span>
-                    <span class="task-list-entry-count" id="taskListEntryCount">0 项</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-                </button>
-            </div>
-
-            <!-- 任务列表：在当前任务卡片下方展开/收起 -->
+            <!-- 任务列表：由右侧工具栏「今日任务」按钮触发，在当前任务卡片下方展开/收起 -->
             <section class="task-list-panel" id="taskSheet" data-testid="task-sheet" aria-label="今日任务列表">
                 <div class="task-list-top">
                     <div class="task-list-stats" id="taskSheetMeta">待开始 5 · 进行中 1 · 已完成 2</div>
@@ -2430,7 +2517,7 @@
             var workbench = document.getElementById('workbench');
             var trigger = document.getElementById('taskSheetTrigger');
             workbench.classList.toggle('sheet-open', open);
-            trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
             updateTaskTriggerText();
             // 同步右侧工具栏位置（紧贴 console 卡片上方 16px）
             updateMapToolsPosition();
@@ -2438,14 +2525,13 @@
 
         function updateTaskTriggerText() {
             var workbench = document.getElementById('workbench');
-            var trigger = document.getElementById('taskSheetTrigger');
-            var label = document.getElementById('taskListEntryLabel');
-            var count = document.getElementById('taskListEntryCount');
-            if (!workbench || !trigger) return;
+            var badge = document.getElementById('taskShortcutBadge');
+            if (!workbench) return;
             var open = workbench.classList.contains('sheet-open');
-            if (label) label.textContent = '今日任务';
-            if (count) count.textContent = (open ? taskDrawerSummary.total : taskDrawerSummary.active) + ' 项';
-            trigger.setAttribute('aria-label', open ? '收起今日任务列表' : '展开今日任务列表');
+            // 角标始终显示未完成（进行中）任务数，与原底部入口收起态一致
+            if (badge) badge.textContent = taskDrawerSummary.active;
+            // 任务列表抽屉已改由右侧工具栏「今日任务」按钮触发，无底部入口文案需更新
+            void open;
         }
 
         // 同步地图底部浮层位置：始终在 console 卡片顶部上方 16px
@@ -3042,8 +3128,21 @@
             go('qrcode.html?scene=bind&returnUrl=vehicle-management.html');
         }
         function onAppExit() {
+            // 退出用车管理：优先通知外层 vehicle-management 外壳做进行中任务二次确认
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.requestExit === 'function') {
+                    window.parent.requestExit();
+                    return;
+                }
+            } catch (e) {}
             go('home.html');
         }
+        (function () {
+            var back = document.getElementById('jsTopBack');
+            var exit = document.getElementById('jsTopExit');
+            if (back) back.addEventListener('click', onAppExit);
+            if (exit) exit.addEventListener('click', onAppExit);
+        })();
         function renderAllTaskMarkers() {
             var box = document.getElementById('allTaskMarkers');
             if (!box) return;

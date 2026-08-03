@@ -445,7 +445,9 @@
         function initBindingScene() {
             if (!IS_BINDING) return;
             document.querySelector('.top-nav-title').textContent = '车辆绑定';
-            document.querySelector('.top-nav-back').setAttribute('href', 'vehicle-management.html');
+            var returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+            var bindingReturnUrl = (returnUrl === 'vehicle-management.html' || returnUrl === 'inspection-management.html') ? returnUrl : 'vehicle-management.html';
+            document.querySelector('.top-nav-back').setAttribute('href', bindingReturnUrl);
             document.getElementById('bindingBanner').style.display = 'block';
             document.querySelector('.user-role').textContent = '作业车辆驾驶员';
             var usageTitle = document.querySelector('.usage-title span:last-child');
@@ -464,7 +466,7 @@
             VehicleDemoState.bind();
             showToast('车辆绑定成功，正在进入地图工作台');
             var returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
-            var nextPage = returnUrl === 'vehicle-management.html' ? returnUrl : 'map-workbench.html';
+            var nextPage = (returnUrl === 'vehicle-management.html' || returnUrl === 'inspection-management.html') ? returnUrl : 'map-workbench.html';
             setTimeout(function () {
                 window.location.href = nextPage;
             }, 900);
