@@ -550,12 +550,12 @@
         .connection-row__arrow { width: 15px; height: 15px; flex: none; color: #00000073; }
         .task-line { display: flex; align-items: center; gap: 8px; }
         .task-line + .task-line { margin-top: 8px; }
-        /* 第 1 行：区域名 + 状态 + 任务详情（详情为右上角文字链接，非底部按钮） */
+        /* 第 1 行：区域名 + 紧贴的状态 + 右侧圆形详情入口 */
         .task-line-head { justify-content: space-between; }
-        .task-title-wrap { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+        .task-title-wrap { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
         .task-card__area {
-            flex: none; max-width: 60%;
-            font-size: 16px; font-weight: 700; color: #000000d9; line-height: 22px;
+            flex: 0 1 auto; max-width: 100%;
+            font-size: 16px; font-weight: 600; color: #000000d9; line-height: 24px;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         /* 事件上报数（待接收不渲染） */
@@ -566,10 +566,13 @@
         .task-card__count svg { width: 13px; height: 13px; }
         .task-head-right { flex: none; display: flex; align-items: center; gap: 8px; }
         .detail-link {
-            flex: none; font-size: 12px; line-height: 18px; color: #1677ff;
-            text-decoration: none; font-weight: 500; background: none; border: none; padding: 0;
+            flex: none; display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; padding: 0; border: 1px solid #e8e8e8;
+            border-radius: 50%; background: #ffffff; color: #1677ff; cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
         }
-        .detail-link:active { opacity: 0.7; }
+        .detail-link:active { transform: scale(0.92); background: #e6f4ff; border-color: #91caff; }
+        .detail-link svg { width: 17px; height: 17px; }
         /* 第 2 行：任务日期 - 作业时间 - 作业资源 */
         .task-card__meta {
             font-size: 12px; line-height: 18px; color: #00000073;
@@ -667,7 +670,7 @@
         .workbench.is-executing .task-banner__txt { font-size: 14px; color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .workbench.is-executing .task-banner__view { min-height: 28px; border-radius: 15px; background: #f0f7ff; color: #1677ff; line-height: 28px; }
         .workbench.is-executing .task-banner__view:active { background: #e6f4ff; }
-        .workbench.is-executing .map-tools { right: 14px; bottom: 280px; z-index: 10; }
+        .workbench.is-executing .map-tools { right: 14px; bottom: 334px; z-index: 10; }
         .workbench.is-executing .tool-btn { width: 40px; height: 40px; color: #526072; }
         .workbench.is-executing .tool-btn svg { width: 20px; height: 20px; }
         .workbench.is-executing .map-legend { display: none; }
@@ -842,7 +845,7 @@
             gap: 12px;
             padding: 12px 16px 8px;
         }
-        .sheet__title { font-size: 15px; font-weight: 600; color: #000000d9; }
+        .sheet__title { font-size: 16px; font-weight: 600; color: #000000d9; }
         .sheet__close {
             display: inline-flex;
             align-items: center;
@@ -872,33 +875,52 @@
             min-height: 0;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            padding: 4px 12px 12px;
+            background: #f5f8fb;
         }
-        .sheet__group { padding: 10px 16px 4px; font-size: 12px; color: #00000073; background: #fafafa; }
+        .sheet__group { padding: 10px 4px 6px; font-size: 12px; line-height: 18px; color: #00000073; background: transparent; }
         .sheet-task {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding: 12px 16px;
-            border-bottom: 1px solid #f5f5f5;
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 32px;
+            align-items: center;
+            gap: 10px;
+            min-height: 76px;
+            padding: 10px 12px;
+            border: 1px solid transparent;
+            border-radius: 8px;
             background: #fff;
-            transition: background-color 0.15s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: background-color 0.15s, border-color 0.15s;
         }
-        .sheet-task:last-child { border-bottom: none; }
-        .sheet-task:active { background: #f5f5f5; }
-        .sheet-task.is-selected { background: #e6f4ff; }
+        .sheet-task + .sheet-task { margin-top: 8px; }
+        .sheet-task.is-selected { background: #e6f4ff; border-color: #91caff; }
         .sheet-task.is-selected::before {
             content: "";
             position: absolute;
-            left: 0; top: 0; bottom: 0; width: 3px;
+            left: -1px; top: 10px; bottom: 10px; width: 3px;
+            border-radius: 0 2px 2px 0;
             background: #1677ff;
         }
-        .sheet-task { position: relative; }
-        .sheet-task__r1 { display: flex; align-items: center; gap: 8px; }
-        .sheet-task__area { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; color: #000000d9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sheet-task__focus {
+            min-width: 0; padding: 0; border: 0; background: transparent; color: inherit;
+            font: inherit; text-align: left; cursor: pointer;
+        }
+        .sheet-task__focus:active { opacity: 0.72; }
+        .sheet-task__r1 { display: flex; align-items: center; gap: 6px; min-width: 0; }
+        .sheet-task__area { flex: 1 1 auto; min-width: 0; font-size: 16px; font-weight: 600; line-height: 24px; color: #000000d9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .sheet-task__count { flex: none; color: #ff4d4f; font-size: 12px; line-height: 18px; font-weight: 500; }
         .sheet-task__r2 { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #00000073; flex-wrap: wrap; }
         .sheet-task__r2 .sep { color: #e8e8e8; }
         .sheet-task__r2 .mono { font-family: "DIN", "SF UI Text", sans-serif; }
+        .sheet-task__detail {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; padding: 0; border: 1px solid #e8e8e8;
+            border-radius: 50%; background: #ffffff; color: #1677ff; cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+        }
+        .sheet-task__detail:active { transform: scale(0.92); background: #e6f4ff; border-color: #91caff; }
+        .sheet-task__detail svg { width: 17px; height: 17px; }
         .sheet-problem {
             --problem-accent: #ff7a45;
             max-height: 50vh;
@@ -1153,6 +1175,7 @@
     </div>
 
     <input type="file" id="js-camera-input" accept="image/*" capture="environment" hidden>
+    <input type="file" id="js-binding-camera-input" accept="image/*" capture="environment" hidden>
 
     <!-- Toast -->
     <div class="toast" id="js-toast"></div>
@@ -1281,7 +1304,7 @@
     ];
 
     var STATUS_TAG = { done: 'tag--done', running: 'tag--running', todo: 'tag--todo' };
-    var STATUS_TEXT = { done: '已完成', running: '进行中', todo: '待开始' };
+    var STATUS_TEXT = { done: '已完成', running: '进行中', todo: '待接收' };
     // 事件六类状态及展示顺序（PRD 事件状态机：待判别→待分配→待处理→处理中→待核查→已完成）
     var PROB_STATUS_ORDER = ['unidentified', 'unassigned', 'unprocessed', 'processing', 'reviewing', 'done'];
     var PROB_STATUS_TEXT = {
@@ -1296,10 +1319,10 @@
         pending: 'tag--unidentified', assigned: 'tag--unassigned'
     };
     var PROB_STATUS_COLOR = {
-        unidentified: '#8c8c8c', unassigned: '#1677ff', unprocessed: '#faad14',
-        processing: '#faad14', reviewing: '#722ed1', done: '#52c41a',
+        unidentified: '#8c8c8c', unassigned: '#faad14', unprocessed: '#1677ff',
+        processing: '#1677ff', reviewing: '#1677ff', done: '#52c41a',
         // 兼容旧 key
-        pending: '#8c8c8c', assigned: '#1677ff'
+        pending: '#8c8c8c', assigned: '#faad14'
     };
 
     // 状态持久化（与车机端 car-common 一致思路，独立键避免污染用车管理）
@@ -1318,12 +1341,15 @@
         t.status = saved.status;
         if (saved.status === 'running') {
             t.start = saved.start || '10:31';
-            t.mileage = saved.mileage === undefined || saved.mileage === null ? 0.01 : saved.mileage;
-            t.duration = saved.duration === undefined || saved.duration === null ? 1 : saved.duration;
+            t.startedAt = Number(saved.startedAt) || (Date.now() - Math.max(0, Number(saved.duration) || 0) * 60000);
+            t.mileage = saved.mileage === undefined || saved.mileage === null ? 0 : saved.mileage;
+            t.duration = elapsedMinutes(t);
+            t._stepIdx = Math.max(1, Number(saved.stepIdx) || 1);
+            t._traveled = getTraveledTrack(t);
         }
     });
 
-    // 选中的任务：优先 URL 指定 → 进行中 → 待开始 → 第一条
+    // 选中的任务：优先 URL 指定 → 进行中 → 待接收 → 第一条
     var params = new URLSearchParams(location.search);
     var requestedId = params.get('task');
     var action = params.get('action');
@@ -1398,6 +1424,7 @@
     var currentPersonMarker = null;
     // 执行中任务轨迹动画状态
     var trackAnimTimer = null;     // setInterval 句柄
+    var runningKpiTimer = null;    // 按开始时间刷新作业时长
     var trackAnimState = null;     // { taskId, track, stepIdx, trackLayer, personMarker }
     var stateSaveTimer = null;     // 持久化 debounce 句柄
     var facilitiesVisible = false;
@@ -1413,7 +1440,7 @@
 
     // 问题状态色（与 UI_design_APP 色值对齐）
     function problemStatusColor(status) {
-        return PROB_STATUS_COLOR[status] || '#1677ff';
+        return PROB_STATUS_COLOR[status] || '#8c8c8c';
     }
     // 解析 'lng,lat' 字符串为 Leaflet [lat,lng]
     function parseLatLng(str) {
@@ -1543,15 +1570,71 @@
         }
         // 聚焦到任务区域
         if (currentTaskLayer) {
-            leafletMap.fitBounds(currentTaskLayer.getBounds().pad(0.25), { animate: false });
+            leafletMap.fitBounds(currentTaskLayer.getBounds().pad(0.25), { animate: true, duration: 0.35 });
         } else if (geo && geo.person) {
-            leafletMap.setView(geo.person, 16, { animate: false });
+            leafletMap.setView(geo.person, 16, { animate: true, duration: 0.35 });
         }
         // 设施图层按可见性重绘
         renderFacilities();
     }
 
-    // ===== 执行中任务轨迹动画（3秒/步，到达终点停止） =====
+    // ===== 执行中任务轨迹与实时指标 =====
+    function elapsedMinutes(t) {
+        var startedAt = Number(t && t.startedAt);
+        if (!isFinite(startedAt) || startedAt <= 0) return Math.max(0, Math.floor(Number(t && t.duration) || 0));
+        return Math.max(0, Math.floor((Date.now() - startedAt) / 60000));
+    }
+    function getTraveledTrack(t) {
+        var track = t && t.geo && t.geo.track;
+        if (!track || !track.length) return [];
+        var stepIdx = Math.max(1, Math.min(Number(t._stepIdx) || 1, track.length));
+        return track.slice(0, stepIdx);
+    }
+    function trackMileageKm(track) {
+        if (!track || track.length < 2) return 0;
+        var earthRadius = 6371000;
+        var meters = 0;
+        for (var i = 1; i < track.length; i++) {
+            var prev = track[i - 1];
+            var next = track[i];
+            var lat1 = prev[0] * Math.PI / 180;
+            var lat2 = next[0] * Math.PI / 180;
+            var dLat = (next[0] - prev[0]) * Math.PI / 180;
+            var dLng = (next[1] - prev[1]) * Math.PI / 180;
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            meters += 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+        return +(meters / 1000).toFixed(2);
+    }
+    function persistTaskExecution(t) {
+        if (!t) return;
+        state[t.id] = state[t.id] || {};
+        state[t.id].mileage = t.mileage;
+        state[t.id].duration = t.duration;
+        state[t.id].startedAt = t.startedAt;
+        state[t.id].stepIdx = t._stepIdx;
+        saveState(state);
+    }
+    function startRunningKpiTimer(t) {
+        stopRunningKpiTimer();
+        if (!t || t.status !== 'running') return;
+        updateRunningKpi(t);
+        runningKpiTimer = setInterval(function () {
+            if (t.status !== 'running') {
+                stopRunningKpiTimer();
+                return;
+            }
+            updateRunningKpi(t);
+        }, 1000);
+    }
+    function stopRunningKpiTimer() {
+        if (runningKpiTimer) {
+            clearInterval(runningKpiTimer);
+            runningKpiTimer = null;
+        }
+    }
+    // 轨迹点代表已接收的实时定位。演示态每 3 秒追加一个点，里程始终由已采集轨迹求和。
     function startTrackAnimation(t) {
         if (!mapReady || !leafletMap) return;            // 降级模式不启动地图动画
         if (!t || !t.geo || !t.geo.track || t.geo.track.length < 2) return;  // 轨迹点不足
@@ -1592,11 +1675,9 @@
         // 延伸已行驶轨迹
         t._traveled.push(next);
         st.trackLayer.setLatLngs(t._traveled);
-        // 累计里程（Leaflet 球面距离，米→公里，2 位小数）
-        var segMeters = L.latLng(prev[0], prev[1]).distanceTo(L.latLng(next[0], next[1]));
-        t.mileage = +(t.mileage + segMeters / 1000).toFixed(2);
-        // 累计时长（3秒/步映射 3 分钟演示节奏）
-        t.duration = t.duration + 3;
+        // 作业里程为开始任务后已采集轨迹的累计长度；作业时长按开始时刻实时计算。
+        t.mileage = trackMileageKm(t._traveled);
+        t.duration = elapsedMinutes(t);
         // 更新 KPI 文本
         updateRunningKpi(t);
         // 推进下标（同步到 task）
@@ -1607,10 +1688,7 @@
         // debounce 持久化
         if (stateSaveTimer) clearTimeout(stateSaveTimer);
         stateSaveTimer = setTimeout(function () {
-            state[t.id] = state[t.id] || {};
-            state[t.id].mileage = t.mileage;
-            state[t.id].duration = t.duration;
-            saveState(state);
+            persistTaskExecution(t);
         }, 800);
     }
 
@@ -1621,10 +1699,7 @@
         trackAnimState = null;
         // 落盘最终里程/时长
         if (t) {
-            state[t.id] = state[t.id] || {};
-            state[t.id].mileage = t.mileage;
-            state[t.id].duration = t.duration;
-            saveState(state);
+            persistTaskExecution(t);
         }
         // restoreFull 暂无额外处理：进度已存 task，renderMapLeaflet 重渲染会正确画出
         void restoreFull;
@@ -1634,8 +1709,10 @@
     function updateRunningKpi(t) {
         var mEl = document.getElementById('js-kpi-mileage');
         var dEl = document.getElementById('js-kpi-duration');
-        if (mEl) mEl.textContent = fmt(t.mileage, '', '—');
-        if (dEl) dEl.textContent = fmt(t.duration, '', '—');
+        t.duration = elapsedMinutes(t);
+        if (mEl) mEl.textContent = Number(t.mileage || 0).toFixed(2);
+        if (dEl) dEl.textContent = String(t.duration);
+        persistTaskExecution(t);
     }
 
     // 旧 SVG/百分比降级渲染（Leaflet 加载失败时兜底）
@@ -1773,12 +1850,11 @@
     }
 
     /* ===== 任务卡片渲染（PRD 6.1.1-2 / 6.1.1-8） ===== */
-    // 第 1 行：片区名 - 事件上报数（未开始不显示）- 任务状态（+ 右侧详情链接）
-    // showCount=false 时强制不显示事件上报数（执行态收起场景）
-    function cardHeadHtml(t, withStatus, showCount) {
-        var statusHtml = withStatus ? '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span>' : '';
-        // 待接收（未开始）或收起态不显示事件上报数
-        var showCountFlag = (showCount !== false) && (t.status !== 'todo');
+    // 第 1 行：片区名 - 事件上报数（待接收不显示）- 任务状态 - 右侧圆形详情入口
+    function cardHeadHtml(t) {
+        var statusHtml = '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span>';
+        // 任务未开始时不显示事件上报数。
+        var showCountFlag = t.status !== 'todo';
         var countHtml = showCountFlag ? '<span class="task-card__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>事件上报 ' + t.problems + '</span>' : '';
         return '<div class="task-line task-line-head">' +
                 '<div class="task-title-wrap">' +
@@ -1787,7 +1863,9 @@
                     statusHtml +
                 '</div>' +
                 '<div class="task-head-right">' +
-                    '<button type="button" class="detail-link" id="js-btn-detail">详情</button>' +
+                    '<button type="button" class="detail-link" id="js-btn-detail" aria-label="查看任务详情" title="查看任务详情">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>' +
+                    '</button>' +
                 '</div>' +
             '</div>';
     }
@@ -1874,13 +1952,29 @@
         document.getElementById('js-connection-overlay').classList.add('show');
     }
     function openVehicleBinding() {
-        var target = 'qrcode.html?scene=bind&returnUrl=inspection-management.html';
-        if (window.parent && window.parent !== window) {
-            window.parent.location.href = target;
-        } else {
-            window.location.href = target;
+        var bindingCameraInput = document.getElementById('js-binding-camera-input');
+        if (!bindingCameraInput) {
+            toast('暂无法打开拍照');
+            return;
         }
+        bindingCameraInput.value = '';
+        bindingCameraInput.click();
     }
+    function completeDemoVehicleBinding() {
+        var binding = null;
+        try {
+            if (typeof VehicleDemoState === 'undefined') throw new Error('binding state unavailable');
+            binding = VehicleDemoState.bind();
+        } catch (e) {
+            toast('绑定失败，请重试');
+            return;
+        }
+        renderAll();
+        toast('绑定成功，已连接' + binding.plateNo);
+    }
+    document.getElementById('js-binding-camera-input').addEventListener('change', function (event) {
+        if (event.target.files && event.target.files[0]) completeDemoVehicleBinding();
+    });
     function bindConnectionRow() {
         var row = document.getElementById('js-connection-row');
         if (!row) return;
@@ -1906,16 +2000,19 @@
     // 第 3 行：3 列指标卡（开始时间 / 作业里程 km 2 位 / 作业时长 min 整数）
     function cardKpisHtml(t) {
         var mileage = (t.mileage == null || t.mileage === '') ? '—' : Number(t.mileage).toFixed(2);
-        var duration = (t.duration == null || t.duration === '') ? '—' : t.duration;
+        var duration = t.status === 'running' ? elapsedMinutes(t) : ((t.duration == null || t.duration === '') ? '—' : Math.floor(Number(t.duration)));
         return '<div class="task-line task-kpis">' +
                 '<div class="task-kpi"><span class="task-kpi__label">开始时间</span><span class="task-kpi__value">' + fmt(t.start, '', '—') + '</span></div>' +
                 '<div class="task-kpi"><span class="task-kpi__label">作业里程</span><span class="task-kpi__value" id="js-kpi-mileage">' + mileage + '</span><span class="task-kpi__unit"> km</span></div>' +
                 '<div class="task-kpi"><span class="task-kpi__label">作业时长</span><span class="task-kpi__value" id="js-kpi-duration">' + duration + '</span><span class="task-kpi__unit"> min</span></div>' +
             '</div>';
     }
+    function openInspectionTaskDetail(id) {
+        location.href = 'inspection-task-detail.html?id=' + encodeURIComponent(id) + '&from=map';
+    }
     function bindDetail(t) {
         var btn = document.getElementById('js-btn-detail');
-        if (btn) btn.addEventListener('click', function () { location.href = 'inspection-task-detail.html?id=' + encodeURIComponent(t.id) + '&from=map'; });
+        if (btn) btn.addEventListener('click', function () { openInspectionTaskDetail(t.id); });
     }
 
     function renderTaskCard(t) {
@@ -1923,11 +2020,11 @@
         var actionsEl = document.getElementById('js-actions');
         var workbench = document.getElementById('workbench');
 
-        // 执行态（PRD 6.1.1-8）：卡片收起，仅展示片区名称 + 开始时间/作业里程/作业时长
+        // 执行态：保留完整任务摘要，并实时更新开始时间、作业里程与作业时长。
         if (t.status === 'running') {
             workbench.classList.add('is-executing');
             card.classList.add('is-executing');
-            card.innerHTML = connectionRowHtml() + cardHeadHtml(t, false, false) + cardKpisHtml(t);
+            card.innerHTML = connectionRowHtml() + cardHeadHtml(t) + cardMetaHtml(t) + cardKpisHtml(t);
             bindConnectionRow();
             bindDetail(t);
             actionsEl.innerHTML = '<div class="exec-actions">' +
@@ -1943,14 +2040,12 @@
             return;
         }
 
-        // 待开始 / 已完成（PRD 6.1.1-2）：完整多行任务卡片
+        // 待接收 / 已完成（PRD 6.1.1-2）：完整多行任务卡片
         workbench.classList.remove('is-executing');
         card.classList.remove('is-executing');
-        var html = connectionRowHtml() + cardHeadHtml(t, true) + cardMetaHtml(t);
-        // 已完成展示执行指标；待接收（未开始）无执行数据，不展示
-        if (t.status === 'done') {
-            html += cardKpisHtml(t);
-        }
+        var html = connectionRowHtml() + cardHeadHtml(t) + cardMetaHtml(t);
+        // 三项执行指标始终保留；待接收任务以“—”表示尚无执行数据。
+        html += cardKpisHtml(t);
         card.innerHTML = html;
         bindConnectionRow();
         bindDetail(t);
@@ -1977,14 +2072,16 @@
         }
         // 3. 人员位置是否在路段范围（阻断项）—— 静态原型 mock 通过
         // 校验通过
-        t.start = nowHHMM();
-        t.mileage = 0.01;
-        t.duration = 1;
-        t._traveled = null;   // 重置动画进度
+        t.startedAt = Date.now();
+        t.start = formatHHMM(t.startedAt);
+        t.mileage = 0;
+        t.duration = 0;
+        t._traveled = t.geo && t.geo.track && t.geo.track.length ? [t.geo.track[0]] : [];
         t._stepIdx = 1;
         setStateStatus(t.id, 'running');
         toast('任务已开始');
         renderAll();
+        startRunningKpiTimer(t);
         startTrackAnimation(t);
     }
 
@@ -2035,6 +2132,8 @@
     /* ===== 结束任务 → 今日回顾（本期跳占位，PRD 5.1） ===== */
     function onFinish(t) {
         // 静态原型中，任务完成校验已在确认层展示为通过。
+        updateRunningKpi(t);
+        stopRunningKpiTimer();
         stopTrackAnimation(false);
         setStateStatus(t.id, 'done');
         var nextTodo = TASKS.find(function (x) { return x.status === 'todo'; });
@@ -2066,12 +2165,14 @@
             state[id].start = t.start;
             state[id].mileage = t.mileage;
             state[id].duration = t.duration;
+            state[id].startedAt = t.startedAt;
+            state[id].stepIdx = t._stepIdx;
         }
         saveState(state);
     }
-    function nowHHMM() {
-        // 脚本环境不可用 Date.now/new Date，用静态占位（演示数据已含真实时间）
-        return '10:31';
+    function formatHHMM(timestamp) {
+        var date = new Date(timestamp == null ? Date.now() : timestamp);
+        return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
     }
 
     /* ===== 今日待办抽屉（PRD 6.1.1-4~7） ===== */
@@ -2089,7 +2190,7 @@
             body.innerHTML = '<div class="sheet-empty"><div class="sheet-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg></div>暂无今日待办任务</div>';
             return;
         }
-        var groups = [{ key: 'todo', label: '未开始' }, { key: 'running', label: '进行中' }, { key: 'done', label: '已完成' }];
+        var groups = [{ key: 'todo', label: '待接收' }, { key: 'running', label: '进行中' }, { key: 'done', label: '已完成' }];
         var html = '';
         var lastGroup = null;
         sorted.forEach(function (t) {
@@ -2098,22 +2199,33 @@
                 html += '<div class="sheet__group">' + g.label + '</div>';
                 lastGroup = t.status;
             }
-            // 卡片两行（对齐 PRD 6.1.2-3）：片区名-事件上报数（未开始不显示）-状态 / 任务日期-作业时间-作业资源
+            // 主体点击聚焦地图；右侧圆形按钮仅进入任务详情。
             var countHtml = (t.status !== 'todo') ? '<span class="sheet-task__count">事件上报 ' + t.problems + '</span>' : '';
-            html += '<div class="sheet-task' + (t.id === selectedId ? ' is-selected' : '') + '" data-id="' + t.id + '">' +
-                '<div class="sheet-task__r1"><span class="sheet-task__area">' + t.area + '</span>' +
-                countHtml +
-                '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span></div>' +
-                '<div class="sheet-task__r2"><span class="mono">' + (t.planDate || '—') + '</span><span class="sep">·</span><span class="mono">' + t.time + '</span><span class="sep">·</span><span>' + (t.resource || '—') + '</span></div>' +
-            '</div>';
+            html += '<article class="sheet-task' + (t.id === selectedId ? ' is-selected' : '') + '" data-id="' + t.id + '">' +
+                '<button type="button" class="sheet-task__focus" data-id="' + t.id + '" aria-label="聚焦任务区域：' + escapeHtml(t.area) + '，' + STATUS_TEXT[t.status] + '">' +
+                    '<div class="sheet-task__r1"><span class="sheet-task__area">' + escapeHtml(t.area) + '</span>' +
+                    countHtml +
+                    '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span></div>' +
+                    '<div class="sheet-task__r2"><span class="mono">' + escapeHtml(t.planDate || '—') + '</span><span class="sep">·</span><span class="mono">' + escapeHtml(t.time) + '</span><span class="sep">·</span><span>' + escapeHtml(t.resource || '—') + '</span></div>' +
+                '</button>' +
+                '<button type="button" class="sheet-task__detail" data-id="' + t.id + '" aria-label="查看' + escapeHtml(t.area) + '任务详情" title="查看任务详情">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>' +
+                '</button>' +
+            '</article>';
         });
         body.innerHTML = html;
-        body.querySelectorAll('.sheet-task').forEach(function (el) {
+        body.querySelectorAll('.sheet-task__focus').forEach(function (el) {
             el.addEventListener('click', function () {
                 stopTrackAnimation(false);
                 selectedId = el.dataset.id;
                 closeSheet();
                 renderAll();
+            });
+        });
+        body.querySelectorAll('.sheet-task__detail').forEach(function (el) {
+            el.addEventListener('click', function (event) {
+                event.stopPropagation();
+                openInspectionTaskDetail(el.dataset.id);
             });
         });
     }
@@ -2393,12 +2505,18 @@
     document.addEventListener('projectChanged', function () {
         toast('项目已切换，任务列表已刷新');
         stopTrackAnimation(false);
+        stopRunningKpiTimer();
         renderAll();
     });
 
     /* ===== 初始化 ===== */
     initLeafletMap();
     renderAll();
+    var initialRunningTask = TASKS.find(function (t) { return t.status === 'running'; });
+    if (initialRunningTask) {
+        startRunningKpiTimer(initialRunningTask);
+        startTrackAnimation(initialRunningTask);
+    }
     // 双层 iframe 嵌入下容器尺寸可能延迟就绪，需多次 invalidateSize
     if (mapReady && leafletMap) {
         [0, 60, 200, 500].forEach(function (delay) {
@@ -2410,15 +2528,22 @@
     if (initialSheet === 'problems') {
         setTimeout(openProblemSheet, 0);
     }
-    // 若 URL 指定 action=start，自动触发开始
+    // 若详情页指定操作，则复用地图页的任务校验与确认流程。
     if (action === 'start') {
         var t0 = findTask(selectedId);
         if (t0 && t0.status === 'todo') { setTimeout(function () { onStart(t0); }, 300); }
     }
+    if (action === 'finish') {
+        var t1 = findTask(selectedId);
+        if (t1 && t1.status === 'running') { setTimeout(function () { requestFinish(t1); }, 300); }
+    }
     // 演示：加载后延时弹一次新任务 banner
     setTimeout(showBanner, 1800);
     // 页面卸载时停止动画并落盘进度
-    window.addEventListener('pagehide', function () { stopTrackAnimation(false); });
+    window.addEventListener('pagehide', function () {
+        stopRunningKpiTimer();
+        stopTrackAnimation(false);
+    });
 })();
 </script>
 </body>

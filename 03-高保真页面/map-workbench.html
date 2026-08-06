@@ -63,6 +63,12 @@
                 linear-gradient(155deg, transparent 0 54%, rgba(255,255,255,0.45) 54% 56%, transparent 56%),
                 #dfe6ea;
         }
+        .map-shell.is-task-focused { animation: taskMapFocus 0.46s ease-out; }
+        @keyframes taskMapFocus {
+            0% { box-shadow: inset 0 0 0 0 rgba(22,119,255,0); }
+            45% { box-shadow: inset 0 0 0 4px rgba(22,119,255,0.42); }
+            100% { box-shadow: inset 0 0 0 0 rgba(22,119,255,0); }
+        }
         .map-grid {
             position: absolute;
             inset: 0;
@@ -449,6 +455,7 @@
             z-index: 9;
             display: flex;
             flex-direction: column;
+            align-items: flex-end;
             gap: 10px;
             transition: bottom 0.24s ease;
         }
@@ -648,30 +655,115 @@
             border-radius: 22px 22px 0 0;
             box-shadow: 0 -12px 34px rgba(0,0,0,0.14);
         }
-        .drawer-head {
-            position: relative;
-            min-height: 24px;
-            margin: -4px 0 4px;
+        /* 车辆绑定信息行（任务卡片顶部紧凑上下文行，参照品质巡查 connection-row） */
+        .connection-row {
+            width: 100%;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0 0 8px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            background: transparent;
+            color: #000000d9;
+            text-align: left;
         }
-        .task-drawer-handle {
+        .connection-row__label { flex: none; color: #00000073; font-size: 12px; line-height: 18px; }
+        .connection-row__plate {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: "DIN", "SF UI Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 20px;
+        }
+        .connection-row__status,
+        .connection-row__action {
+            flex: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 18px;
+            white-space: nowrap;
+        }
+        .connection-row__status { color: #389e0d; }
+        .connection-row__status.warning { color: #d48806; }
+        .connection-row__status.active { color: #1677ff; }
+        .connection-row__dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        .connection-row__action { color: #1677ff; text-decoration: none; }
+        .connection-row__arrow { width: 15px; height: 15px; flex: none; color: #00000073; }
+        .connection-row.is-clickable { cursor: pointer; transition: opacity 0.15s; }
+        .connection-row.is-clickable:active { opacity: 0.7; }
+
+        /* ===== 车辆绑定详情弹窗（由车辆信息行点击唤起，参照品质巡查） ===== */
+        .vehicle-overlay {
             position: absolute;
-            top: 0;
-            left: 50%;
-            width: 96px;
-            height: 32px;
-            transform: translateX(-50%);
-            touch-action: none;
+            inset: 0;
+            z-index: 31;
+            display: none;
+            align-items: flex-end;
+            background: rgba(0, 0, 0, 0.48);
         }
-        .handle {
-            position: absolute;
-            top: 12px;
-            left: 50%;
-            width: 42px;
-            height: 4px;
-            border-radius: 999px;
-            background: #d8dadf;
-            transform: translateX(-50%);
+        .vehicle-overlay.show { display: flex; }
+        .vehicle-detail {
+            width: 100%;
+            padding: 8px 20px calc(18px + env(safe-area-inset-bottom));
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
         }
+        .vehicle-detail__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 4px;
+        }
+        .vehicle-detail__title { color: #000000d9; font-size: 18px; font-weight: 700; line-height: 26px; }
+        .vehicle-detail__close {
+            width: 32px; height: 32px;
+            display: grid; place-items: center;
+            border: none; border-radius: 50%;
+            background: #f5f5f5; color: #00000073;
+            cursor: pointer;
+        }
+        .vehicle-detail__close:active { opacity: 0.7; }
+        .vehicle-detail__close svg { width: 18px; height: 18px; }
+        .vehicle-detail__list { margin-top: 14px; border-top: 1px solid #f0f0f0; }
+        .vehicle-detail__item {
+            min-height: 48px;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #00000073;
+            font-size: 14px; line-height: 22px;
+        }
+        .vehicle-detail__item strong {
+            min-width: 0; overflow: hidden;
+            color: #000000d9;
+            font-family: "DIN", "SF UI Text", sans-serif;
+            font-size: 14px; font-weight: 600;
+            text-align: right; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .vehicle-detail__state { color: #389e0d !important; }
+        .vehicle-detail__state.offline { color: #d48806 !important; }
+        .vehicle-detail__state.working { color: #1677ff !important; }
+        .vehicle-detail__handover {
+            width: 100%; height: 44px; margin-top: 14px;
+            border: 1px solid #d3adf7; border-radius: 8px;
+            background: #f9f0ff; color: #722ed1;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+        }
+        .vehicle-detail__handover:active { opacity: 0.85; }
         /* 当前任务卡片：标题 / 副标题 / 作业要求+任务详情 / 3 列指标 / 导航+主操作 */
         .task-line {
             display: flex;
@@ -958,22 +1050,58 @@
         .vm-btn.primary { background: #1677ff; border: 1px solid #1677ff; color: #ffffff; }
 
         /* 任务列表：在 console 内部展开/收起（无独立弹窗） */
-        .task-list-panel {
-            flex: 0 0 0;
-            max-height: 0;
-            margin: 0 -16px;
-            padding: 0 16px;
+        /* ===== 今日任务抽屉（独立弹层，参照品质巡查 sheet） ===== */
+        .task-sheet-mask {
+            position: absolute;
+            inset: 0;
+            z-index: 28;
+            background: rgba(0,0,0,0.32);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.24s ease, visibility 0.24s;
+        }
+        .task-sheet-mask.is-open { opacity: 1; visibility: visible; }
+        .task-sheet {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            z-index: 29;
+            height: 50%;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom);
+            background: #ffffff;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -12px 34px rgba(0,0,0,0.16);
+            transform: translateY(104%);
+            visibility: hidden;
+            transition: transform 0.28s ease-out, visibility 0s linear 0.28s;
+        }
+        .task-sheet.is-open {
+            transform: translateY(0);
+            visibility: visible;
+            transition: transform 0.28s ease-out;
+        }
+        .task-sheet .sheet-handle { margin: 8px auto 0; }
+        .task-sheet__head {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 6px 16px 8px;
+        }
+        .task-sheet__title { font-size: 16px; font-weight: 600; color: #000000d9; line-height: 24px; }
+        .task-sheet__close {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; cursor: pointer;
+            font-size: 12px; color: #1677ff;
+            border: 1px solid #e8e8e8; border-radius: 6px; background: #fff;
+        }
+        .task-sheet__close:active { background: #f5f5f5; }
+        .task-sheet__body {
+            flex: 1; min-height: 0;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: 4px 16px calc(12px + env(safe-area-inset-bottom));
             background: #f5f8fb;
-            border-top: 1px solid #f0f0f0;
-            overflow: hidden;
-            transition: flex-basis 0.3s ease, max-height 0.3s ease, padding 0.3s ease;
         }
-        .workbench.sheet-open .task-list-panel {
-            flex: 1 1 auto;
-            max-height: 50vh;
-            padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-            overflow-y: auto;
-        }
+        /* 抽屉打开时隐藏底部任务卡片（console），收起后再显示选中任务 */
+        .workbench.task-sheet-open .console { display: none; }
         .bottom-modal {
             position: absolute;
             left: 0;
@@ -1034,6 +1162,7 @@
         }
         /* 展开面板头部：状态分布统计（唯一标题由折叠入口按钮承担） */
         .task-list-stats {
+            padding: 0 16px 10px;
             font-size: 13px;
             line-height: 20px;
             color: #00000073;
@@ -1063,24 +1192,35 @@
             font-weight: 700;
         }
         .mini-task {
+            position: relative;
             width: 100%;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: start;
+            grid-template-columns: minmax(0, 1fr) 32px;
+            align-items: center;
             gap: 10px;
-            min-height: 68px;
-            padding: 11px 12px;
+            min-height: 76px;
+            padding: 10px 12px;
             border-radius: 8px;
-            background: #f7f9fb;
+            background: #ffffff;
             border: 1px solid transparent;
             text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: background-color 0.15s, border-color 0.15s;
         }
         .mini-task + .mini-task { margin-top: 8px; }
-        .mini-task.active {
-            background: #f6ffed;
-            border-color: rgba(82,196,26,0.24);
+        .mini-task.active,
+        .mini-task.active.is-completed {
+            background: #e6f4ff;
+            border-color: #91caff;
         }
         .mini-task.is-completed { background: #fafafa; }
+        .mini-task.active::before {
+            content: "";
+            position: absolute;
+            left: -1px; top: 10px; bottom: 10px; width: 3px;
+            border-radius: 0 2px 2px 0;
+            background: #1677ff;
+        }
         .mini-task.flash {
             animation: taskFlash 0.6s ease-in-out 3;
         }
@@ -1095,69 +1235,89 @@
             0%, 100% { color: #000000d9; }
             50% { color: #fa8c16; }
         }
-        .mini-content { min-width: 0; }
-        .mini-heading {
+        /* 卡片内容：两行布局，左侧主体 */
+        .mini-task__focus {
             min-width: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+        .mini-task__focus:active { opacity: 0.72; }
+        .mini-task__body {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .mini-task__row {
             display: flex;
             align-items: center;
             gap: 6px;
+            min-width: 0;
         }
-        .mini-primary {
+        /* 第 1 行：路线名称 + 任务状态 */
+        .mini-task__route {
+            flex: 1;
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: 13px;
-            line-height: 18px;
-            font-weight: 700;
+            font-size: 16px;
+            line-height: 24px;
+            font-weight: 600;
             color: #000000d9;
+        }
+        /* 第 2 行：任务类型 + 作业类型 + 计划时间段 */
+        .mini-task__time {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            line-height: 18px;
+            color: #00000073;
         }
         .mini-type {
             flex: 0 0 auto;
-            min-height: 20px;
+            min-height: 22px;
             padding: 1px 6px;
             border-radius: 4px;
             background: #e6f4ff;
             color: #1677ff;
-            font-size: 10px;
+            font-size: 12px;
             line-height: 18px;
-            font-weight: 600;
+            font-weight: 500;
             white-space: nowrap;
         }
         .mini-type.temporary { background: #fffbe6; color: #ad6800; }
         .mini-type.dynamic { background: #fff7e6; color: #d46b08; }
         .mini-work-type {
             flex: 0 0 auto;
-            min-height: 20px;
+            min-height: 22px;
             padding: 1px 6px;
             border-radius: 4px;
             background: #e6fffb;
             color: #08979c;
-            font-size: 10px;
+            font-size: 12px;
             line-height: 18px;
-            font-weight: 600;
+            font-weight: 500;
             white-space: nowrap;
-        }
-        .mini-secondary {
-            display: block;
-            min-width: 0;
-            margin-top: 4px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 11px;
-            line-height: 16px;
-            color: #00000073;
         }
         .mini-status {
-            min-width: 46px;
-            padding: 2px 7px;
-            border-radius: 4px;
+            flex: 0 0 auto;
+            min-height: 22px;
+            padding: 2px 8px;
+            border-radius: 6px;
             background: #e6f4ff;
             color: #1677ff;
-            font-size: 11px;
+            font-size: 12px;
             line-height: 18px;
-            font-weight: 700;
+            font-weight: 500;
             text-align: center;
             white-space: nowrap;
         }
@@ -1169,6 +1329,23 @@
             background: #f5f5f5;
             color: #00000040;
         }
+        /* 卡片右侧：圆形详情按钮（跨两行，垂直居中） */
+        .mini-task__detail {
+            width: 32px;
+            height: 32px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1px solid #e8e8e8;
+            color: #1677ff;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .mini-task__detail:active { transform: scale(0.92); background: #e6f4ff; }
+        .mini-task__detail svg { width: 17px; height: 17px; }
         .report-item {
             display: flex;
             align-items: center;
@@ -1250,23 +1427,19 @@
         html.is-embedded .workbench { min-height: 100%; box-shadow: none; }
 
         /* ===== 未绑定态 ===== */
-        .top-card.is-unbound .vehicle-icon { background: #fff7e6; color: #fa8c16; }
-        .top-card.is-unbound .bind-btn {
+        .connection-row.is-unbound .connection-row__plate { color: #00000073; font-weight: 400; }
+        .connection-row.is-unbound .connection-row__action {
             flex: none;
-            height: 30px;
-            padding: 0 12px;
+            padding: 3px 10px;
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             background: #1677ff;
             color: #ffffff;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
             text-decoration: none;
         }
-        .top-card.is-unbound .bind-btn:active { opacity: 0.85; }
+        .connection-row.is-unbound .connection-row__action:active { opacity: 0.85; }
         .workbench.is-unbound .marker,
         .workbench.is-unbound .route-layer,
         .workbench.is-unbound .map-legend,
@@ -1929,30 +2102,6 @@
             <div class="all-task-markers" id="allTaskMarkers" aria-hidden="true"></div>
         </section>
 
-        <header class="top-card glass" id="topCard">
-            <span class="vehicle-icon" id="topVehicleIcon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14l-1.6-5.2A2.5 2.5 0 0 0 15 10H9a2.5 2.5 0 0 0-2.4 1.8L5 17Z"/><path d="M7 17v2M17 17v2M8 14h8"/></svg>
-            </span>
-            <div class="vehicle-summary">
-                <div class="vehicle-plate-line">
-                    <strong class="vehicle-plate" id="topPlate">粤B·D2856</strong>
-                    <span class="vehicle-type-inline" id="topMetaType">洗扫车</span>
-                </div>
-                <div class="vehicle-meta" id="topMeta">
-                    <span>今日 <strong id="topTaskCount">5</strong> 项任务</span>
-                    <span>已完成 <strong id="topCompletedCount">0</strong> 项</span>
-                </div>
-            </div>
-            <span class="vehicle-state" id="vehicleStatus" aria-label="车辆状态">
-                <span class="vehicle-state-dot" aria-hidden="true"></span>
-                <span id="vehicleStatusText">在线</span>
-            </span>
-            <a class="bind-btn" id="topBindBtn" href="#" onclick="goBind(event)" style="display:none;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
-                去绑定
-            </a>
-        </header>
-
         <nav class="map-tools" id="mapTools" aria-label="地图工具">
             <button class="map-shortcut" id="taskShortcut" type="button" onclick="toggleTaskList()" aria-label="查看今日任务">
                 <svg class="map-shortcut__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 13h8M8 17h5"/><path d="m5.5 8 .8.8 1.7-1.7"/><path d="m5.5 13 .8.8 1.7-1.7"/><path d="m5.5 17 .8.8 1.7-1.7"/></svg>
@@ -2019,10 +2168,16 @@
         <div class="poi-layer" id="poiLayer" aria-hidden="true"></div>
 
         <section class="console" id="taskConsole" aria-label="任务执行控制台">
-            <div class="drawer-head">
-                <div class="task-drawer-handle" id="taskDrawerHandle" aria-hidden="true">
-                    <span class="handle"></span>
-                </div>
+            <!-- 车辆绑定信息行（点击查看绑定详情 / 未绑定去绑定） -->
+            <div class="connection-row is-clickable" id="topCard" role="button" onclick="onVehicleRowClick()" aria-label="查看车辆绑定信息">
+                <span class="connection-row__label">车辆</span>
+                <span class="connection-row__plate" id="topPlate">粤B·D2856</span>
+                <span class="connection-row__status" id="vehicleStatus">
+                    <span class="connection-row__dot" aria-hidden="true"></span>
+                    <span id="vehicleStatusText">在线</span>
+                </span>
+                <a class="connection-row__action" id="topBindBtn" href="#" onclick="goBind(event); event.stopPropagation();" style="display:none;">去绑定</a>
+                <svg class="connection-row__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
             </div>
 
             <!-- 第 1 行：路线名称/问题地点 + 任务状态 + 任务详情 -->
@@ -2031,7 +2186,7 @@
                     <div class="task-name-area">
                         <div class="task-name" id="taskTitle">科苑南路至高新南九道</div>
                     </div>
-                    <span class="state-tag pending" id="taskState">待开始</span>
+                    <span class="state-tag pending" id="taskState">待接收</span>
                 </div>
                 <div class="task-head-right">
                     <a class="detail-link" id="detailBtn" href="task-detail.html?id=1">详情</a>
@@ -2080,13 +2235,22 @@
                 <button class="primary-action" id="primaryAction" type="button">开始任务</button>
             </div>
 
-            <!-- 任务列表：由右侧工具栏「今日任务」按钮触发，在当前任务卡片下方展开/收起 -->
-            <section class="task-list-panel" id="taskSheet" data-testid="task-sheet" aria-label="今日任务列表">
-                <div class="task-list-top">
-                    <div class="task-list-stats" id="taskSheetMeta">待开始 5 · 进行中 1 · 已完成 2</div>
-                </div>
-                <div id="taskList"></div>
-            </section>
+            <!-- 任务列表已移至独立抽屉（见 console 之后的 .task-sheet） -->
+        </section>
+
+        <!-- 今日任务抽屉（参照品质巡查 sheet：遮罩 + 底部弹出，标题 + 收起 + 统计 + 卡片列表） -->
+        <div class="task-sheet-mask" id="taskSheetMask" aria-hidden="true"></div>
+        <section class="task-sheet" id="taskSheet" role="dialog" aria-modal="true" aria-label="今日任务">
+            <div class="sheet-handle"></div>
+            <div class="task-sheet__head">
+                <span class="task-sheet__title">今日任务</span>
+                <button type="button" class="task-sheet__close" id="taskSheetClose" aria-label="收起今日任务">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    <span>收起</span>
+                </button>
+            </div>
+            <div class="task-list-stats" id="taskSheetMeta">待接收 5 · 进行中 1 · 已完成 2</div>
+            <div class="task-sheet__body" id="taskList"></div>
         </section>
 
         <div class="modal-mask" id="modalMask" onclick="closeActiveModal()" aria-hidden="true"></div>
@@ -2198,6 +2362,21 @@
                 </a>
             </div>
         </section>
+        <!-- 车辆信息弹窗（由车辆信息行点击唤起） -->
+        <div class="vehicle-overlay" id="vehicleDetailOverlay" role="dialog" aria-modal="true" aria-label="车辆信息">
+            <div class="vehicle-detail">
+                <div class="sheet-handle"></div>
+                <div class="vehicle-detail__head">
+                    <div class="vehicle-detail__title">车辆信息</div>
+                    <button type="button" class="vehicle-detail__close" id="vehicleDetailClose" aria-label="关闭">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="vehicle-detail__list" id="vehicleDetailList"></div>
+                <button type="button" class="vehicle-detail__handover" id="vehicleHandoverBtn">交车</button>
+            </div>
+        </div>
+
         <!-- 车辆-任务不一致：更换车辆确认弹窗（需求 6.2.1） -->
         <div class="vm-overlay" id="vehicleMismatchOverlay" role="dialog" aria-modal="true" aria-label="更换车辆确认">
             <div class="vm-card">
@@ -2450,7 +2629,7 @@
         function statusText(status) {
             if (status === 'executing') return '进行中';
             if (status === 'completed') return '已完成';
-            return '待开始';
+            return '待接收';
         }
 
         function statusClass(status) {
@@ -2515,9 +2694,15 @@
 
         function setTaskList(open) {
             var workbench = document.getElementById('workbench');
-            var trigger = document.getElementById('taskSheetTrigger');
-            workbench.classList.toggle('sheet-open', open);
-            if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+            var sheet = document.getElementById('taskSheet');
+            var mask = document.getElementById('taskSheetMask');
+            workbench.classList.toggle('task-sheet-open', open);
+            workbench.classList.toggle('sheet-open', open); // 保留：同步隐藏 map-tools/legend
+            if (sheet) sheet.classList.toggle('is-open', open);
+            if (mask) {
+                mask.classList.toggle('is-open', open);
+                mask.setAttribute('aria-hidden', open ? 'false' : 'true');
+            }
             updateTaskTriggerText();
             // 同步右侧工具栏位置（紧贴 console 卡片上方 16px）
             updateMapToolsPosition();
@@ -2555,82 +2740,10 @@
             setTaskList(false);
         }
 
-        function bindTaskDrawerGesture() {
-            var handle = document.getElementById('taskDrawerHandle');
-            if (!handle) return;
-            var pointerId = null;
-            var startY = 0;
-            var moved = false;
-            var threshold = 48;
-
-            function beginGesture(clientY, id) {
-                pointerId = id;
-                startY = clientY;
-                moved = false;
-            }
-            function moveGesture(clientY) {
-                if (pointerId === null) return;
-                if (Math.abs(clientY - startY) > 8) moved = true;
-            }
-            function endGesture(clientY) {
-                if (pointerId === null) return;
-                var deltaY = clientY - startY;
-                if (moved && deltaY <= -threshold) setTaskList(true);
-                if (moved && deltaY >= threshold) setTaskList(false);
-                pointerId = null;
-                moved = false;
-            }
-            function cancelGesture() {
-                pointerId = null;
-                moved = false;
-            }
-
-            if (window.PointerEvent) {
-                handle.addEventListener('pointerdown', function (event) {
-                    if (event.pointerType === 'mouse' && event.button !== 0) return;
-                    beginGesture(event.clientY, event.pointerId);
-                    if (handle.setPointerCapture) handle.setPointerCapture(event.pointerId);
-                });
-                handle.addEventListener('pointermove', function (event) {
-                    if (event.pointerId === pointerId) moveGesture(event.clientY);
-                });
-                handle.addEventListener('pointerup', function (event) {
-                    if (event.pointerId === pointerId) endGesture(event.clientY);
-                });
-                handle.addEventListener('pointercancel', cancelGesture);
-                return;
-            }
-
-            handle.addEventListener('touchstart', function (event) {
-                if (event.touches[0]) beginGesture(event.touches[0].clientY, 'touch');
-            }, { passive: true });
-            handle.addEventListener('touchmove', function (event) {
-                if (event.touches[0]) moveGesture(event.touches[0].clientY);
-            }, { passive: true });
-            handle.addEventListener('touchend', function (event) {
-                if (event.changedTouches[0]) endGesture(event.changedTouches[0].clientY);
-            }, { passive: true });
-            handle.addEventListener('touchcancel', cancelGesture, { passive: true });
-            handle.addEventListener('mousedown', function (event) {
-                if (event.button === 0) beginGesture(event.clientY, 'mouse');
-            });
-            document.addEventListener('mousemove', function (event) {
-                if (pointerId === 'mouse') moveGesture(event.clientY);
-            });
-            document.addEventListener('mouseup', function (event) {
-                if (pointerId === 'mouse') endGesture(event.clientY);
-            });
-        }
-
         function syncTopVehicleStatus() {
-            var taskCount = document.getElementById('topTaskCount');
-            var completedCount = document.getElementById('topCompletedCount');
             var vehicleStatus = document.getElementById('vehicleStatus');
             var vehicleStatusText = document.getElementById('vehicleStatusText');
             var visibleTasks = getVisibleTasks();
-            if (taskCount) taskCount.textContent = visibleTasks.length;
-            var completed = visibleTasks.filter(function (task) { return task.status === 'completed'; }).length;
-            if (completedCount) completedCount.textContent = completed;
             if (!vehicleStatus || !vehicleStatusText) return;
 
             // 车辆状态按 PRD 4.4：离线(设备不在线) > 作业中(在线+进行中) > 在线(在线)
@@ -2645,7 +2758,7 @@
                 stateClass = 'active';
             }
 
-            vehicleStatus.className = 'vehicle-state' + (stateClass ? ' ' + stateClass : '');
+            vehicleStatus.className = 'connection-row__status' + (stateClass ? ' ' + stateClass : '');
             vehicleStatusText.textContent = label;
         }
 
@@ -2692,7 +2805,7 @@
             taskDrawerSummary = { total: visibleTasks.length, active: activeCount };
             updateTaskTriggerText();
             var segs = [];
-            segs.push('<span class="stat-seg"><span class="stat-dot pending"></span>待开始 ' + pendingCount + '</span>');
+            segs.push('<span class="stat-seg"><span class="stat-dot pending"></span>待接收 ' + pendingCount + '</span>');
             if (executingCount > 0) segs.push('<span class="stat-seg"><span class="stat-dot executing"></span>进行中 ' + executingCount + '</span>');
             segs.push('<span class="stat-seg"><span class="stat-dot completed"></span>已完成 ' + completedCount + '</span>');
             document.getElementById('taskSheetMeta').innerHTML = segs.join('<span class="stat-sep">·</span>');
@@ -2709,10 +2822,28 @@
                 html += g.tasks.map(function (task) {
                     var fields = taskCardFields(task);
                     var status = statusText(task.status);
-                    return '<button type="button" class="mini-task ' + (task.id === selectedTaskId ? 'active ' : '') + (task.status === 'completed' ? 'is-completed' : '') + '" data-task-id="' + task.id + '" data-task-type="' + task.type + '" aria-label="' + task.name + '，' + status + '" onclick="selectTask(' + task.id + ')">' +
-                        '<span class="mini-content"><span class="mini-heading"><span class="mini-primary">' + fields.primary + '</span><span class="mini-type ' + taskTypeClass(task) + '">' + task.type + '</span>' + (task.workType ? '<span class="mini-work-type">' + task.workType + '</span>' : '') + '</span><span class="mini-secondary">' + fields.secondary + '</span></span>' +
+                    var isDynamic = task.icon === 'dynamic';
+                    // 第 1 行：路线名称 + 任务状态
+                    var rowHead = '<div class="mini-task__row mini-task__row--head">' +
+                        '<span class="mini-task__route">' + escapeHtml(fields.primary || '—') + '</span>' +
                         '<span class="mini-status ' + taskStatusClass(task) + '">' + status + '</span>' +
-                        '</button>';
+                        '</div>';
+                    // 第 2 行：任务类型标签 + 作业类型标签 + 计划时间段
+                    var workTypeTag = task.workType ? '<span class="mini-work-type">' + escapeHtml(task.workType) + '</span>' : '';
+                    var metaTime = isDynamic ? (task.dispatchTime || task.time || '--:--') : (task.time || '--:--');
+                    var rowMeta = '<div class="mini-task__row mini-task__row--meta">' +
+                        '<span class="mini-type ' + taskTypeClass(task) + '">' + escapeHtml(task.type || '任务') + '</span>' +
+                        workTypeTag +
+                        '<span class="mini-task__time">' + escapeHtml(metaTime) + '</span>' +
+                        '</div>';
+                    return '<article class="mini-task ' + (task.id === selectedTaskId ? 'active ' : '') + (task.status === 'completed' ? 'is-completed' : '') + '" data-task-id="' + task.id + '" data-task-type="' + task.type + '">' +
+                        '<button type="button" class="mini-task__focus" aria-label="聚焦任务区域：' + escapeHtml(fields.primary || task.name || '任务') + '，' + status + '" onclick="selectTask(' + task.id + ')">' +
+                            '<div class="mini-task__body">' + rowHead + rowMeta + '</div>' +
+                        '</button>' +
+                        '<button type="button" class="mini-task__detail" aria-label="查看' + escapeHtml(fields.primary || task.name || '任务') + '任务详情" title="查看任务详情" onclick="openTaskDetail(event, ' + task.id + ')">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m9 18 6-6-6-6"/></svg>' +
+                        '</button>' +
+                        '</article>';
                 }).join('');
             });
             document.getElementById('taskList').innerHTML = html;
@@ -2833,10 +2964,30 @@
 
         function selectTask(id) {
             selectedTaskId = String(id);
+            // 选中任务后自动收起抽屉，底部任务卡片显示该选中任务信息
+            closeTaskList();
             renderTaskDrawer();
             renderConsole();
             drawSelectedTask();
+            focusSelectedTaskOnMap();
             renderDynamicTaskMarkers();
+        }
+
+        function focusSelectedTaskOnMap() {
+            var map = document.getElementById('mapShell');
+            if (!map) return;
+            map.classList.remove('is-task-focused');
+            void map.offsetWidth;
+            map.classList.add('is-task-focused');
+        }
+
+        // 任务卡片右侧详情按钮：打开任务详情，不触发任务区域聚焦。
+        function openTaskDetail(event, id) {
+            event.stopPropagation();
+            event.preventDefault();
+            var task = getTask(id);
+            var status = task ? task.status : '';
+            go('task-detail.html?id=' + encodeURIComponent(id) + '&status=' + encodeURIComponent(status));
         }
 
         function startTask(id) {
@@ -3015,6 +3166,48 @@
             go('qrcode.html?scene=handover');
         }
 
+        // ===== 车辆绑定详情弹窗（由车辆信息行点击唤起，参照品质巡查 connection-detail） =====
+        function formatBoundAt(ts) {
+            if (!ts) return '—';
+            var d = new Date(ts);
+            if (isNaN(d.getTime())) return '—';
+            function pad(v) { return String(v).padStart(2, '0'); }
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        }
+        function vehicleStateLabel() {
+            var visibleTasks = getVisibleTasks();
+            var hasExecuting = visibleTasks.some(function (task) { return task.status === 'executing'; });
+            if (!vehicleOnline) return { text: '离线', cls: 'offline' };
+            if (hasExecuting) return { text: '作业中', cls: 'working' };
+            return { text: '在线', cls: '' };
+        }
+        function onVehicleRowClick() {
+            if (isBound) {
+                openVehicleDetail();
+            } else {
+                goBind();
+            }
+        }
+        function openVehicleDetail() {
+            var list = document.getElementById('vehicleDetailList');
+            if (!list) return;
+            var st = vehicleStateLabel();
+            list.innerHTML =
+                '<div class="vehicle-detail__item"><span>车牌号</span><strong>' + escapeHtml(currentPlate || '—') + '</strong></div>' +
+                '<div class="vehicle-detail__item"><span>车辆类型</span><strong style="font-family:inherit;">' + escapeHtml(currentVehicleType || '—') + '</strong></div>' +
+                '<div class="vehicle-detail__item"><span>连接状态</span><strong class="vehicle-detail__state ' + st.cls + '">' + st.text + '</strong></div>' +
+                '<div class="vehicle-detail__item"><span>绑定时间</span><strong style="font-family:inherit;">' + escapeHtml(formatBoundAt(currentBoundAt)) + '</strong></div>';
+            document.getElementById('vehicleDetailOverlay').classList.add('show');
+        }
+        function closeVehicleDetail() {
+            document.getElementById('vehicleDetailOverlay').classList.remove('show');
+        }
+        // 弹窗底部「交车」：与右侧工具栏交车按钮一致（先关弹窗再执行）
+        function onVehicleHandover() {
+            closeVehicleDetail();
+            handleHandover();
+        }
+
         // 底部 console 当前任务标题的高亮提示（用于交车拦截时的视觉强调）
         function flashConsoleTask(id) {
             var title = document.getElementById('taskTitle');
@@ -3108,6 +3301,7 @@
         var isBound = !!binding;
         var currentPlate = binding ? binding.plateNo : '';
         var currentVehicleType = binding ? binding.vehicleType : '';
+        var currentBoundAt = binding ? binding.boundAt : 0;
         var EMBEDDED = /[?&]embedded=1/.test(location.search);
 
         // ===== 车辆网联状态（PRD 4.4）：演示用时间脚本 =====
@@ -3188,24 +3382,20 @@
             var vehicleStatus = document.getElementById('vehicleStatus');
             var reportSub = document.getElementById('reportModalSub');
             if (isBound) {
-                topCard.classList.remove('is-unbound');
+                if (topCard) topCard.classList.remove('is-unbound');
                 workbenchEl.classList.remove('is-unbound');
                 document.getElementById('topPlate').textContent = currentPlate || '粤B·D2856';
-                var metaType = document.getElementById('topMetaType');
-                if (metaType) metaType.textContent = currentVehicleType || '洗扫车';
-                topBindBtn.style.display = 'none';
-                vehicleStatus.style.display = '';
+                if (topBindBtn) topBindBtn.style.display = 'none';
+                if (vehicleStatus) vehicleStatus.style.display = '';
                 if (reportSub) reportSub.textContent = '将自动带入当前车辆 ' + (currentPlate || '粤B·D2856');
                 var box = document.getElementById('allTaskMarkers');
                 if (box) box.innerHTML = '';
             } else {
-                topCard.classList.add('is-unbound');
+                if (topCard) topCard.classList.add('is-unbound');
                 workbenchEl.classList.add('is-unbound');
-                document.getElementById('topPlate').textContent = '当前未绑定车辆';
-                var topMeta = document.getElementById('topMeta');
-                if (topMeta) topMeta.innerHTML = '<span>绑定后即可开始执行今日任务</span>';
-                topBindBtn.style.display = '';
-                vehicleStatus.style.display = 'none';
+                document.getElementById('topPlate').textContent = '未绑定车辆';
+                if (topBindBtn) topBindBtn.style.display = '';
+                if (vehicleStatus) vehicleStatus.style.display = 'none';
                 if (reportSub) reportSub.textContent = '未绑定车辆，请在页内选择车辆';
             }
         }
@@ -3220,10 +3410,25 @@
         });
 
         applyBoundState();
-        bindTaskDrawerGesture();
         renderTaskDrawer();
         renderConsole();
         drawSelectedTask();
+        // 车辆信息弹窗事件
+        (function () {
+            var close = document.getElementById('vehicleDetailClose');
+            var overlay = document.getElementById('vehicleDetailOverlay');
+            var handoverBtn = document.getElementById('vehicleHandoverBtn');
+            if (close) close.addEventListener('click', closeVehicleDetail);
+            if (overlay) overlay.addEventListener('click', function (e) { if (e.target === overlay) closeVehicleDetail(); });
+            if (handoverBtn) handoverBtn.addEventListener('click', onVehicleHandover);
+        })();
+        // 今日任务抽屉：收起按钮 + 遮罩点击关闭
+        (function () {
+            var closeBtn = document.getElementById('taskSheetClose');
+            var mask = document.getElementById('taskSheetMask');
+            if (closeBtn) closeBtn.addEventListener('click', function () { setTaskList(false); });
+            if (mask) mask.addEventListener('click', function () { setTaskList(false); });
+        })();
         renderDynamicTaskMarkers();
         if (!isBound) renderAllTaskMarkers();
         if (executingTaskId) {

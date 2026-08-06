@@ -50,12 +50,12 @@
         invalid: { text: '已失效', tag: 'car-tag--neutral', order: 5 }
     };
     var EVENT_STATUS = {
-        judging: { text: '待判别', tag: 'car-tag--neutral', order: 0, node: '等待事件判别' },
-        assigning: { text: '待分配', tag: 'car-tag--info', order: 1, node: '等待责任人分配' },
-        pending: { text: '待处理', tag: 'car-tag--warning', order: 2, node: '等待责任人接收' },
-        processing: { text: '处理中', tag: 'car-tag--warning', order: 3, node: '责任人处理中' },
-        review: { text: '待核查', tag: 'car-tag--info', order: 4, node: '等待巡查核查' },
-        done: { text: '已完成', tag: 'car-tag--success', order: 5, node: '处置完成' }
+        judging: { text: '待判别', tag: 'car-tag--neutral', order: 0, node: '等待事件判别', mapColor: '#8c8c8c' },
+        assigning: { text: '待分配', tag: 'car-tag--info', order: 1, node: '等待责任人分配', mapColor: '#faad14' },
+        pending: { text: '待处理', tag: 'car-tag--warning', order: 2, node: '等待责任人接收', mapColor: '#1677ff' },
+        processing: { text: '处理中', tag: 'car-tag--warning', order: 3, node: '责任人处理中', mapColor: '#1677ff' },
+        review: { text: '待核查', tag: 'car-tag--info', order: 4, node: '等待巡查核查', mapColor: '#1677ff' },
+        done: { text: '已完成', tag: 'car-tag--success', order: 5, node: '处置完成', mapColor: '#52c41a' }
     };
 
     var BASE_TASKS = [

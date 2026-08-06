@@ -1,269 +1,571 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>酷哇APP - 车辆能耗成本管理</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #f0f2f5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        .container {
-            text-align: center;
-            max-width: 800px;
-            padding: 24px;
-        }
-        .title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #000000d9;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            color: #00000073;
-            font-size: 14px;
-            margin-bottom: 32px;
-        }
-        .section {
-            margin-bottom: 24px;
-        }
-        .section-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: #000000d9;
-            margin-bottom: 12px;
-            text-align: left;
-            padding-left: 8px;
-            border-left: 3px solid #1677ff;
-        }
-        .link-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-        }
-        .link-card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 16px;
-            text-decoration: none;
-            color: #000000d9;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.2s;
-            border: 1px solid #f0f0f0;
-        }
-        .link-card:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-color: #1677ff;
-            color: #1677ff;
-        }
-        .link-card svg {
-            width: 24px;
-            height: 24px;
-            flex-shrink: 0;
-        }
-        .link-card .name {
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .link-card .desc {
-            font-size: 12px;
-            color: #00000073;
-            margin-top: 2px;
-        }
-        .tag {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: auto;
-        }
-        .tag-web { background: #e6f4ff; color: #1677ff; }
-        .tag-app { background: #f6ffed; color: #52c41a; }
-        .tag-car { background: #fff7e6; color: #fa8c16; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>酷哇APP · 车辆能耗成本管理 — 高保真原型导航</title>
+<style>
+    /* ============ Design Tokens（对齐 Ant Design WEB 规范） ============ */
+    :root {
+        --c-primary: #1677ff;
+        --c-primary-hover: #4096ff;
+        --c-primary-dark: #0958d9;
+        --c-text: #000000d9;
+        --c-text-secondary: #00000073;
+        --c-text-tertiary: #00000040;
+        --c-bg: #f0f2f5;
+        --c-card: #ffffff;
+        --c-border: #f0f0f0;
+        --c-border-strong: #d9d9d9;
+        --c-split: #f0f0f0;
+
+        --web-color: #1677ff;  --web-bg: #e6f4ff;
+        --app-color: #52c41a;  --app-bg: #f6ffed;
+        --car-color: #fa8c16;  --car-bg: #fff7e6;
+
+        --radius-card: 12px;
+        --radius-icon: 10px;
+        --shadow-card: 0 1px 2px rgba(0,0,0,.03), 0 1px 6px rgba(0,0,0,.04);
+        --shadow-hover: 0 6px 16px rgba(0,0,0,.08);
+        --font: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        --font-num: 'DIN Alternate', 'DIN', 'Bebas Neue', 'PingFang SC', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+        background: var(--c-bg);
+        min-height: 100vh;
+        font-family: var(--font);
+        color: var(--c-text);
+        -webkit-font-smoothing: antialiased;
+        padding-bottom: 64px;
+    }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* ============ Hero ============ */
+    .hero {
+        position: relative;
+        margin-top: 28px;
+        padding: 40px 40px 36px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+        color: #fff;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(22, 119, 255, .22);
+    }
+    /* 装饰：网格点纹 */
+    .hero::before {
+        content: "";
+        position: absolute; inset: 0;
+        background-image: radial-gradient(rgba(255,255,255,.16) 1px, transparent 1px);
+        background-size: 22px 22px;
+        opacity: .5;
+        pointer-events: none;
+    }
+    /* 装饰：右侧光晕 */
+    .hero::after {
+        content: "";
+        position: absolute;
+        right: -120px; top: -120px;
+        width: 360px; height: 360px;
+        background: radial-gradient(circle, rgba(255,255,255,.22), transparent 65%);
+        pointer-events: none;
+    }
+    .hero-inner { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; flex-wrap: wrap; }
+
+    .hero-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .hero-logo {
+        width: 44px; height: 44px; border-radius: 12px;
+        background: rgba(255,255,255,.18);
+        backdrop-filter: blur(4px);
+        display: grid; place-items: center;
+        border: 1px solid rgba(255,255,255,.28);
+    }
+    .hero-logo svg { width: 26px; height: 26px; }
+    .hero-eyebrow { font-size: 12px; letter-spacing: 2px; opacity: .82; text-transform: uppercase; }
+    .hero h1 { font-size: 30px; font-weight: 600; line-height: 1.2; letter-spacing: .5px; }
+    .hero-sub { margin-top: 10px; font-size: 14px; opacity: .85; max-width: 560px; line-height: 1.7; }
+
+    .hero-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stat {
+        min-width: 116px;
+        padding: 14px 18px;
+        border-radius: 14px;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.22);
+        backdrop-filter: blur(4px);
+    }
+    .stat-num { font-family: var(--font-num); font-size: 28px; font-weight: 700; line-height: 1; }
+    .stat-num small { font-size: 14px; font-weight: 500; opacity: .8; margin-left: 3px; }
+    .stat-label { margin-top: 6px; font-size: 12px; opacity: .82; }
+
+    /* ============ Toolbar（搜索 + Tab） ============ */
+    .toolbar {
+        position: sticky; top: 12px; z-index: 50;
+        margin: 24px 0 8px;
+        padding: 14px 16px;
+        background: rgba(255,255,255,.86);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--c-border);
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.04);
+        display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .search {
+        position: relative; flex: 1; min-width: 220px;
+    }
+    .search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--c-text-tertiary); pointer-events: none; }
+    .search input {
+        width: 100%; height: 40px;
+        padding: 0 38px 0 40px;
+        border: 1px solid var(--c-border-strong);
+        border-radius: 10px;
+        font-size: 14px; font-family: var(--font);
+        color: var(--c-text); background: #fff;
+        transition: all .2s;
+    }
+    .search input::placeholder { color: var(--c-text-tertiary); }
+    .search input:focus { outline: none; border-color: var(--c-primary); box-shadow: 0 0 0 3px var(--web-bg); }
+    .search .clear {
+        position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+        width: 22px; height: 22px; border: none; background: #f0f0f0; border-radius: 50%;
+        display: none; align-items: center; justify-content: center; cursor: pointer; color: var(--c-text-secondary);
+    }
+    .search .clear.show { display: flex; }
+
+    .tabs { display: flex; gap: 4px; background: #f5f5f5; padding: 4px; border-radius: 10px; }
+    .tab {
+        position: relative;
+        padding: 7px 16px; border: none; background: transparent;
+        font-size: 13px; font-family: var(--font); font-weight: 500;
+        color: var(--c-text-secondary); cursor: pointer;
+        border-radius: 7px; transition: all .2s; white-space: nowrap;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .tab .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-text-tertiary); }
+    .tab[data-key="web"] .dot { background: var(--web-color); }
+    .tab[data-key="app"] .dot { background: var(--app-color); }
+    .tab[data-key="car"] .dot { background: var(--car-color); }
+    .tab .cnt { font-family: var(--font-num); font-size: 12px; opacity: .7; }
+    .tab:hover { color: var(--c-text); }
+    .tab.active { background: #fff; color: var(--c-text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .tab.active .cnt { opacity: 1; }
+
+    /* ============ Sections ============ */
+    .result-meta { margin: 18px 4px 0; font-size: 12px; color: var(--c-text-secondary); }
+    .result-meta b { color: var(--c-text); font-family: var(--font-num); }
+
+    .platform-section { margin-top: 28px; }
+    .platform-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .platform-icon { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; }
+    .platform-icon svg { width: 18px; height: 18px; }
+    .platform-name { font-size: 18px; font-weight: 600; color: var(--c-text); }
+    .platform-count { font-size: 12px; color: var(--c-text-secondary); background: #fff; border: 1px solid var(--c-border); padding: 2px 10px; border-radius: 20px; font-family: var(--font-num); }
+
+    .module-group { margin-top: 18px; }
+    .module-title {
+        font-size: 13px; font-weight: 500; color: var(--c-text-secondary);
+        padding-left: 10px; margin-bottom: 12px;
+        border-left: 3px solid var(--c-border-strong);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .module-title .m-cnt { font-family: var(--font-num); font-size: 11px; color: var(--c-text-tertiary); }
+
+    /* ============ 卡片网格 ============ */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+    }
+    .card {
+        position: relative;
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px;
+        background: var(--c-card);
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius-card);
+        text-decoration: none; color: var(--c-text);
+        box-shadow: var(--shadow-card);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        opacity: 0; transform: translateY(10px);
+        animation: cardIn .4s ease forwards;
+    }
+    @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--card-accent, var(--c-primary)); }
+    .card:active { transform: translateY(-1px); }
+
+    .card-icon {
+        flex-shrink: 0;
+        width: 44px; height: 44px;
+        border-radius: var(--radius-icon);
+        display: grid; place-items: center;
+    }
+    .card-icon svg { width: 22px; height: 22px; }
+    .card-body { flex: 1; min-width: 0; }
+    .card-name {
+        font-size: 14px; font-weight: 600; color: var(--c-text);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .card-desc {
+        margin-top: 3px;
+        font-size: 12px; color: var(--c-text-secondary);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .card-arrow {
+        flex-shrink: 0; width: 18px; height: 18px; color: var(--c-text-tertiary);
+        transition: transform .18s ease, color .18s ease;
+    }
+    .card:hover .card-arrow { transform: translate(2px, -2px); color: var(--card-accent, var(--c-primary)); }
+
+    .badge-new {
+        font-size: 10px; font-weight: 600; line-height: 1;
+        padding: 2px 6px; border-radius: 4px;
+        background: #fff1f0; color: #ff4d4f;
+        border: 1px solid #ffccc7;
+    }
+
+    /* 端色映射 */
+    .platform-section[data-platform="web"] .platform-icon,
+    .platform-section[data-platform="web"] .module-title { border-color: var(--web-color); }
+    .platform-section[data-platform="app"] .platform-icon,
+    .platform-section[data-platform="app"] .module-title { border-color: var(--app-color); }
+    .platform-section[data-platform="car"] .platform-icon,
+    .platform-section[data-platform="car"] .module-title { border-color: var(--car-color); }
+
+    /* ============ 空状态 ============ */
+    .empty {
+        text-align: center; padding: 80px 20px; color: var(--c-text-secondary);
+    }
+    .empty svg { width: 56px; height: 56px; color: var(--c-text-tertiary); margin-bottom: 16px; }
+    .empty h3 { font-size: 16px; font-weight: 500; color: var(--c-text); margin-bottom: 6px; }
+    .empty p { font-size: 13px; }
+
+    /* ============ 页脚 ============ */
+    .footer {
+        margin-top: 48px; text-align: center;
+        font-size: 12px; color: var(--c-text-tertiary); line-height: 1.8;
+    }
+    .footer a { color: var(--c-primary); text-decoration: none; }
+
+    /* ============ 响应式 ============ */
+    @media (max-width: 768px) {
+        .wrap { padding: 0 16px; }
+        .hero { margin-top: 16px; padding: 28px 22px; }
+        .hero h1 { font-size: 22px; }
+        .hero-inner { flex-direction: column; align-items: flex-start; }
+        .hero-stats { width: 100%; }
+        .stat { flex: 1; min-width: 0; }
+        .toolbar { position: static; flex-direction: column; align-items: stretch; }
+        .tabs { overflow-x: auto; }
+        .grid { grid-template-columns: 1fr; }
+    }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="title">酷哇APP · 车辆能耗成本管理</div>
-        <div class="subtitle">高保真原型系统</div>
+<div class="wrap">
 
-        <div class="section">
-            <div class="section-title">WEB端管理后台</div>
-            <div class="link-grid">
-                <a href="03-高保真页面/web-fuel-records.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                    <div>
-                        <div class="name">加油记录明细</div>
-                        <div class="desc">WEB端 · 能耗管理</div>
+    <!-- ============ Hero ============ -->
+    <header class="hero">
+        <div class="hero-inner">
+            <div>
+                <div class="hero-brand">
+                    <div class="hero-logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 13h2l2-5h9l3 5h2"/><path d="M5 13v5h14v-5"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/>
+                        </svg>
                     </div>
-                    <span class="tag tag-web">WEB</span>
-                </a>
-                <a href="03-高保真页面/web-water-records.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.15 0-6-2.38-6-6.2 0-2.34 1.78-5.23 6-8.92 4.22 3.69 6 6.58 6 8.92 0 3.82-2.85 6.2-6 6.2z"/></svg>
-                    <div>
-                        <div class="name">加水记录明细</div>
-                        <div class="desc">WEB端 · 能耗管理</div>
-                    </div>
-                    <span class="tag tag-web">WEB</span>
-                </a>
-                <a href="03-高保真页面/web-charge-records.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
-                    <div>
-                        <div class="name">充电记录明细</div>
-                        <div class="desc">WEB端 · 能耗管理</div>
-                    </div>
-                    <span class="tag tag-web">WEB</span>
-                </a>
-                <a href="03-高保真页面/web-fuel-analysis.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><path d="M4 19V5a2 2 0 012-2h7a2 2 0 012 2v14"/><path d="M3 19h14"/><path d="M7 9h5"/><path d="M18 8v8M21 12h-6"/></svg>
-                    <div>
-                        <div class="name">油耗分析</div>
-                        <div class="desc">WEB端 · 能耗成本管理</div>
-                    </div>
-                    <span class="tag tag-web">WEB</span>
-                </a>
-                <a href="03-高保真页面/web-charge-analysis.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><path d="M13 2L6 13h6l-1 9 7-12h-6z"/><path d="M18 14v6M21 17h-6"/></svg>
-                    <div>
-                        <div class="name">电耗分析</div>
-                        <div class="desc">WEB端 · 能耗成本管理</div>
-                    </div>
-                    <span class="tag tag-web">WEB</span>
-                </a>
+                    <span class="hero-eyebrow">KUWA · PROTOTYPE</span>
+                </div>
+                <h1>酷哇APP · 车辆能耗成本管理</h1>
+                <p class="hero-sub">城市环卫车辆能耗成本与品质巡查全链路高保真原型，覆盖 WEB 管理后台、移动端 APP、车机端三端协同，用于产品评审与开发落地参考。</p>
             </div>
+            <div class="hero-stats" id="heroStats"></div>
         </div>
+    </header>
 
-        <div class="section">
-            <div class="section-title">APP端</div>
-            <div class="link-grid">
-                <a href="03-高保真页面/home.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-                    <div>
-                        <div class="name">城市管家工作台</div>
-                        <div class="desc">移动端 · 车务管理</div>
-                    </div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/home-ocr.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    <div>
-                        <div class="name">城市管家-OCR版</div>
-                        <div class="desc">移动端 · OCR识别自动填充</div>
-                    </div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/vehicle-management.html?demo=reset" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><path d="M3 13h2l2-5h9l3 5h2"/><path d="M5 13v5h14v-5"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/><path d="M9 8V5h6v3"/></svg>
-                    <div>
-                        <div class="name">用车管理（双Tab应用）</div>
-                        <div class="desc">地图/服务双Tab · 未绑定可查看全部任务</div>
-                    </div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/schedule-tasks.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1677ff" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
-                    <div><div class="name">常规任务</div><div class="desc">当前驾驶员 · 多车辆任务</div></div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/emergency-tasks.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#ff4d4f" stroke-width="2"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
-                    <div><div class="name">应急任务</div><div class="desc">当前驾驶员 · 应急任务查询</div></div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/dynamic-tasks.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    <div><div class="name">动态任务</div><div class="desc">当前驾驶员 · 动态问题任务</div></div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/fuel-report-ocr.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                    <div>
-                        <div class="name">加油上报（OCR）</div>
-                        <div class="desc">移动端 · OCR 识别自动填充</div>
-                    </div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/water-report-ocr.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.15 0-6-2.38-6-6.2 0-2.34 1.78-5.23 6-8.92 4.22 3.69 6 6.58 6 8.92 0 3.82-2.85 6.2-6 6.2z"/></svg>
-                    <div>
-                        <div class="name">加水上报（OCR）</div>
-                        <div class="desc">移动端 · OCR 识别自动填充</div>
-                    </div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-                <a href="03-高保真页面/charge-report-ocr.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
-                    <div>
-                        <div class="name">充电上报（OCR）</div>
-                        <div class="desc">移动端 · OCR 识别自动填充</div>
-                    </div>
-                    <span class="tag tag-app">APP</span>
-                </a>
-            </div>
+    <!-- ============ 工具栏 ============ -->
+    <div class="toolbar">
+        <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input id="searchInput" type="text" placeholder="搜索页面名称、功能或模块…" autocomplete="off">
+            <button class="clear" id="clearBtn" title="清除">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:12px;height:12px"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
         </div>
-
-        <div class="section">
-            <div class="section-title">车机端（16:9 横屏）</div>
-            <div class="link-grid">
-                <a href="03-高保真页面/car-bind.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7"/></svg>
-                    <div>
-                        <div class="name">车辆绑定页</div>
-                        <div class="desc">车机端 · 扫码绑车入口</div>
-                    </div>
-                    <span class="tag tag-car">车机</span>
-                </a>
-                <a href="03-高保真页面/car-home.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
-                    <div>
-                        <div class="name">系统首页（左右分屏）</div>
-                        <div class="desc">车机端 · 地图+今日巡查任务列表</div>
-                    </div>
-                    <span class="tag tag-car">车机</span>
-                </a>
-                <a href="03-高保真页面/car-task-running.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
-                    <div>
-                        <div class="name">任务执行页</div>
-                        <div class="desc">车机端 · 实时轨迹+问题卡片+结束任务</div>
-                    </div>
-                    <span class="tag tag-car">车机</span>
-                </a>
-                <a href="03-高保真页面/car-problem-detail.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <div>
-                        <div class="name">问题详情页</div>
-                        <div class="desc">车机端 · 只读查看问题+处置节点</div>
-                    </div>
-                    <span class="tag tag-car">车机</span>
-                </a>
-                <a href="03-高保真页面/car-handover.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                    <div>
-                        <div class="name">交车页</div>
-                        <div class="desc">车机端 · 扫码交车解绑</div>
-                    </div>
-                    <span class="tag tag-car">车机</span>
-                </a>
-                <a href="03-高保真页面/car-today-review.html" class="link-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fa8c16" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                    <div>
-                        <div class="name">今日回顾页</div>
-                        <div class="desc">车机端 · 当日指标+未完成+明日待办</div>
-                    </div>
-                    <span class="tag tag-car">车机</span>
-                </a>
-            </div>
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-key="all">全部 <span class="cnt" id="cnt-all"></span></button>
+            <button class="tab" data-key="web"><span class="dot"></span>WEB端 <span class="cnt" id="cnt-web"></span></button>
+            <button class="tab" data-key="app"><span class="dot"></span>APP端 <span class="cnt" id="cnt-app"></span></button>
+            <button class="tab" data-key="car"><span class="dot"></span>车机端 <span class="cnt" id="cnt-car"></span></button>
         </div>
     </div>
+
+    <div class="result-meta" id="resultMeta"></div>
+
+    <!-- ============ 渲染容器 ============ -->
+    <main id="container"></main>
+
+    <footer class="footer">
+        酷哇APP · 车辆能耗成本管理高保真原型系统 &nbsp;|&nbsp; 风格遵循 Ant Design 规范<br>
+        最近更新：<span id="updateDate"></span> &nbsp;·&nbsp; 共 <b id="footTotal" style="color:var(--c-text)"></b> 个页面
+    </footer>
+</div>
+
+<script>
+/* ============ 图标库（Lucide 风格，stroke=currentColor） ============ */
+const ICONS = {
+    fuel:   '<path d="M3 22V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v18"/><path d="M3 22h12"/><path d="M14 8h2.5a2.5 2.5 0 0 1 2.5 2.5V18a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.5L17 5"/><path d="M7 8h4"/>',
+    water:  '<path d="M12 2.5S5.5 9 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 9 12 2.5 12 2.5z"/>',
+    charge: '<path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13l0-8z"/>',
+    chart:  '<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="7"/><rect x="12" y="7" width="3" height="11"/><rect x="17" y="13" width="3" height="5"/>',
+    car:    '<path d="M3 13h2l2-5h10l2 5h2"/><path d="M5 13v5h14v-5"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="16.5" cy="18.5" r="1.5"/>',
+    home:   '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/>',
+    user:   '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    qr:     '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7M17 21h4M14 18h3"/>',
+    map:    '<polygon points="3 6 9 4 15 6 21 4 21 18 15 20 9 18 3 20 3 6"/><line x1="9" y1="4" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="20"/>',
+    review: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/>',
+    placeholder: '<rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 3"/><path d="M9 12h6M12 9v6"/>',
+    task:   '<rect x="4" y="4" width="16" height="17" rx="2"/><path d="M9 3v4M15 3v4M4 10h16"/><path d="M9 15l2 2 4-4"/>',
+    alert:  '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17.5" r=".6" fill="currentColor"/>',
+    bolt:   '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
+    check:  '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+    list:   '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/>',
+    doc:    '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
+    wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.2 5.2L3 18l3 3 6.5-6.5a4 4 0 0 0 5.2-5.2l-2.6 2.6-2.4-2.4z"/>',
+    shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    edit:   '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    link:   '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/>'
+};
+function svg(name, color) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.doc}</svg>`;
+}
+
+/* ============ 页面数据（端 → 模块 → 页面） ============ */
+const DIR = '03-高保真页面/';
+// 最近迭代的页面（基于近期版本：品质巡查模块优化）
+const UPDATED = new Set(['inspection-map','inspection-problem-detail','map-workbench','home','car-home','car-problem-detail','car-task-running','inspection-management','vehicle-management']);
+
+const PLATFORMS = [
+    {
+        key: 'web', name: 'WEB 端管理后台', color: '#1677ff', bg: '#e6f4ff', icon: 'chart',
+        desc: 'PC 浏览器 · 能耗与用车数据管理',
+        modules: [
+            { title: '能耗记录明细', pages: [
+                { f:'web-fuel-records',   n:'加油记录明细', d:'加油数据列表与筛选', icon:'fuel' },
+                { f:'web-water-records',  n:'加水记录明细', d:'加水数据列表与筛选', icon:'water' },
+                { f:'web-charge-records', n:'充电记录明细', d:'充电数据列表与筛选', icon:'charge' },
+            ]},
+            { title: '能耗成本分析', pages: [
+                { f:'web-fuel-analysis',   n:'油耗分析', d:'油耗趋势与成本看板', icon:'chart' },
+                { f:'web-charge-analysis', n:'电耗分析', d:'电耗趋势与成本看板', icon:'chart' },
+            ]},
+            { title: '用车管理', pages: [
+                { f:'web-vehicle-use-records', n:'用车记录', d:'车辆使用记录明细', icon:'car' },
+            ]},
+        ]
+    },
+    {
+        key: 'app', name: 'APP 端 / 城市管家', color: '#52c41a', bg: '#f6ffed', icon: 'home',
+        desc: '移动端 · 驾驶员/管家作业应用',
+        modules: [
+            { title: '工作台与通用', pages: [
+                { f:'home',              n:'城市管家工作台',   d:'首页工作台 · 标准版', icon:'home' },
+                { f:'home-ocr',          n:'城市管家-OCR版',   d:'首页工作台 · OCR识别版', icon:'home' },
+                { f:'city-steward-home', n:'城市管家首页',     d:'应用首页入口聚合', icon:'layout' },
+                { f:'layout',            n:'APP 整体框架',     d:'底部 Tab 框架演示', icon:'layout' },
+                { f:'profile',           n:'我的',             d:'个人中心页面', icon:'user' },
+                { f:'qrcode',            n:'我的二维码',       d:'驾驶员身份二维码', icon:'qr' },
+                { f:'map',               n:'地图',             d:'通用地图视图', icon:'map' },
+                { f:'map-workbench',     n:'地图工作台',       d:'地图作业工作台', icon:'map' },
+                { f:'today-review',      n:'今日回顾',         d:'当日作业数据回顾', icon:'review' },
+                { f:'placeholder',       n:'功能开发中',       d:'通用占位页', icon:'placeholder' },
+            ]},
+            { title: '用车与任务', pages: [
+                { f:'vehicle-management?demo=reset', n:'用车管理',   d:'地图/服务双 Tab · 全部任务', icon:'car' },
+                { f:'schedule-tasks',   n:'常规任务', d:'当前驾驶员常规任务', icon:'task' },
+                { f:'emergency-tasks',  n:'应急任务', d:'应急任务查询与处理', icon:'alert' },
+                { f:'dynamic-tasks',    n:'动态任务', d:'动态问题任务列表', icon:'bolt' },
+                { f:'task-detail',      n:'任务详情', d:'单条任务详情查看', icon:'doc' },
+                { f:'finish-task',      n:'结束任务确认', d:'任务完成确认弹窗', icon:'check' },
+            ]},
+            { title: '能耗上报', pages: [
+                { f:'fuel-report',       n:'加油上报',       d:'手动填写加油数据', icon:'fuel' },
+                { f:'water-report',      n:'加水上报',       d:'手动填写加水数据', icon:'water' },
+                { f:'charge-report',     n:'充电上报',       d:'手动填写充电数据', icon:'charge' },
+                { f:'fuel-report-ocr',   n:'加油上报(OCR)',   d:'OCR 识别自动填充', icon:'fuel' },
+                { f:'water-report-ocr',  n:'加水上报(OCR)',   d:'OCR 识别自动填充', icon:'water' },
+                { f:'charge-report-ocr', n:'充电上报(OCR)',   d:'OCR 识别自动填充', icon:'charge' },
+                { f:'records',           n:'上报记录',       d:'历史上报记录列表', icon:'list' },
+                { f:'record-detail',     n:'记录详情',       d:'单条上报记录详情', icon:'doc' },
+                { f:'repair-bottomsheet',n:'故障报修',       d:'底部弹窗报修上报', icon:'wrench' },
+            ]},
+            { title: '品质巡查', pages: [
+                { f:'inspection-management',        n:'品质巡查',     d:'巡查管理总入口', icon:'shield' },
+                { f:'inspection-task-management',   n:'巡查任务',     d:'巡查任务管理列表', icon:'task' },
+                { f:'inspection-task-detail',       n:'任务详情',     d:'巡查任务详情页', icon:'doc' },
+                { f:'inspection-problem-management',n:'品质事件',     d:'品质事件管理列表', icon:'alert' },
+                { f:'inspection-problem-report',    n:'事件上报',     d:'上报品质事件', icon:'edit' },
+                { f:'inspection-problem-detail',    n:'事件详情',     d:'品质事件详情页', icon:'doc' },
+                { f:'inspection-map',               n:'巡查地图',     d:'地图巡查作业视图', icon:'map' },
+            ]},
+        ]
+    },
+    {
+        key: 'car', name: '车机端（16:9 横屏）', color: '#fa8c16', bg: '#fff7e6', icon: 'car',
+        desc: '车载终端 · 品质巡查作业',
+        modules: [
+            { title: '车机品质巡查', pages: [
+                { f:'car-bind',           n:'车辆绑定', d:'扫码绑车入口', icon:'link' },
+                { f:'car-plate-entry',    n:'车辆牌照', d:'车辆牌照录入', icon:'car' },
+                { f:'car-home',           n:'系统首页', d:'左右分屏 · 地图+任务', icon:'home' },
+                { f:'car-task-running',   n:'任务执行', d:'实时轨迹+问题+结束', icon:'task' },
+                { f:'car-problem-detail', n:'事件详情', d:'只读查看事件+处置', icon:'doc' },
+                { f:'car-handover',       n:'交车',     d:'扫码交车解绑', icon:'link' },
+                { f:'car-today-review',   n:'今日回顾', d:'当日指标+明日待办', icon:'review' },
+            ]},
+        ]
+    }
+];
+
+/* ============ 统计 ============ */
+function countAll() {
+    let total = 0; const by = { web:0, app:0, car:0 };
+    PLATFORMS.forEach(p => {
+        let c = 0;
+        p.modules.forEach(m => c += m.pages.length);
+        by[p.key] = c; total += c;
+    });
+    return { total, by };
+}
+const STATS = countAll();
+
+function renderHeroStats() {
+    const el = document.getElementById('heroStats');
+    el.innerHTML = `
+        <div class="stat"><div class="stat-num">${STATS.total}<small>个</small></div><div class="stat-label">原型页面总数</div></div>
+        <div class="stat"><div class="stat-num">3</div><div class="stat-label">协同终端</div></div>
+        <div class="stat"><div class="stat-num">v1.0</div><div class="stat-label">高保真版本</div></div>
+    `;
+    document.getElementById('cnt-all').textContent = STATS.total;
+    document.getElementById('cnt-web').textContent = STATS.by.web;
+    document.getElementById('cnt-app').textContent = STATS.by.app;
+    document.getElementById('cnt-car').textContent = STATS.by.car;
+    document.getElementById('footTotal').textContent = STATS.total;
+}
+
+/* ============ 渲染 ============ */
+const container = document.getElementById('container');
+const searchInput = document.getElementById('searchInput');
+const clearBtn = document.getElementById('clearBtn');
+const resultMeta = document.getElementById('resultMeta');
+let currentTab = 'all';
+
+function matchKeyword(page, platformName, moduleName, kw) {
+    if (!kw) return true;
+    const hay = (page.n + ' ' + page.d + ' ' + platformName + ' ' + moduleName + ' ' + page.icon).toLowerCase();
+    return hay.includes(kw.toLowerCase());
+}
+
+function render() {
+    const kw = searchInput.value.trim();
+    clearBtn.classList.toggle('show', !!kw);
+    const filter = currentTab === 'all' ? null : currentTab;
+    let shown = 0;
+    let html = '';
+    let delay = 0;
+
+    PLATFORMS.forEach(p => {
+        if (filter && p.key !== filter) return;
+        // 收集该端命中模块
+        const hitModules = [];
+        p.modules.forEach(m => {
+            const pages = m.pages.filter(pg => matchKeyword(pg, p.name, m.title, kw));
+            if (pages.length) hitModules.push({ title: m.title, pages });
+        });
+        if (!hitModules.length) return;
+
+        const pCount = hitModules.reduce((s, m) => s + m.pages.length, 0);
+        shown += pCount;
+
+        html += `<section class="platform-section" data-platform="${p.key}">
+            <div class="platform-head">
+                <div class="platform-icon" style="background:${p.bg}">${svg(p.icon, p.color)}</div>
+                <div class="platform-name">${p.name}</div>
+                <span class="platform-count">${pCount} 页</span>
+            </div>`;
+
+        hitModules.forEach(m => {
+            html += `<div class="module-group">
+                <div class="module-title">${m.title} <span class="m-cnt">${m.pages.length}</span></div>
+                <div class="grid">`;
+            m.pages.forEach(pg => {
+                const isNew = UPDATED.has(pg.f.split('?')[0]);
+                // pg.f 可能含查询串（如 vehicle-management?demo=reset），需正确补 .html 后缀
+                const finalHref = pg.f.includes('?')
+                    ? DIR + pg.f.replace('?', '.html?')
+                    : DIR + pg.f + '.html';
+                html += `<a class="card" style="--card-accent:${p.color}; animation-delay:${delay}ms" href="${finalHref}" target="_blank" rel="noopener">
+                    <div class="card-icon" style="background:${p.bg}">${svg(pg.icon, p.color)}</div>
+                    <div class="card-body">
+                        <div class="card-name">${pg.n}${isNew ? '<span class="badge-new">更新</span>' : ''}</div>
+                        <div class="card-desc">${pg.d}</div>
+                    </div>
+                    <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+                </a>`;
+                delay = Math.min(delay + 25, 400);
+            });
+            html += `</div></div>`;
+        });
+        html += `</section>`;
+    });
+
+    if (!shown) {
+        html = `<div class="empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M8 11h6"/></svg>
+            <h3>未找到匹配的页面</h3>
+            <p>试试更换关键词，或切换其他终端 Tab</p>
+        </div>`;
+    }
+
+    container.innerHTML = html;
+    resultMeta.innerHTML = kw || filter
+        ? `当前筛选下共 <b>${shown}</b> 个页面${kw ? ` · 关键词「${escapeHtml(kw)}」` : ''}${filter ? ` · ${PLATFORMS.find(p=>p.key===filter).name}` : ''}`
+        : '';
+}
+
+function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ============ 事件绑定 ============ */
+let searchTimer = null;
+searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(render, 80);
+});
+clearBtn.addEventListener('click', () => { searchInput.value = ''; render(); searchInput.focus(); });
+
+document.getElementById('tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.key;
+    render();
+});
+
+// 快捷键：/ 聚焦搜索
+document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== searchInput) { e.preventDefault(); searchInput.focus(); }
+    if (e.key === 'Escape' && document.activeElement === searchInput) { searchInput.value = ''; render(); }
+});
+
+/* ============ 初始化 ============ */
+renderHeroStats();
+document.getElementById('updateDate').textContent = '2026-08-04';
+render();
+</script>
 </body>
 </html>

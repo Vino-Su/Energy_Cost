@@ -240,7 +240,7 @@
         .module-icon.repair { background: #fff1f0; color: #ff4d4f; }
         .module-icon.stat { background: #f2f0ff; color: #722ed1; }
 
-        /* ===== 底部导航：地图 / 服务 ===== */
+        /* ===== 底部导航：地图 / 快捷操作 / 服务 ===== */
         .app-tabbar {
             position: fixed;
             bottom: 0;
@@ -276,6 +276,136 @@
         .app-tab.active { color: #1677ff; }
         .app-tab:active { opacity: 0.7; }
         .app-tab svg { width: 24px; height: 24px; }
+        .app-tab--quick {
+            position: absolute;
+            top: 28px;
+            left: 50%;
+            width: 52px;
+            height: 52px;
+            padding: 0;
+            border: 4px solid #ffffff;
+            border-radius: 50%;
+            background: #1677ff;
+            box-shadow: 0 5px 14px rgba(22, 119, 255, 0.32);
+            color: #ffffff;
+            gap: 0;
+            transform: translate(-50%, -50%);
+            transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+            z-index: 1;
+        }
+        .app-tab--quick svg { width: 24px; height: 24px; }
+        .app-tab--quick:active {
+            opacity: 1;
+            background: #0958d9;
+            box-shadow: 0 3px 8px rgba(22, 119, 255, 0.28);
+            transform: translate(-50%, -50%) scale(0.92);
+        }
+        .app-tab--quick::after {
+            content: '快捷操作';
+            position: absolute;
+            left: 50%;
+            bottom: 50px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.76);
+            color: #ffffff;
+            font-size: 12px;
+            line-height: 18px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .app-tab--quick:hover::after,
+        .app-tab--quick:focus-visible::after {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        /* ===== 快捷操作底部弹窗 ===== */
+        .quick-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0 auto;
+            max-width: 375px;
+            display: none;
+            align-items: flex-end;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 4000;
+        }
+        .quick-overlay.show { display: flex; }
+        .quick-sheet {
+            width: 100%;
+            padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+            border-radius: 16px 16px 0 0;
+            background: #ffffff;
+            transform: translateY(100%);
+            transition: transform 0.2s ease;
+        }
+        .quick-overlay.show .quick-sheet { transform: translateY(0); }
+        .quick-sheet__handle {
+            width: 36px;
+            height: 4px;
+            margin: 0 auto 8px;
+            border-radius: 2px;
+            background: #d9d9d9;
+        }
+        .quick-sheet__header {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .quick-sheet__title {
+            margin-left: 40px;
+            color: #000000d9;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 24px;
+        }
+        .quick-sheet__close {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: #00000073;
+            cursor: pointer;
+        }
+        .quick-sheet__close:active { background: #f5f5f5; }
+        .quick-sheet__close svg { width: 20px; height: 20px; }
+        .quick-action {
+            width: 100%;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px;
+            border: none;
+            border-top: 1px solid #f0f0f0;
+            background: #ffffff;
+            color: #000000d9;
+            text-align: left;
+            cursor: pointer;
+        }
+        .quick-action:active { background: #f5f5f5; }
+        .quick-action__icon {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            background: #fff2f0;
+            color: #ff4d4f;
+        }
+        .quick-action__icon svg { width: 20px; height: 20px; }
+        .quick-action__text { font-size: 15px; font-weight: 500; line-height: 22px; }
 
 
         /* ===== 退出确认弹窗（与用车管理一致） ===== */
@@ -456,17 +586,39 @@
         </section>
     </div>
 
-    <!-- 底部导航：地图 / 服务 -->
+    <!-- 底部导航：地图 / 快捷操作 / 服务 -->
     <nav class="app-tabbar" aria-label="主导航">
         <button type="button" class="app-tab active" id="tab-map" onclick="switchTab('map')" aria-label="地图">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
             <span>地图</span>
+        </button>
+        <button type="button" class="app-tab app-tab--quick" id="js-quick-trigger" aria-label="快捷操作" aria-haspopup="dialog" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         </button>
         <button type="button" class="app-tab" id="tab-service" onclick="switchTab('service')" aria-label="服务">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
             <span>服务</span>
         </button>
     </nav>
+
+    <!-- 快捷操作 -->
+    <div class="quick-overlay" id="js-quick-overlay" role="dialog" aria-modal="true" aria-labelledby="js-quick-title">
+        <div class="quick-sheet">
+            <div class="quick-sheet__handle" aria-hidden="true"></div>
+            <div class="quick-sheet__header">
+                <span class="quick-sheet__title" id="js-quick-title">快捷操作</span>
+                <button type="button" class="quick-sheet__close" id="js-quick-close" aria-label="关闭快捷操作">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                </button>
+            </div>
+            <button type="button" class="quick-action" id="js-quick-report">
+                <span class="quick-action__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+                </span>
+                <span class="quick-action__text">事件上报</span>
+            </button>
+        </div>
+    </div>
 
     <!-- 退出确认弹窗 -->
     <div class="confirm-overlay" id="exitConfirm" role="dialog" aria-modal="true" aria-label="退出确认">
@@ -496,6 +648,33 @@
                 document.getElementById('panel-service').scrollTop = 0;
             }
         }
+
+        /* ===== 快捷操作 ===== */
+        (function () {
+            var trigger = document.getElementById('js-quick-trigger');
+            var overlay = document.getElementById('js-quick-overlay');
+            var close = document.getElementById('js-quick-close');
+            var report = document.getElementById('js-quick-report');
+            function closeQuickActions() {
+                overlay.classList.remove('show');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+            function openQuickActions() {
+                overlay.classList.add('show');
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+            trigger.addEventListener('click', openQuickActions);
+            close.addEventListener('click', closeQuickActions);
+            overlay.addEventListener('click', function (event) {
+                if (event.target === overlay) closeQuickActions();
+            });
+            report.addEventListener('click', function () {
+                window.location.href = 'inspection-problem-report.html?task=I002&captured=1';
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && overlay.classList.contains('show')) closeQuickActions();
+            });
+        })();
 
         /* ===== 服务页顶部胶囊交互（与地图页同款） ===== */
         (function () {

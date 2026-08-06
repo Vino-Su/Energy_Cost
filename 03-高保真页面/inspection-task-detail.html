@@ -128,8 +128,12 @@
             background: #ffffff;
             border-top: 1px solid #e8e8e8;
         }
-        .page-actions__back { width: 100%; height: 44px; border: none; border-radius: 8px; background: #1677ff; color: #ffffff; font-size: 16px; font-weight: 600; }
-        .page-actions__back:active { opacity: 0.85; }
+        .page-actions__group { display: flex; gap: 12px; }
+        .page-actions__group--single .page-actions__button { width: 100%; }
+        .page-actions__button { flex: 1; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 600; }
+        .page-actions__primary { border: none; background: #1677ff; color: #ffffff; }
+        .page-actions__secondary { border: 1px solid #1677ff; background: #ffffff; color: #1677ff; }
+        .page-actions__button:active { opacity: 0.85; }
 
         @media (prefers-reduced-motion: reduce) { .event-card { animation: none; transition: none; } }
     </style>
@@ -169,9 +173,7 @@
         </section>
     </main>
 
-    <footer class="page-actions">
-        <button type="button" class="page-actions__back" id="js-back">返回</button>
-    </footer>
+    <footer class="page-actions" id="js-page-actions"></footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="components/top-capsule.js"></script>
@@ -199,6 +201,24 @@
                 planDate: '—', workTime: '—', resource: '—', type: '品质巡查', coordinate: '', radius: 280,
                 startAt: '—', mileage: null, duration: null, problemCount: 0, remark: '暂无任务说明。'
             };
+        }
+
+        // 地图执行页与详情页共用会话内任务状态，返回详情时即时反映开始或结束结果。
+        var STATE_KEY = 'kuwash-inspection-state';
+        var state = {};
+        try { state = JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}'); } catch (e) {}
+        var savedState = state[item.code || item.id];
+        if (savedState && savedState.status) {
+            var statusMap = { todo: 'pending', running: 'running', done: 'done' };
+            var statusTextMap = { pending: '待接收', running: '进行中', done: '已完成' };
+            var currentStatus = statusMap[savedState.status] || item.status;
+            item.status = currentStatus;
+            item.statusText = statusTextMap[currentStatus] || item.statusText;
+            if (currentStatus !== 'pending') {
+                item.startAt = savedState.start || item.startAt;
+                item.mileage = savedState.mileage === undefined ? item.mileage : savedState.mileage;
+                item.duration = savedState.duration === undefined ? item.duration : savedState.duration;
+            }
         }
 
         function escapeHtml(value) {
@@ -233,6 +253,30 @@
                 return;
             }
             location.href = 'inspection-management.html?tab=service';
+        }
+
+        function openMapAction(action) {
+            var taskId = item.code || item.id;
+            location.href = 'inspection-management.html?tab=map&task=' + encodeURIComponent(taskId) + '&action=' + encodeURIComponent(action);
+        }
+
+        function renderActions() {
+            var holder = document.getElementById('js-page-actions');
+            if (!holder) return;
+            var actionConfig = {
+                pending: { key: 'start', label: '开始任务' },
+                running: { key: 'finish', label: '结束任务' }
+            }[item.status];
+            var html = '<div class="page-actions__group' + (actionConfig ? '' : ' page-actions__group--single') + '">';
+            if (actionConfig) {
+                html += '<button type="button" class="page-actions__button page-actions__primary" id="js-task-action">' + actionConfig.label + '</button>';
+            }
+            html += '<button type="button" class="page-actions__button ' + (actionConfig ? 'page-actions__secondary' : 'page-actions__primary') + '" id="js-back">返回</button></div>';
+            holder.innerHTML = html;
+            document.getElementById('js-back').addEventListener('click', backToTaskList);
+            if (actionConfig) {
+                document.getElementById('js-task-action').addEventListener('click', function () { openMapAction(actionConfig.key); });
+            }
         }
 
         // ===== 渲染基础信息 =====
@@ -353,7 +397,7 @@
                 onExit: backToTaskList
             });
         }
-        document.getElementById('js-back').addEventListener('click', backToTaskList);
+        renderActions();
         initTaskMap();
     })();
     </script>
