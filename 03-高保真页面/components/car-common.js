@@ -13,6 +13,7 @@
     var STATE_KEY = 'car-bind-state';
     var TASK_STATE_KEY = 'car-today-task-state';
     var TASK_METRICS_KEY = 'car-today-task-metrics';
+    var TASK_ACTION_KEY = 'car-today-task-actions';
     var LIVE_PROBLEM_KEY = 'car-live-problems';
     var REMOTE_LOGOUT_KEY = 'kuwash-car-app-remote-logout';
     var STATE = {
@@ -149,7 +150,7 @@
         try { sessionStorage.setItem(TASK_STATE_KEY, JSON.stringify(states)); } catch (e) {}
     }
     function resetTaskStates() {
-        try { sessionStorage.removeItem(TASK_STATE_KEY); } catch (e) {}
+        try { sessionStorage.removeItem(TASK_STATE_KEY); sessionStorage.removeItem(TASK_ACTION_KEY); } catch (e) {}
     }
     function getTaskMetrics() {
         try { return JSON.parse(sessionStorage.getItem(TASK_METRICS_KEY) || '{}'); } catch (e) { return {}; }
@@ -158,6 +159,16 @@
         var all = getTaskMetrics();
         all[taskId] = Object.assign({}, all[taskId] || {}, patch || {});
         try { sessionStorage.setItem(TASK_METRICS_KEY, JSON.stringify(all)); } catch (e) {}
+    }
+    function getTaskActions() {
+        try { return JSON.parse(sessionStorage.getItem(TASK_ACTION_KEY) || '{}'); } catch (e) { return {}; }
+    }
+    function getTaskAction(taskId) { return getTaskActions()[taskId] || null; }
+    function setTaskAction(taskId, action) {
+        var all = getTaskActions();
+        all[taskId] = Object.assign({}, all[taskId] || {}, action || {});
+        try { sessionStorage.setItem(TASK_ACTION_KEY, JSON.stringify(all)); } catch (e) {}
+        return all[taskId];
     }
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
     function getLiveProblems() {
@@ -194,6 +205,7 @@
             item.status = states[task.id] || task.status;
             item.statusText = (TASK_STATUS[item.status] || TASK_STATUS.invalid).text;
             item.statusTag = (TASK_STATUS[item.status] || TASK_STATUS.invalid).tag;
+            item.action = getTaskAction(task.id);
             item.geo = clone(TASK_MAP_DATA[task.id] || null);
             item.problemsList = getProblems(item.id);
             item.problems = item.problemsList.length;
@@ -568,7 +580,7 @@
         if (app && demo === 'driving') {
             app.classList.add('is-driving');
             document.addEventListener('click', function (event) {
-                var restricted = event.target.closest('#js-handover, #js-fullscreen, #js-layer, #js-finish, #js-start, #js-task-tool, #js-problem-tool, [data-detail], [data-task-info], .home-task, .run-task-item, .car-task-problem');
+                var restricted = event.target.closest('#js-handover, #js-fullscreen, #js-layer, #js-finish, #js-start, #js-more, #js-action-submit, #js-action-cancel, #js-task-tool, #js-problem-tool, [data-action], [data-detail], [data-task-info], .home-task, .run-task-item, .car-task-problem');
                 if (!restricted) return;
                 event.preventDefault(); event.stopImmediatePropagation();
                 toast('行驶中暂不可执行该操作');
@@ -610,6 +622,8 @@
     CAR.getTaskStatus = getTaskStatus;
     CAR.setTaskStatus = setTaskStatus;
     CAR.setTaskMetrics = setTaskMetrics;
+    CAR.getTaskAction = getTaskAction;
+    CAR.setTaskAction = setTaskAction;
     CAR.resetTaskStates = resetTaskStates;
     CAR.TASK_STATUS = TASK_STATUS;
     CAR.EVENT_STATUS = EVENT_STATUS;

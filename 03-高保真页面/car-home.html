@@ -114,6 +114,25 @@
 /* 详情卡底部：待开始任务时双按钮横排（开始任务 + 返回列表） */
 .home-detail-foot.is-split { display: flex; gap: 12px; }
 .home-detail-foot.is-split .car-btn { width: auto; flex: 1; }
+.home-detail-foot__more { position: relative; flex: 0 0 var(--car-touch); }
+.home-detail-foot__more > .car-icon-btn { width: var(--car-touch); height: var(--car-touch); }
+.home-more-menu { position: absolute; left: 0; bottom: calc(100% + 8px); min-width: 150px; padding: 4px 0; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); background: var(--car-surface); box-shadow: 0 4px 16px rgba(20,40,70,0.18); z-index: 30; }
+.home-more-menu[hidden] { display: none; }
+.home-more-menu button { display: block; width: 100%; min-height: 48px; padding: 0 16px; border: 0; background: transparent; color: var(--car-text); font-size: var(--car-fs-body); text-align: left; cursor: pointer; }
+.home-more-menu button:active, .home-more-menu button:focus-visible { background: var(--car-surface-soft); }
+.home-more-menu button[data-action="terminate"] { color: var(--car-danger); }
+.home-action-mask { position: fixed; inset: 0; z-index: 2600; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,0.45); opacity: 0; visibility: hidden; transition: opacity 0.18s; }
+.home-action-mask.is-show { opacity: 1; visibility: visible; }
+.home-action-modal { width: 440px; max-width: 100%; border-radius: var(--car-radius); background: var(--car-surface); overflow: hidden; }
+.home-action-modal__head { padding: 20px 24px 8px; font-size: var(--car-fs-panel); font-weight: 600; }
+.home-action-modal__body { padding: 4px 24px 20px; color: var(--car-text-secondary); font-size: var(--car-fs-body); line-height: 24px; }
+.home-action-modal__label { display: block; margin: 12px 0 8px; color: var(--car-text); font-size: var(--car-fs-body); }
+.home-action-modal__label::before { content: '*'; margin-right: 4px; color: var(--car-danger); }
+.home-action-modal__reason { box-sizing: border-box; width: 100%; min-height: 112px; padding: 10px 12px; resize: vertical; border: 1px solid var(--car-border); border-radius: var(--car-radius-sm); outline: none; color: var(--car-text); font: inherit; line-height: 24px; }
+.home-action-modal__reason:focus { border-color: var(--car-primary); box-shadow: 0 0 0 2px var(--car-primary-soft); }
+.home-action-modal__error { min-height: 20px; margin-top: 4px; color: var(--car-danger); font-size: var(--car-fs-aux); }
+.home-action-modal__foot { display: flex; gap: 12px; padding: 0 24px 20px; }
+.home-action-modal__foot .car-btn { flex: 1; }
 </style>
 </head>
 <body>
@@ -179,6 +198,15 @@
                 <!-- 选中任务详情 -->
                 <div class="home-detail__body" id="js-detail"></div>
                 <div class="car-task-action home-detail-foot">
+                    <div class="home-detail-foot__more" id="js-more-wrap" hidden>
+                        <button type="button" class="car-icon-btn" id="js-more" aria-label="更多任务操作" aria-expanded="false" title="更多操作">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                        </button>
+                        <div class="home-more-menu" id="js-more-menu" hidden>
+                            <button type="button" data-action="transfer">转派任务</button>
+                            <button type="button" data-action="terminate">终止任务</button>
+                        </div>
+                    </div>
                     <button class="car-btn car-btn--primary car-btn--lg" id="js-start">开始任务</button>
                     <button class="car-btn car-btn--ghost car-btn--lg" id="js-back-list" style="display:none">返回任务列表</button>
                 </div>
@@ -206,6 +234,21 @@
                     </div>
                     <div class="car-task-info-panel__body" id="js-taskInfoBody"></div>
                 </aside>
+                <div class="home-action-mask" id="js-action-mask" role="dialog" aria-modal="true" aria-hidden="true">
+                    <form class="home-action-modal" id="js-action-modal">
+                        <div class="home-action-modal__head" id="js-action-title">任务操作</div>
+                        <div class="home-action-modal__body">
+                            <div id="js-action-desc"></div>
+                            <label class="home-action-modal__label" for="js-action-reason" id="js-action-label">操作原因</label>
+                            <textarea class="home-action-modal__reason" id="js-action-reason" maxlength="200" placeholder="请输入原因（最多200字）"></textarea>
+                            <div class="home-action-modal__error" id="js-action-error" role="alert"></div>
+                        </div>
+                        <div class="home-action-modal__foot">
+                            <button type="button" class="car-btn car-btn--ghost car-btn--lg" id="js-action-cancel">取消</button>
+                            <button type="submit" class="car-btn car-btn--primary car-btn--lg" id="js-action-submit">提交</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -682,6 +725,7 @@
             '<div class="car-task-info-field"><span class="car-task-info-field__label">作业类型</span><span class="car-task-info-field__value">' + t.workType + '</span></div>' +
             '<div class="car-task-info-field"><span class="car-task-info-field__label">任务日期</span><span class="car-task-info-field__value car-mono">' + t.date + '</span></div>' +
             '<div class="car-task-info-field"><span class="car-task-info-field__label">计划时段</span><span class="car-task-info-field__value car-mono">' + t.time + '</span></div>' +
+            (t.action ? '<div class="car-task-info-field"><span class="car-task-info-field__label">' + (t.action.type === 'transfer' ? '转派原因' : '终止原因') + '</span><span class="car-task-info-field__value">' + t.action.reason + '</span></div>' : '') +
         '</div>';
     }
 
@@ -763,12 +807,16 @@
             el.addEventListener('click', function () { openTaskInfo(t); });
         });
 
-        // 固定操作区：待接收双按钮（开始任务 + 返回任务列表）；进行中双按钮（结束任务 + 返回任务列表）；已完成单按钮（返回任务列表）。
+        // 固定操作区：待接收/进行中任务支持更多操作（转派、终止）。
         var startBtn = document.getElementById('js-start');
         var backBtn = document.getElementById('js-back-list');
         var foot = document.querySelector('.home-detail-foot');
+        var moreWrap = document.getElementById('js-more-wrap');
         if (reviewIssueEntry) { foot.style.display = 'none'; return; }
         foot.style.display = '';
+        moreWrap.hidden = !(t.status === 'pending' || t.status === 'running');
+        document.getElementById('js-more-menu').hidden = true;
+        document.getElementById('js-more').setAttribute('aria-expanded', 'false');
         if (t.status === 'running') {
             foot.classList.add('is-split'); backBtn.style.display = '';
             startBtn.textContent = '结束任务'; startBtn.disabled = false; startBtn.dataset.mode = 'finish'; startBtn.className = 'car-btn car-btn--primary car-btn--lg';
@@ -814,6 +862,61 @@
     });
     document.getElementById('js-back-list').addEventListener('click', function () {
         CAR.go('car-home.html?panel=tasks', { toast: '已返回任务列表', delay: 200 });
+    });
+
+    var actionType = null;
+    function closeActionModal() {
+        var mask = document.getElementById('js-action-mask');
+        mask.classList.remove('is-show');
+        mask.setAttribute('aria-hidden', 'true');
+        document.getElementById('js-action-reason').value = '';
+        document.getElementById('js-action-error').textContent = '';
+    }
+    function openActionModal(type) {
+        var t = TASKS.find(function (x) { return x.id === selectedId; });
+        if (!t || (t.status !== 'pending' && t.status !== 'running')) return;
+        actionType = type;
+        document.getElementById('js-more-menu').hidden = true;
+        document.getElementById('js-more').setAttribute('aria-expanded', 'false');
+        document.getElementById('js-action-title').textContent = type === 'transfer' ? '转派任务' : '终止任务';
+        document.getElementById('js-action-desc').textContent = type === 'transfer' ? '提交后任务将转派给其他执行人员，当前任务不再由本车执行。' : '提交后任务将终止，终止操作不可恢复，请确认原因填写准确。';
+        document.getElementById('js-action-label').textContent = type === 'transfer' ? '转派原因' : '终止原因';
+        document.getElementById('js-action-submit').className = 'car-btn car-btn--lg ' + (type === 'terminate' ? 'car-btn--danger' : 'car-btn--primary');
+        var mask = document.getElementById('js-action-mask');
+        mask.classList.add('is-show');
+        mask.setAttribute('aria-hidden', 'false');
+        window.setTimeout(function () { document.getElementById('js-action-reason').focus(); }, 0);
+    }
+    document.getElementById('js-more').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var menu = document.getElementById('js-more-menu');
+        var open = menu.hidden;
+        menu.hidden = !open;
+        this.setAttribute('aria-expanded', String(open));
+    });
+    document.querySelectorAll('#js-more-menu [data-action]').forEach(function (el) {
+        el.addEventListener('click', function () { openActionModal(el.dataset.action); });
+    });
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#js-more-wrap')) {
+            document.getElementById('js-more-menu').hidden = true;
+            document.getElementById('js-more').setAttribute('aria-expanded', 'false');
+        }
+    });
+    document.getElementById('js-action-cancel').addEventListener('click', closeActionModal);
+    document.getElementById('js-action-mask').addEventListener('click', function (e) { if (e.target === this) closeActionModal(); });
+    document.getElementById('js-action-modal').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var reasonEl = document.getElementById('js-action-reason');
+        var reason = reasonEl.value.trim();
+        if (!reason) { document.getElementById('js-action-error').textContent = '请填写' + (actionType === 'transfer' ? '转派' : '终止') + '原因'; reasonEl.focus(); return; }
+        var t = TASKS.find(function (x) { return x.id === selectedId; });
+        if (!t || (t.status !== 'pending' && t.status !== 'running')) { closeActionModal(); return; }
+        var status = actionType === 'transfer' ? 'transferred' : 'terminated';
+        CAR.setTaskAction(t.id, { type: actionType, reason: reason, operator: document.getElementById('js-driver').textContent, time: new Date().toISOString() });
+        CAR.setTaskStatus(t.id, status);
+        closeActionModal();
+        CAR.go('car-home.html?panel=tasks&task=' + encodeURIComponent(t.id) + '&taskAction=' + status, { toast: status === 'transferred' ? '任务已转派，已返回任务列表' : '任务已终止，已返回任务列表', delay: 700 });
     });
 
     // 抽屉交互：任务与事件在右侧工具栏中并列为页面级入口
