@@ -300,6 +300,14 @@
 <script src="components/car-common.js"></script>
 <script>
 (function () {
+    var taskCallDemoMode = CAR.query('callDemo');
+    var taskCallDemoEntry = taskCallDemoMode && taskCallDemoMode !== 'off';
+    if (taskCallDemoEntry) {
+        if (!CAR.getState().bound) CAR.bindVehicle(CAR.getState().driverName);
+        var demoTaskId = CAR.query('id') || 'T002';
+        var demoTask = CAR.getTask(demoTaskId);
+        if (!demoTask || demoTask.status !== 'running') CAR.startTask(demoTaskId);
+    }
     var st = CAR.getState();
     if (!st.bound) { location.replace('car-bind.html'); return; }
     document.getElementById('js-vehNo').textContent = st.vehicleNo;

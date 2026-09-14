@@ -260,7 +260,8 @@
 (function () {
     var st = CAR.getState();
     var reviewIssueEntry = CAR.query('panel') === 'problems' && CAR.query('from') === 'review';
-    if (!st.bound && !reviewIssueEntry) { location.replace('car-bind.html'); return; }
+    var callDemoEntry = ['requesting', 'incoming', 'connected', 'history'].indexOf(CAR.query('call')) !== -1;
+    if (!st.bound && !reviewIssueEntry && !callDemoEntry) { location.replace('car-bind.html'); return; }
     document.getElementById('js-driver').textContent = st.driverName;
     document.getElementById('js-vehNo').textContent = st.vehicleNo;
     if (reviewIssueEntry) {

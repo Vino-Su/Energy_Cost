@@ -131,7 +131,7 @@
     }
     function applyRemoteLogout(raw) {
         if (!STATE.bound || !isRemoteLogoutForCurrentVehicle(raw)) return false;
-        unbindVehicle();
+        unbindVehicle('REMOTE_UNBIND');
         return true;
     }
     function redirectToBindAfterRemoteLogout() {
@@ -242,7 +242,8 @@
         saveState();
         clearRemoteLogoutNotice();
     }
-    function unbindVehicle() {
+    function unbindVehicle(reason) {
+        global.dispatchEvent(new CustomEvent('car:session-ending', { detail: { reason: reason || 'USER_LOGOUT' } }));
         STATE.bound = false;
         STATE.handoverTime = formatNow();
         STATE.handoverLocation = STATE.bindLocation;
@@ -456,6 +457,7 @@
     /* ---------- 6. 语音播报（规范：语音不得是唯一方式，屏幕保留摘要） ---------- */
     function speak(text) {
         try {
+            if (CAR.call && CAR.call.isActive()) return;
             if ('speechSynthesis' in global) {
                 var u = new SpeechSynthesisUtterance(text);
                 u.lang = 'zh-CN'; u.rate = 1;
@@ -670,3 +672,22 @@
         redirectToBindAfterRemoteLogout();
     });
 })(window);
+
+/* 通话为车机全局能力，由公共脚本统一加载，页面无需重复挂载。 */
+(function () {
+    var current = document.currentScript;
+    if (!current || !current.src || document.querySelector('script[data-car-call-loader]')) return;
+    var base = current.src.slice(0, current.src.lastIndexOf('/') + 1);
+    if (!document.querySelector('link[data-car-call-style]')) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = base + 'car-call.css';
+        link.setAttribute('data-car-call-style', '');
+        document.head.appendChild(link);
+    }
+    var script = document.createElement('script');
+    script.src = base + 'car-call.js';
+    script.async = false;
+    script.setAttribute('data-car-call-loader', '');
+    document.head.appendChild(script);
+})();
