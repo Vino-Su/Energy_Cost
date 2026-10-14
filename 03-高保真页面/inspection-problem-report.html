@@ -53,6 +53,64 @@
         .photo-thumb__del:active { background: rgba(0, 0, 0, 0.75); }
         .photo-thumb__del svg { width: 12px; height: 12px; }
         .photo-count { margin-top: 8px; color: #00000073; font-size: 12px; line-height: 18px; }
+        /* 问题类型：选择器触发器，与输入框同高同宽（UI 规范 6.2.3） */
+        .select-field {
+            width: 100%; height: 44px; margin-top: 10px; padding: 0 12px;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            border: 1px solid #e8e8e8; border-radius: 8px; background: #ffffff; text-align: left;
+        }
+        .select-field:active { background: #fafafa; }
+        .select-field__value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #000000d9; font-size: 14px; line-height: 22px; }
+        .select-field__value--placeholder { color: #00000040; }
+        .select-field__arrow { flex: none; width: 16px; height: 16px; color: #00000040; }
+        /* 问题类型级联选择：底部弹窗（左右双列），遮罩 50% 黑（UI 规范 6.2.3 / 6.5.2） */
+        .cascade-mask {
+            position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.5);
+            opacity: 0; visibility: hidden; transition: opacity 0.24s ease, visibility 0.24s ease;
+        }
+        .cascade-mask.show { opacity: 1; visibility: visible; }
+        .cascade-sheet {
+            position: fixed; left: 50%; bottom: 0; z-index: 31; width: min(100%, 375px);
+            display: flex; flex-direction: column; max-height: 70vh;
+            border-radius: 16px 16px 0 0; background: #ffffff;
+            visibility: hidden; transform: translate(-50%, 100%);
+            transition: transform 0.24s ease, visibility 0.24s ease;
+        }
+        .cascade-sheet.show { visibility: visible; transform: translate(-50%, 0); }
+        .cascade-sheet__head {
+            position: relative; flex: none; height: 48px;
+            display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f0f0f0;
+        }
+        .cascade-sheet__title { color: #000000d9; font-size: 16px; font-weight: 600; line-height: 24px; }
+        .cascade-sheet__close {
+            position: absolute; right: 8px; top: 50%; width: 32px; height: 32px; padding: 0;
+            display: grid; place-items: center; transform: translateY(-50%);
+            border: none; background: transparent; color: #00000073;
+        }
+        .cascade-sheet__close svg { width: 18px; height: 18px; }
+        .cascade-sheet__body { flex: 1; min-height: 0; display: grid; grid-template-columns: 130px 1fr; overflow: hidden; }
+        .cascade-col { margin: 0; padding: 6px 0; list-style: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .cascade-col--primary { background: #f7f8fa; }
+        .cascade-col--secondary { background: #ffffff; }
+        .cascade-item {
+            position: relative; width: 100%; min-height: 44px; padding: 10px 12px 10px 16px;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            border: none; background: transparent; color: #000000d9; font-size: 14px; line-height: 22px; text-align: left;
+        }
+        .cascade-item:active { background: #f0f0f0; }
+        .cascade-col--primary .cascade-item.is-active { background: #ffffff; color: #1677ff; font-weight: 600; }
+        .cascade-col--primary .cascade-item.is-active::after {
+            content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 18px;
+            transform: translateY(-50%); border-radius: 0 3px 3px 0; background: #1677ff;
+        }
+        .cascade-col--secondary .cascade-item.is-active { color: #1677ff; font-weight: 600; }
+        .cascade-item__check { flex: none; width: 14px; height: 14px; color: #1677ff; visibility: hidden; }
+        .cascade-item.is-active .cascade-item__check { visibility: visible; }
+        .cascade-sheet__foot { flex: none; display: flex; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid #f0f0f0; }
+        .cascade-sheet__button { flex: 1; height: 44px; border-radius: 8px; font-size: 16px; font-weight: 500; }
+        .cascade-sheet__button--clear { border: 1px solid #e8e8e8; background: #ffffff; color: #00000073; }
+        .cascade-sheet__button--clear:active { opacity: 0.85; }
+        .cascade-sheet__button--clear[disabled] { border-color: #f0f0f0; color: #00000040; }
         .text-field { display: flex; gap: 10px; margin-top: 10px; }
         textarea {
             flex: 1; min-height: 96px; padding: 10px 12px; resize: vertical;
@@ -109,6 +167,13 @@
         <section class="form-group" aria-label="事件内容">
             <div class="group-title">事件内容</div>
             <div class="form-body">
+                <div class="field-label"><span>问题类型</span><span class="field-label__optional">选填</span></div>
+                <button type="button" class="select-field" id="js-problem-type" aria-haspopup="dialog" aria-expanded="false" aria-controls="js-cascade-sheet">
+                    <span class="select-field__value select-field__value--placeholder" id="js-problem-type-text">请选择</span>
+                    <svg class="select-field__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                </button>
+            </div>
+            <div class="form-body">
                 <div class="field-label"><span class="field-label__required">事件图片</span><span class="field-label__optional">仅支持拍照上传，最多 5 张</span></div>
                 <div class="photo-grid" id="js-photo-grid">
                     <button type="button" class="photo-capture" id="js-photo-capture" aria-label="拍摄事件图片">
@@ -139,6 +204,23 @@
         <button type="button" class="page-button page-button--cancel" id="js-cancel">取消</button>
         <button type="button" class="page-button page-button--submit" id="js-submit">提交</button>
     </footer>
+    <!-- 问题类型级联选择：底部弹窗（一级分类 + 二级问题） -->
+    <div class="cascade-mask" id="js-cascade-mask"></div>
+    <div class="cascade-sheet" id="js-cascade-sheet" role="dialog" aria-modal="true" aria-label="选择问题类型">
+        <div class="cascade-sheet__head">
+            <span class="cascade-sheet__title">问题类型</span>
+            <button type="button" class="cascade-sheet__close" id="js-cascade-close" aria-label="关闭">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="cascade-sheet__body">
+            <ul class="cascade-col cascade-col--primary" id="js-cascade-primary"></ul>
+            <ul class="cascade-col cascade-col--secondary" id="js-cascade-secondary"></ul>
+        </div>
+        <div class="cascade-sheet__foot">
+            <button type="button" class="cascade-sheet__button cascade-sheet__button--clear" id="js-cascade-clear">清除选择</button>
+        </div>
+    </div>
     <div class="toast" id="js-toast" role="status" aria-live="polite"></div>
     <script src="components/top-capsule.js"></script>
     <script>
@@ -197,8 +279,107 @@
             photoList = [];
             renderPhotoGrid();
             document.getElementById('js-description').value = '';
+            problemType.primary = '';
+            problemType.secondary = '';
+            renderTypeTrigger();
+            renderCascadeClear();
             showToast('已清空');
         }
+        // ---------- 问题类型：级联字典与底部弹窗 ----------
+        // 两级字典：一级为问题大类，二级为具体问题；选填，不参与提交校验
+        var PROBLEM_TYPES = [
+            { name: '环境卫生', children: ['明显垃圾', '垃圾渣土', '果皮箱溢满', '油污遗撒', '大件垃圾'] },
+            { name: '市容秩序', children: ['车辆违停', '乱堆物料', '违规广告'] },
+            { name: '设施设备', children: ['环卫设施破损', '公厕设施故障'] },
+            { name: '道路病害', children: ['路面破损', '雨水口堵塞', '路面淤积'] }
+        ];
+        var problemType = { primary: '', secondary: '' };
+        var pickerPrimaryIdx = 0;
+        var typeTrigger = document.getElementById('js-problem-type');
+        var typeTriggerText = document.getElementById('js-problem-type-text');
+        var cascadeMask = document.getElementById('js-cascade-mask');
+        var cascadeSheet = document.getElementById('js-cascade-sheet');
+        var cascadePrimary = document.getElementById('js-cascade-primary');
+        var cascadeSecondary = document.getElementById('js-cascade-secondary');
+        var cascadeClear = document.getElementById('js-cascade-clear');
+        function typeLabel() {
+            if (!problemType.primary) return '';
+            return problemType.secondary ? (problemType.primary + ' / ' + problemType.secondary) : problemType.primary;
+        }
+        function checkIconHtml() {
+            return '<svg class="cascade-item__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+        }
+        function renderTypeTrigger() {
+            var label = typeLabel();
+            typeTriggerText.textContent = label || '请选择';
+            typeTriggerText.classList.toggle('select-field__value--placeholder', !label);
+        }
+        function renderCascadePrimary() {
+            cascadePrimary.innerHTML = PROBLEM_TYPES.map(function (group, idx) {
+                return '<li><button type="button" class="cascade-item' + (idx === pickerPrimaryIdx ? ' is-active' : '') + '" data-idx="' + idx + '">' +
+                    '<span>' + group.name + '</span>' + checkIconHtml() + '</button></li>';
+            }).join('');
+            cascadePrimary.querySelectorAll('.cascade-item').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    pickerPrimaryIdx = parseInt(btn.dataset.idx, 10);
+                    renderCascadePrimary();
+                    renderCascadeSecondary();
+                });
+            });
+        }
+        function renderCascadeSecondary() {
+            var group = PROBLEM_TYPES[pickerPrimaryIdx];
+            if (!group) { cascadeSecondary.innerHTML = ''; return; }
+            cascadeSecondary.innerHTML = group.children.map(function (name) {
+                var active = problemType.primary === group.name && problemType.secondary === name;
+                return '<li><button type="button" class="cascade-item' + (active ? ' is-active' : '') + '" data-name="' + name + '">' +
+                    '<span>' + name + '</span>' + checkIconHtml() + '</button></li>';
+            }).join('');
+            cascadeSecondary.querySelectorAll('.cascade-item').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    problemType.primary = group.name;
+                    problemType.secondary = btn.dataset.name;
+                    renderTypeTrigger();
+                    closeCascadePicker();
+                });
+            });
+        }
+        function renderCascadeClear() { cascadeClear.disabled = !typeLabel(); }
+        function openCascadePicker() {
+            // 打开时定位到已选一级，未选则默认第一项
+            var idx = PROBLEM_TYPES.findIndex(function (g) { return g.name === problemType.primary; });
+            pickerPrimaryIdx = idx < 0 ? 0 : idx;
+            renderCascadePrimary();
+            renderCascadeSecondary();
+            renderCascadeClear();
+            cascadeMask.classList.add('show');
+            cascadeSheet.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            typeTrigger.setAttribute('aria-expanded', 'true');
+        }
+        function closeCascadePicker() {
+            cascadeMask.classList.remove('show');
+            cascadeSheet.classList.remove('show');
+            document.body.style.overflow = '';
+            typeTrigger.setAttribute('aria-expanded', 'false');
+        }
+        typeTrigger.addEventListener('click', openCascadePicker);
+        document.getElementById('js-cascade-close').addEventListener('click', closeCascadePicker);
+        cascadeMask.addEventListener('click', closeCascadePicker);
+        cascadeClear.addEventListener('click', function () {
+            if (!typeLabel()) return;
+            problemType.primary = '';
+            problemType.secondary = '';
+            renderTypeTrigger();
+            renderCascadeClear();
+            renderCascadeSecondary();
+            showToast('已清除问题类型');
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && cascadeSheet.classList.contains('show')) closeCascadePicker();
+        });
+        renderTypeTrigger();
+        renderCascadeClear();
         photoCapture.addEventListener('click', function () { photoInput.value = ''; photoInput.click(); });
         photoInput.addEventListener('change', function () {
             var file = photoInput.files && photoInput.files[0];

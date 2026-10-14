@@ -134,6 +134,28 @@
         .page-actions__primary { border: none; background: #1677ff; color: #ffffff; }
         .page-actions__secondary { border: 1px solid #1677ff; background: #ffffff; color: #1677ff; }
         .page-actions__button:active { opacity: 0.85; }
+        /* 更多操作（转派 / 终止）：图标按钮固定宽度，菜单向上弹出 */
+        .page-actions__more {
+            flex: 0 0 44px; width: 44px; padding: 0;
+            display: grid; place-items: center;
+            border: 1px solid #e8e8e8; background: #ffffff; color: #1677ff;
+        }
+        .page-actions__more svg { width: 20px; height: 20px; }
+        .page-more-menu {
+            position: absolute; left: 16px; bottom: 100%; margin-bottom: 4px; z-index: 25;
+            min-width: 132px; padding: 4px 0;
+            display: none; flex-direction: column; overflow: hidden;
+            border-radius: 12px; background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 35, 70, 0.18);
+        }
+        .page-more-menu.show { display: flex; }
+        .page-more-menu button {
+            height: 40px; padding: 0 16px; border: none; background: #ffffff;
+            color: #000000d9; font-size: 14px; line-height: 40px; text-align: left; white-space: nowrap;
+        }
+        .page-more-menu button:active { background: #f5f5f5; }
+        /* 终止为不可恢复操作，用危险色区分 */
+        .page-more-menu button[data-action="terminate"] { color: #cf1322; }
 
         @media (prefers-reduced-motion: reduce) { .event-card { animation: none; transition: none; } }
     </style>
@@ -209,8 +231,15 @@
         try { state = JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}'); } catch (e) {}
         var savedState = state[item.code || item.id];
         if (savedState && savedState.status) {
-            var statusMap = { todo: 'pending', running: 'running', done: 'done' };
-            var statusTextMap = { pending: '待接收', running: '进行中', done: '已完成' };
+            // 地图页使用 todo/running/done 三态命名，转派与终止为旁路终态，需一并映射
+            var statusMap = {
+                todo: 'pending', running: 'running', done: 'done',
+                transferred: 'transferred', terminated: 'terminated', invalid: 'invalid'
+            };
+            var statusTextMap = {
+                pending: '待接收', running: '进行中', done: '已完成',
+                transferred: '已转派', terminated: '已终止', invalid: '已失效'
+            };
             var currentStatus = statusMap[savedState.status] || item.status;
             item.status = currentStatus;
             item.statusText = statusTextMap[currentStatus] || item.statusText;
@@ -219,6 +248,19 @@
                 item.mileage = savedState.mileage === undefined ? item.mileage : savedState.mileage;
                 item.duration = savedState.duration === undefined ? item.duration : savedState.duration;
             }
+        }
+
+        // 转派 / 终止操作记录（由地图页写入），用于任务信息区回显操作原因
+        var ACTION_KEY = 'kuwash-inspection-task-actions';
+        var actionRecord = null;
+        try {
+            actionRecord = (JSON.parse(sessionStorage.getItem(ACTION_KEY) || '{}'))[item.code || item.id] || null;
+        } catch (e) { actionRecord = null; }
+        function formatActionTime(value) {
+            var date = new Date(value);
+            if (isNaN(date.getTime())) return '—';
+            function pad(v) { return String(v).padStart(2, '0'); }
+            return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
         }
 
         function escapeHtml(value) {
@@ -269,15 +311,49 @@
             }[item.status];
             var html = '<div class="page-actions__group' + (actionConfig ? '' : ' page-actions__group--single') + '">';
             if (actionConfig) {
+                // 待接收 / 进行中任务：更多操作置于主操作左侧
+                html += '<button type="button" class="page-actions__button page-actions__more" id="js-more" aria-label="更多任务操作" aria-haspopup="menu" aria-expanded="false" title="更多操作">' +
+                    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>' +
+                '</button>';
                 html += '<button type="button" class="page-actions__button page-actions__primary" id="js-task-action">' + actionConfig.label + '</button>';
             }
             html += '<button type="button" class="page-actions__button ' + (actionConfig ? 'page-actions__secondary' : 'page-actions__primary') + '" id="js-back">返回</button></div>';
+            if (actionConfig) {
+                html += '<div class="page-more-menu" id="js-more-menu" role="menu">' +
+                    '<button type="button" role="menuitem" data-action="transfer">转派任务</button>' +
+                    '<button type="button" role="menuitem" data-action="terminate">终止任务</button>' +
+                '</div>';
+            }
             holder.innerHTML = html;
             document.getElementById('js-back').addEventListener('click', backToTaskList);
             if (actionConfig) {
                 document.getElementById('js-task-action').addEventListener('click', function () { openMapAction(actionConfig.key); });
+                var moreBtn = document.getElementById('js-more');
+                var moreMenu = document.getElementById('js-more-menu');
+                moreBtn.addEventListener('click', function (event) {
+                    event.stopPropagation();   // 阻止冒泡到全局收起逻辑
+                    var open = !moreMenu.classList.contains('show');
+                    moreMenu.classList.toggle('show', open);
+                    moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                });
+                moreMenu.querySelectorAll('[data-action]').forEach(function (el) {
+                    el.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        moreMenu.classList.remove('show');
+                        moreBtn.setAttribute('aria-expanded', 'false');
+                        // 转派 / 终止复用地图页的原因填写与状态流转，避免同一能力两处实现
+                        openMapAction(el.getAttribute('data-action'));
+                    });
+                });
             }
         }
+        // 点击页面其他区域收起更多菜单
+        document.addEventListener('click', function () {
+            var menu = document.getElementById('js-more-menu');
+            var btn = document.getElementById('js-more');
+            if (menu) menu.classList.remove('show');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        });
 
         // ===== 渲染基础信息 =====
         setText('js-map-area', item.area);
@@ -293,12 +369,17 @@
         }
         setText('js-summary-time', [item.planDate, item.workTime, item.resource].join('  ·  '));
 
-        // 任务信息（PRD 6.1.2：仅任务编号）
-        document.getElementById('js-task-info').innerHTML = infoRow('任务编号', item.no, true);
+        // 任务信息（PRD 6.1.2：仅任务编号；已转派/已终止额外回显操作原因与操作时间）
+        var taskInfoHtml = infoRow('任务编号', item.no, true);
+        if (actionRecord && actionRecord.reason) {
+            taskInfoHtml += infoRow(actionRecord.type === 'transfer' ? '转派原因' : '终止原因', actionRecord.reason);
+            taskInfoHtml += infoRow('操作时间', formatActionTime(actionRecord.time), true);
+        }
+        document.getElementById('js-task-info').innerHTML = taskInfoHtml;
 
-        // 任务执行信息：待接收状态不显示
+        // 任务执行信息：待接收，以及转派/终止前未开始的任务均无执行数据，不展示
         var execSection = document.getElementById('js-exec-section');
-        if (item.status === 'pending') {
+        if (item.status === 'pending' || !item.startAt || item.startAt === '—') {
             execSection.style.display = 'none';
         } else {
             var mileageText = (item.mileage == null ? '—' : Number(item.mileage).toFixed(2) + ' km');

@@ -4,6 +4,9 @@
 # 浏览器自测截图目录
 07-bugs/
 
+# 一次性自测脚手架
+.codex_tmp/
+
 # 系统文件
 .DS_Store
 Thumbs.db

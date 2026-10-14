@@ -594,6 +594,10 @@
         .tag--unassigned { background: #e6f4ff; color: #1677ff; }
         .tag--unprocessed { background: #fff7e6; color: #d46b08; }
         .tag--reviewing { background: #f9f0ff; color: #722ed1; }
+        /* 任务旁路终态（转派/终止/失效），色值与任务详情页保持一致 */
+        .tag--transferred { background: #f9f0ff; color: #531dab; }
+        .tag--terminated { background: #fff2f0; color: #cf1322; }
+        .tag--invalid { background: #f2f3f5; color: #86909c; }
         /* 第 3 行：3 列指标卡（对齐用车管理 #f5f8fb 底圆角） */
         .task-kpis {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
@@ -606,6 +610,15 @@
         .task-kpi__value { margin-top: 2px; font-family: "DIN", "SF UI Text", sans-serif; font-size: 14px; line-height: 20px; font-weight: 700; color: #000000d9; }
         .task-kpi__value--link { color: #1677ff; }
         .task-kpi__unit { font-size: 11px; color: #00000073; font-weight: 400; }
+        /* 终态任务（已转派/已终止）回显操作原因与时间 */
+        .task-action-reason {
+            display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px 8px;
+            padding: 8px 10px; border-radius: 8px; background: #f7f8fa;
+            font-size: 12px; line-height: 18px;
+        }
+        .task-action-reason__label { flex: none; color: #00000073; }
+        .task-action-reason__value { min-width: 0; flex: 1; color: #000000d9; word-break: break-all; }
+        .task-action-reason__time { flex: none; width: 100%; color: #00000040; font-family: "DIN", "SF UI Text", sans-serif; }
         /* 第 4 行：主操作 */
         .task-actions {
             display: grid; grid-template-columns: 1fr;
@@ -623,6 +636,51 @@
         }
         .primary-action:active, .icon-action:active { transform: scale(0.98); opacity: 0.86; }
         .icon-action svg { width: 21px; height: 21px; }
+
+        /* ===== 任务更多操作（转派 / 终止） ===== */
+        /* 待接收态：更多按钮置于主操作左侧，主操作占满剩余宽度 */
+        .task-actions--with-more { grid-template-columns: 56px 1fr; gap: 10px; }
+        .task-more { position: relative; width: 56px; }
+        .task-more__btn {
+            width: 100%; height: 46px; border: 1px solid #e8e8e8; border-radius: 12px;
+            background: #ffffff; color: #1677ff;
+            display: grid; place-items: center;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .task-more__btn:active { transform: scale(0.98); opacity: 0.86; }
+        .task-more__btn svg { width: 22px; height: 22px; }
+        /* 菜单向上弹出，避免遮挡底部主操作 */
+        .task-more__menu {
+            position: absolute; bottom: 56px; left: 0; z-index: 21;
+            min-width: 132px; padding: 4px 0;
+            display: none; flex-direction: column; overflow: hidden;
+            border-radius: 12px; background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 35, 70, 0.18);
+        }
+        .task-more__menu.show { display: flex; }
+        .task-more__menu button {
+            height: 40px; padding: 0 16px; border: none; background: #ffffff;
+            color: #000000d9; font-size: 14px; line-height: 40px; text-align: left; white-space: nowrap;
+        }
+        .task-more__menu button:active { background: #f5f5f5; }
+        /* 终止为不可恢复操作，用危险色区分 */
+        .task-more__menu button[data-action="terminate"] { color: #cf1322; }
+
+        /* 进行中态：更多按钮与两枚圆形主操作并排 */
+        .exec-actions--with-more {
+            display: grid; grid-template-columns: 56px 96px 96px;
+            align-items: center; justify-content: space-between;
+            padding: 8px 20px 18px;
+        }
+        /* 执行态容器整体禁点，更多按钮需单独放开 */
+        .exec-actions--with-more .task-more { pointer-events: auto; }
+        .task-more--exec .task-more__btn {
+            height: 56px; border-radius: 50%;
+            border-color: #d9e2ec; background: rgba(255, 255, 255, 0.94); color: #475569;
+            box-shadow: 0 5px 16px rgba(24, 39, 59, 0.14);
+        }
+        /* 执行态菜单贴近圆形按钮上方（56px 圆形 + 8px 间距） */
+        .task-more--exec .task-more__menu { bottom: 64px; }
 
         /* ===== 执行态：地图优先巡查操作台 ===== */
         .task-card.is-executing .task-line-head { margin-bottom: 0; }
@@ -717,6 +775,41 @@
         .finish-dialog__button--cancel { background: #f5f5f5; color: #000000d9; }
         .finish-dialog__button--confirm { background: #ff4d4f; color: #ffffff; }
         .finish-dialog__button:active { opacity: 0.85; }
+
+        /* ===== 任务操作弹窗（转派 / 终止，需填写原因）：屏幕居中弹出 ===== */
+        .task-op-overlay {
+            position: absolute; inset: 0; z-index: 32; display: none;
+            align-items: center; justify-content: center; padding: 24px;
+            background: rgba(0, 0, 0, 0.45);
+        }
+        .task-op-overlay.show { display: flex; }
+        .task-op-dialog {
+            width: 280px; max-width: 100%; overflow: hidden;
+            background: #ffffff; border-radius: 16px;
+            animation: taskOpDialogIn 0.18s ease-out;
+        }
+        @keyframes taskOpDialogIn { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .task-op-dialog__title { padding: 20px 20px 8px; color: #000000d9; font-size: 16px; font-weight: 600; line-height: 24px; }
+        .task-op-dialog__desc { padding: 0 20px; color: #00000073; font-size: 13px; line-height: 20px; }
+        .task-op-dialog__body { padding: 4px 20px 20px; }
+        .task-op-dialog__label { display: block; margin: 12px 0 8px; color: #000000d9; font-size: 14px; line-height: 22px; }
+        .task-op-dialog__label::before { content: '*'; margin-right: 4px; color: #ff4d4f; }
+        .task-op-dialog__reason {
+            box-sizing: border-box; width: 100%; height: 88px; padding: 10px 12px;
+            border: 1px solid #e8e8e8; border-radius: 8px; background: #f7f8fa;
+            color: #000000d9; font-family: inherit; font-size: 14px; line-height: 22px;
+            outline: none; resize: none;
+        }
+        .task-op-dialog__reason:focus { border-color: #1677ff; background: #ffffff; }
+        .task-op-dialog__error { min-height: 18px; margin-top: 4px; color: #ff4d4f; font-size: 12px; line-height: 18px; }
+        .task-op-dialog__actions { display: flex; gap: 10px; padding: 0 20px 20px; }
+        .task-op-dialog__button { flex: 1; height: 44px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; }
+        .task-op-dialog__button--cancel { background: #f5f5f5; color: #000000d9; }
+        .task-op-dialog__button--primary { background: #1677ff; color: #ffffff; }
+        .task-op-dialog__button--danger { background: #ff4d4f; color: #ffffff; }
+        .task-op-dialog__button:active { opacity: 0.85; }
+        .task-op-dialog__button[disabled] { opacity: 0.6; }
+
 
         /* ===== 车辆连接详情 ===== */
         .connection-overlay {
@@ -1148,6 +1241,23 @@
         </div>
     </div>
 
+    <!-- 任务操作：转派 / 终止（提交前必须填写原因） -->
+    <div class="task-op-overlay" id="js-task-op-overlay" aria-hidden="true">
+        <form class="task-op-dialog" id="js-task-op-form" role="dialog" aria-modal="true" aria-labelledby="js-task-op-title">
+            <div class="task-op-dialog__title" id="js-task-op-title">任务操作</div>
+            <div class="task-op-dialog__desc" id="js-task-op-desc"></div>
+            <div class="task-op-dialog__body">
+                <label class="task-op-dialog__label" for="js-task-op-reason" id="js-task-op-label">操作原因</label>
+                <textarea class="task-op-dialog__reason" id="js-task-op-reason" maxlength="200" placeholder="请输入原因（最多200字）"></textarea>
+                <div class="task-op-dialog__error" id="js-task-op-error" role="alert"></div>
+            </div>
+            <div class="task-op-dialog__actions">
+                <button type="button" class="task-op-dialog__button task-op-dialog__button--cancel" id="js-task-op-cancel">取消</button>
+                <button type="submit" class="task-op-dialog__button task-op-dialog__button--primary" id="js-task-op-submit">提交</button>
+            </div>
+        </form>
+    </div>
+
     <!-- 车辆连接详情：已绑定时由任务卡片连接行唤起 -->
     <div class="connection-overlay" id="js-connection-overlay" role="dialog" aria-modal="true" aria-labelledby="js-connection-title">
         <div class="connection-detail">
@@ -1304,8 +1414,19 @@
         }
     ];
 
-    var STATUS_TAG = { done: 'tag--done', running: 'tag--running', todo: 'tag--todo' };
-    var STATUS_TEXT = { done: '已完成', running: '进行中', todo: '待接收' };
+    var STATUS_TAG = {
+        done: 'tag--done', running: 'tag--running', todo: 'tag--todo',
+        transferred: 'tag--transferred', terminated: 'tag--terminated', invalid: 'tag--invalid'
+    };
+    var STATUS_TEXT = {
+        done: '已完成', running: '进行中', todo: '待接收',
+        transferred: '已转派', terminated: '已终止', invalid: '已失效'
+    };
+    // 今日任务分组顺序（PRD 任务六态），旁路终态排在已完成之后
+    var SHEET_GROUPS = [
+        { key: 'todo', label: '待接收' }, { key: 'running', label: '进行中' }, { key: 'done', label: '已完成' },
+        { key: 'transferred', label: '已转派' }, { key: 'terminated', label: '已终止' }, { key: 'invalid', label: '已失效' }
+    ];
     // 事件六类状态及展示顺序（PRD 事件状态机：待判别→待分配→待处理→处理中→待核查→已完成）
     var PROB_STATUS_ORDER = ['unidentified', 'unassigned', 'unprocessed', 'processing', 'reviewing', 'done'];
     var PROB_STATUS_TEXT = {
@@ -1362,16 +1483,25 @@
 
     function findTask(id) { return TASKS.find(function (t) { return t.id === id; }) }
     function fmt(v, suffix, dash) { return v === null || v === undefined ? (dash || '—') : (v + (suffix || '')); }
-    function groupOrder(s) { return s === 'todo' ? 0 : (s === 'running' ? 1 : 2); }
+    // 分组排序沿用 SHEET_GROUPS 顺序，未知状态沉底
+    function groupOrder(s) {
+        var i = SHEET_GROUPS.findIndex(function (g) { return g.key === s; });
+        return i < 0 ? SHEET_GROUPS.length : i;
+    }
     function sortedTasks() {
         return TASKS.slice().sort(function (a, b) {
             if (groupOrder(a.status) !== groupOrder(b.status)) return groupOrder(a.status) - groupOrder(b.status);
             return a.time < b.time ? -1 : 1;
         });
     }
+    // 统计口径：未完成=待接收；进行中=进行中；已结束=已完成/已转派/已终止/已失效
     function countBy() {
-        var c = { todo: 0, running: 0, done: 0 };
-        TASKS.forEach(function (t) { c[t.status]++; });
+        var c = { todo: 0, running: 0, ended: 0 };
+        TASKS.forEach(function (t) {
+            if (t.status === 'todo') c.todo++;
+            else if (t.status === 'running') c.running++;
+            else c.ended++;
+        });
         return c;
     }
     function todayProblems() {
@@ -1854,8 +1984,8 @@
     // 第 1 行：片区名 - 事件上报数（待接收不显示）- 任务状态 - 右侧圆形详情入口
     function cardHeadHtml(t) {
         var statusHtml = '<span class="tag ' + STATUS_TAG[t.status] + '">' + STATUS_TEXT[t.status] + '</span>';
-        // 任务未开始时不显示事件上报数。
-        var showCountFlag = t.status !== 'todo';
+        // 任务未开始时不显示事件上报数（含转派/终止前未开始的任务，其 start 为空）。
+        var showCountFlag = !!t.start;
         var countHtml = showCountFlag ? '<span class="task-card__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 19a2 2 0 0 0 1.75 3h14.5A2 2 0 0 0 21 19L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>事件上报 ' + t.problems + '</span>' : '';
         return '<div class="task-line task-line-head">' +
                 '<div class="task-title-wrap">' +
@@ -1989,6 +2119,19 @@
         });
     }
     // 第 2 行：任务日期 - 作业时间 - 作业资源
+    // 转派/终止任务回显已提交的操作原因与操作时间
+    function cardActionReasonHtml(t) {
+        if (t.status !== 'transferred' && t.status !== 'terminated') return '';
+        var record = getTaskAction(t.id);
+        if (!record) return '';
+        var label = record.type === 'transfer' ? '转派原因' : '终止原因';
+        var time = formatBindingTime(record.time);
+        return '<div class="task-line task-action-reason">' +
+                '<span class="task-action-reason__label">' + label + '</span>' +
+                '<span class="task-action-reason__value">' + escapeHtml(record.reason) + '</span>' +
+                '<span class="task-action-reason__time">' + time + '</span>' +
+            '</div>';
+    }
     function cardMetaHtml(t) {
         return '<div class="task-line task-card__meta">' +
                 '<span class="mono">' + (t.planDate || '—') + '</span>' +
@@ -2028,7 +2171,8 @@
             card.innerHTML = connectionRowHtml() + cardHeadHtml(t) + cardMetaHtml(t) + cardKpisHtml(t);
             bindConnectionRow();
             bindDetail(t);
-            actionsEl.innerHTML = '<div class="exec-actions">' +
+            actionsEl.innerHTML = '<div class="exec-actions exec-actions--with-more">' +
+                taskMoreHtml(true) +
                 '<button type="button" class="exec-action exec-action--finish" id="js-btn-finish" aria-label="结束任务">' +
                     '<span class="exec-action__name">结束任务</span>' +
                 '</button>' +
@@ -2036,6 +2180,7 @@
                     '<span class="exec-action__name">事件上报</span>' +
                 '</button>' +
             '</div>';
+            bindTaskMore(t);
             document.getElementById('js-btn-report').addEventListener('click', function () { openReportCapture(t); });
             document.getElementById('js-btn-finish').addEventListener('click', function () { requestFinish(t); });
             return;
@@ -2044,7 +2189,7 @@
         // 待接收 / 已完成（PRD 6.1.1-2）：完整多行任务卡片
         workbench.classList.remove('is-executing');
         card.classList.remove('is-executing');
-        var html = connectionRowHtml() + cardHeadHtml(t) + cardMetaHtml(t);
+        var html = connectionRowHtml() + cardHeadHtml(t) + cardMetaHtml(t) + cardActionReasonHtml(t);
         // 三项执行指标始终保留；待接收任务以“—”表示尚无执行数据。
         html += cardKpisHtml(t);
         card.innerHTML = html;
@@ -2053,11 +2198,123 @@
 
         // 操作行：任务列表入口已移至地图右侧“今日任务”按钮。
         if (t.status === 'todo') {
-            actionsEl.innerHTML = '<div class="task-actions"><button type="button" class="primary-action" id="js-btn-start">开始任务</button></div>';
+            // 待接收：更多操作置于开始任务左侧
+            actionsEl.innerHTML = '<div class="task-actions task-actions--with-more">' +
+                taskMoreHtml(false) +
+                '<button type="button" class="primary-action" id="js-btn-start">开始任务</button>' +
+            '</div>';
+            bindTaskMore(t);
             document.getElementById('js-btn-start').addEventListener('click', function () { onStart(t); });
-        } else { // done
-            actionsEl.innerHTML = '<div class="task-actions"><button type="button" class="primary-action" style="background:#f5f5f5;color:#00000040;box-shadow:none;">已完成</button></div>';
+        } else {
+            // 终态（已完成/已转派/已终止/已失效）：仅展示状态，不提供任何操作
+            actionsEl.innerHTML = '<div class="task-actions"><button type="button" class="primary-action" style="background:#f5f5f5;color:#00000040;box-shadow:none;">' + (STATUS_TEXT[t.status] || '已完成') + '</button></div>';
         }
+    }
+
+    /* ===== 任务更多操作：转派 / 终止（待接收与进行中任务可用） ===== */
+    // 菜单触发按钮：isExec 为真时使用执行态圆形外观
+    function taskMoreHtml(isExec) {
+        return '<div class="task-more' + (isExec ? ' task-more--exec' : '') + '">' +
+            '<button type="button" class="task-more__btn" id="js-task-more" aria-label="更多任务操作" aria-haspopup="menu" aria-expanded="false" title="更多操作">' +
+                '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>' +
+            '</button>' +
+            '<div class="task-more__menu" id="js-task-more-menu" role="menu">' +
+                '<button type="button" role="menuitem" data-action="transfer">转派任务</button>' +
+                '<button type="button" role="menuitem" data-action="terminate">终止任务</button>' +
+            '</div>' +
+        '</div>';
+    }
+    function closeTaskMoreMenu() {
+        var menu = document.getElementById('js-task-more-menu');
+        var btn = document.getElementById('js-task-more');
+        if (menu) menu.classList.remove('show');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    // 卡片每次 renderAll 都会重建，故在渲染后重新绑定
+    function bindTaskMore(t) {
+        var btn = document.getElementById('js-task-more');
+        var menu = document.getElementById('js-task-more-menu');
+        if (!btn || !menu) return;
+        btn.addEventListener('click', function (event) {
+            event.stopPropagation();   // 阻止冒泡到全局收起逻辑，否则菜单会被立即关闭
+            var open = !menu.classList.contains('show');
+            menu.classList.toggle('show', open);
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        menu.querySelectorAll('[data-action]').forEach(function (el) {
+            el.addEventListener('click', function (event) {
+                event.stopPropagation();
+                closeTaskMoreMenu();
+                openTaskActionModal(t.id, el.getAttribute('data-action'));
+            });
+        });
+    }
+
+    // 操作记录（原因与操作时间）独立持久化，供任务详情页回溯
+    var TASK_ACTION_KEY = 'kuwash-inspection-task-actions';
+    var pendingActionType = null;
+    var pendingActionTaskId = null;
+    function loadTaskActions() {
+        try { return JSON.parse(sessionStorage.getItem(TASK_ACTION_KEY) || '{}'); } catch (e) { return {}; }
+    }
+    function saveTaskAction(taskId, record) {
+        var all = loadTaskActions();
+        all[taskId] = record;
+        try { sessionStorage.setItem(TASK_ACTION_KEY, JSON.stringify(all)); } catch (e) {}
+    }
+    function getTaskAction(taskId) {
+        var all = loadTaskActions();
+        return all[taskId] || null;
+    }
+
+    function openTaskActionModal(taskId, type) {
+        var t = findTask(taskId);
+        // 仅待接收与进行中任务支持转派或终止；终态任务不提供该操作
+        if (!t || (t.status !== 'todo' && t.status !== 'running')) {
+            toast('任务状态已变化，请刷新后重试');
+            return;
+        }
+        var isTransfer = type === 'transfer';
+        pendingActionType = type;
+        pendingActionTaskId = taskId;
+        document.getElementById('js-task-op-title').textContent = isTransfer ? '转派任务' : '终止任务';
+        document.getElementById('js-task-op-desc').textContent = isTransfer
+            ? '提交后任务将转派给其他巡查员，当前任务不再由本人执行。'
+            : '提交后任务将终止，终止操作不可恢复，请确认原因填写准确。';
+        document.getElementById('js-task-op-label').textContent = isTransfer ? '转派原因' : '终止原因';
+        var submit = document.getElementById('js-task-op-submit');
+        submit.className = 'task-op-dialog__button task-op-dialog__button--' + (isTransfer ? 'primary' : 'danger');
+        submit.textContent = '提交';
+        submit.disabled = false;
+        var reasonEl = document.getElementById('js-task-op-reason');
+        reasonEl.value = '';
+        document.getElementById('js-task-op-error').textContent = '';
+        var overlay = document.getElementById('js-task-op-overlay');
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+        window.setTimeout(function () { reasonEl.focus(); }, 0);
+    }
+    function closeTaskActionModal() {
+        var overlay = document.getElementById('js-task-op-overlay');
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.getElementById('js-task-op-reason').value = '';
+        document.getElementById('js-task-op-error').textContent = '';
+        pendingActionType = null;
+        pendingActionTaskId = null;
+    }
+    // 操作成功后就地收敛：优先选中下一条待接收任务，否则打开今日任务清单查看结果
+    function selectNextTaskAfterAction(changedId) {
+        var nextTodo = TASKS.find(function (x) { return x.status === 'todo'; });
+        if (nextTodo) {
+            selectedId = nextTodo.id;
+            renderAll();
+            return;
+        }
+        var running = TASKS.find(function (x) { return x.status === 'running' && x.id !== changedId; });
+        selectedId = (running || TASKS[0]).id;
+        renderAll();
+        openSheet();
     }
 
     /* ===== 开始任务校验链（PRD 6.1.1-3） ===== */
@@ -2182,7 +2439,7 @@
         document.getElementById('js-sheet-stats').innerHTML =
             '<span class="stat"><span class="dot" style="background:#faad14"></span>未完成 <span class="num">' + c.todo + '</span></span>' +
             '<span class="stat"><span class="dot" style="background:#52c41a"></span>进行中 <span class="num">' + c.running + '</span></span>' +
-            '<span class="stat"><span class="dot" style="background:#1677ff"></span>已完成 <span class="num">' + c.done + '</span></span>';
+            '<span class="stat"><span class="dot" style="background:#1677ff"></span>已结束 <span class="num">' + c.ended + '</span></span>';
     }
     function renderSheetBody() {
         var body = document.getElementById('js-sheet-body');
@@ -2191,17 +2448,16 @@
             body.innerHTML = '<div class="sheet-empty"><div class="sheet-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg></div>暂无今日待办任务</div>';
             return;
         }
-        var groups = [{ key: 'todo', label: '待接收' }, { key: 'running', label: '进行中' }, { key: 'done', label: '已完成' }];
         var html = '';
         var lastGroup = null;
         sorted.forEach(function (t) {
             if (t.status !== lastGroup) {
-                var g = groups.find(function (x) { return x.key === t.status; });
-                html += '<div class="sheet__group">' + g.label + '</div>';
+                var g = SHEET_GROUPS.find(function (x) { return x.key === t.status; });
+                html += '<div class="sheet__group">' + (g ? g.label : '其他') + '</div>';
                 lastGroup = t.status;
             }
             // 主体点击聚焦地图；右侧圆形按钮仅进入任务详情。
-            var countHtml = (t.status !== 'todo') ? '<span class="sheet-task__count">事件上报 ' + t.problems + '</span>' : '';
+            var countHtml = t.start ? '<span class="sheet-task__count">事件上报 ' + t.problems + '</span>' : '';
             html += '<article class="sheet-task' + (t.id === selectedId ? ' is-selected' : '') + '" data-id="' + t.id + '">' +
                 '<button type="button" class="sheet-task__focus" data-id="' + t.id + '" aria-label="聚焦任务区域：' + escapeHtml(t.area) + '，' + STATUS_TEXT[t.status] + '">' +
                     '<div class="sheet-task__r1"><span class="sheet-task__area">' + escapeHtml(t.area) + '</span>' +
@@ -2385,6 +2641,49 @@
     document.getElementById('js-finish-overlay').addEventListener('click', function (event) {
         if (event.target === this) closeFinishConfirm();
     });
+    /* ===== 任务操作弹窗：取消 / 遮罩关闭 / 提交 ===== */
+    document.getElementById('js-task-op-cancel').addEventListener('click', closeTaskActionModal);
+    document.getElementById('js-task-op-overlay').addEventListener('click', function (event) {
+        if (event.target === this) closeTaskActionModal();
+    });
+    document.getElementById('js-task-op-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var reasonEl = document.getElementById('js-task-op-reason');
+        var errorEl = document.getElementById('js-task-op-error');
+        var isTransfer = pendingActionType === 'transfer';
+        var reason = reasonEl.value.trim();
+        // 原因必填：为空时阻止提交并保留已填写内容
+        if (!reason) {
+            errorEl.textContent = '请填写' + (isTransfer ? '转派' : '终止') + '原因';
+            reasonEl.focus();
+            return;
+        }
+        var t = findTask(pendingActionTaskId);
+        // 提交前二次校验：任务可能已被其他流程更新为终态
+        if (!t || (t.status !== 'todo' && t.status !== 'running')) {
+            errorEl.textContent = '任务状态已变化，请关闭后重试';
+            return;
+        }
+        var submit = document.getElementById('js-task-op-submit');
+        submit.disabled = true;   // 防重复提交
+        submit.textContent = '提交中…';
+        // 进行中任务需先收尾轨迹与计时器，避免残留定时器
+        if (t.status === 'running') {
+            updateRunningKpi(t);
+            stopRunningKpiTimer();
+            stopTrackAnimation(false);
+        }
+        saveTaskAction(t.id, {
+            type: pendingActionType,
+            reason: reason,
+            operator: t.resource || '巡查员',
+            time: new Date().toISOString()
+        });
+        setStateStatus(t.id, isTransfer ? 'transferred' : 'terminated');
+        closeTaskActionModal();
+        toast(isTransfer ? '任务已转派' : '任务已终止');
+        selectNextTaskAfterAction(t.id);
+    });
     document.getElementById('js-connection-close').addEventListener('click', closeConnectionDetail);
     document.getElementById('js-connection-overlay').addEventListener('click', function (event) {
         if (event.target === this) closeConnectionDetail();
@@ -2416,6 +2715,13 @@
     document.addEventListener('click', function () {
         morePop.classList.remove('show');
         moreBtn.setAttribute('aria-expanded', 'false');
+        closeTaskMoreMenu();   // 点击页面其他区域收起任务更多菜单
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+        var opOverlay = document.getElementById('js-task-op-overlay');
+        if (opOverlay && opOverlay.classList.contains('show')) closeTaskActionModal();
+        else closeTaskMoreMenu();
     });
     morePop.addEventListener('click', function (e) {
         var action = e.target.getAttribute('data-action');
@@ -2537,6 +2843,13 @@
     if (action === 'finish') {
         var t1 = findTask(selectedId);
         if (t1 && t1.status === 'running') { setTimeout(function () { requestFinish(t1); }, 300); }
+    }
+    // 详情页发起转派/终止：直接打开原因填写弹窗，复用同一套状态流转
+    if (action === 'transfer' || action === 'terminate') {
+        var t2 = findTask(selectedId);
+        if (t2 && (t2.status === 'todo' || t2.status === 'running')) {
+            setTimeout(function () { openTaskActionModal(t2.id, action); }, 300);
+        }
     }
     // 演示：加载后延时弹一次新任务 banner
     setTimeout(showBanner, 1800);
