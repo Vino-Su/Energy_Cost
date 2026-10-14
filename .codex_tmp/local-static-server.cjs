@@ -14,6 +14,7 @@ const contentTypes = {
 
 http.createServer((request, response) => {
   let requestPath = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+  if (requestPath === '/favicon.ico') { response.writeHead(204); return response.end(); }
   if (requestPath === '/') requestPath = '/index.html';
   const filePath = path.resolve(root, `.${requestPath}`);
   if (!filePath.startsWith(`${root}${path.sep}`)) {

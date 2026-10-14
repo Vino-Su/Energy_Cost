@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>用车管理 - 城市管家</title>
+    <title>城市管家 - 驾驶员</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="components/app-common.css">
     <link rel="stylesheet" href="components/top-capsule.css">
+    <link rel="stylesheet" href="components/city-steward-role.css">
     <script src="components/vehicle-demo-state.js"></script>
     <script src="components/app-common.js"></script>
+    <script src="components/city-steward-role.js"></script>
+    <script>CityStewardRole.setRole('driver');</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
@@ -26,11 +29,32 @@
             overflow: hidden;
         }
         button, a { -webkit-tap-highlight-color: transparent; font: inherit; }
+        /* 项目与角色合并到现有胶囊行，保持单行上下文，避免额外占用首屏空间。 */
+        #js-capsule { position: fixed; top: 0; left: 0; right: 0; z-index: 1100; max-width: 375px; margin: 0 auto; background: #ffffff; }
+        #js-capsule .tc-bar { position: relative; }
+        #js-capsule .tc-title.tc-context-trigger { position: absolute; left: 64px; right: 112px; min-width: 0; display: inline-flex; align-items: center; gap: 4px; overflow: hidden; cursor: pointer; font-size: 14px; }
+        .tc-context-project { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tc-context-divider { flex: none; color: #00000040; }
+        .tc-context-role { flex: none; max-width: 48px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1677ff; font-weight: 500; }
+        .tc-context-chevron { width: 13px; height: 13px; flex: none; color: #00000073; }
+        .tc-context-trigger:active { opacity: .7; }
+        .context-picker-overlay { position: fixed; inset: 0; z-index: 3200; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.5); }
+        .context-picker-overlay.show { display: flex; }
+        .context-picker { width: 100%; max-width: 375px; max-height: 82vh; overflow-y: auto; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 16px 16px 0 0; background: #ffffff; }
+        .context-picker__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .context-picker__title { color: #000000d9; font-size: 18px; font-weight: 600; line-height: 26px; }
+        .context-picker__close { width: 32px; height: 32px; border: 0; border-radius: 50%; background: #f5f5f5; color: #00000073; font-size: 22px; line-height: 32px; cursor: pointer; }
+        .context-picker__group + .context-picker__group { margin-top: 16px; }
+        .context-picker__label { display: block; margin-bottom: 8px; color: #00000073; font-size: 13px; line-height: 20px; }
+        .context-picker__option { width: 100%; min-height: 44px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #e8e8e8; border-radius: 8px; background: #ffffff; color: #000000d9; font-size: 14px; text-align: left; cursor: pointer; }
+        .context-picker__option + .context-picker__option { margin-top: 8px; }
+        .context-picker__option.is-current { border-color: #1677ff; background: #e6f4ff; color: #1677ff; }
+        .context-picker__check { color: #1677ff; font-size: 16px; }
 
         /* ===== 应用外壳（模式 A：独立应用） ===== */
         .app-shell {
             position: fixed;
-            top: 0;
+            top: 56px;
             left: 0;
             right: 0;
             bottom: calc(56px + env(safe-area-inset-bottom));
@@ -60,46 +84,13 @@
             background: #eef2f5;
         }
 
-        /* 服务 Tab：可滚动，含顶部胶囊（top-capsule 组件，sticky 顶栏） */
+        /* 服务 Tab：可滚动，工作上下文由外壳统一承载。 */
         #panel-service {
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             background: #ffffff;
             padding-bottom: 16px;
         }
-        /* top-capsule 的 .tc-bar 为 sticky，需服务面板作为滚动容器生效 */
-        #panel-service .tc-bar { position: sticky; top: 0; z-index: 10; }
-
-        /* 项目切换行（参照 inspection-management） */
-        .project-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            background: #ffffff;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .project-bar__label { color: #00000073; font-size: 13px; line-height: 20px; flex: none; }
-        .project-bar__switch {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            height: 36px;
-            padding: 0 12px;
-            border: 1px solid #e8e8e8;
-            border-radius: 8px;
-            background: #f7faff;
-            color: #1677ff;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: border-color 0.15s ease, background 0.15s ease;
-        }
-        .project-bar__switch:active { background: #eef6ff; border-color: #91caff; }
-        .project-bar__arrow { width: 16px; height: 16px; flex: none; color: #00000073; }
 
         .section-title {
             font-size: 14px;
@@ -261,6 +252,7 @@
     </style>
 </head>
 <body>
+    <div id="js-capsule" data-top-capsule aria-label="当前工作上下文"></div>
     <div class="app-shell">
         <!-- 地图 Tab（默认）：嵌入地图工作台 -->
         <section id="panel-map" class="tab-panel active" role="tabpanel" aria-label="地图">
@@ -269,17 +261,6 @@
 
         <!-- 服务 Tab：子功能入口 -->
         <section id="panel-service" class="tab-panel" role="tabpanel" aria-label="服务">
-            <div id="js-capsule" data-top-capsule></div>
-
-            <!-- 项目切换行 -->
-            <div class="project-bar">
-                <span class="project-bar__label">当前项目</span>
-                <button type="button" class="project-bar__switch" id="js-project-switch" aria-label="切换项目">
-                    <span class="project-switcher-text">选择项目</span>
-                    <svg class="project-bar__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-            </div>
-
             <div class="content-area">
                 <!-- 任务管理 -->
                 <div class="section-title">任务管理</div>
@@ -336,7 +317,7 @@
                         </div>
                         <span class="module-name">故障报修</span>
                     </a>
-                    <a href="placeholder.html?from=repair-records&title=维修记录" class="module-item">
+                    <a href="placeholder.html?from=repair-records&title=维修记录&returnUrl=vehicle-management.html%3Ftab%3Dservice" class="module-item">
                         <div class="module-icon maintenance">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                         </div>
@@ -347,19 +328,36 @@
                 <!-- 数据统计 -->
                 <div class="section-title">数据统计</div>
                 <div class="module-grid">
-                    <a href="placeholder.html?from=stats-trip&title=出车统计" class="module-item">
+                    <a href="placeholder.html?from=stats-trip&title=出车统计&returnUrl=vehicle-management.html%3Ftab%3Dservice" class="module-item">
                         <div class="module-icon stat-trip">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
                         </div>
                         <span class="module-name">出车统计</span>
                     </a>
-                    <a href="placeholder.html?from=stats-task&title=任务统计" class="module-item">
+                    <a href="placeholder.html?from=stats-task&title=任务统计&returnUrl=vehicle-management.html%3Ftab%3Dservice" class="module-item">
                         <div class="module-icon stat-task">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
                         </div>
                         <span class="module-name">任务统计</span>
                     </a>
                 </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="context-picker-overlay" id="contextPicker" role="dialog" aria-modal="true" aria-labelledby="contextPickerTitle">
+        <section class="context-picker">
+            <div class="context-picker__head">
+                <h2 class="context-picker__title" id="contextPickerTitle">切换项目与角色</h2>
+                <button type="button" class="context-picker__close" id="contextPickerClose" aria-label="关闭">×</button>
+            </div>
+            <div class="context-picker__group">
+                <span class="context-picker__label">项目</span>
+                <div id="contextProjectOptions"></div>
+            </div>
+            <div class="context-picker__group">
+                <span class="context-picker__label">角色</span>
+                <div id="contextRoleOptions"></div>
             </div>
         </section>
     </div>
@@ -383,7 +381,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
             <div class="confirm-title">有任务进行中</div>
-            <div class="confirm-desc">退出后任务仍会在后台记录，确认退出用车管理？</div>
+            <div class="confirm-desc">退出后任务仍会在后台记录，确认退出城市管家？</div>
             <div class="confirm-buttons">
                 <button type="button" class="confirm-btn secondary" onclick="closeExitConfirm()">取消</button>
                 <button type="button" class="confirm-btn primary" onclick="confirmExit()">确认退出</button>
@@ -393,6 +391,93 @@
 
     <script src="components/top-capsule.js"></script>
     <script>
+        var contextPicker = document.getElementById('contextPicker');
+        var contextTitle = null;
+        var contextProject = null;
+        var contextRole = null;
+        function currentProject() {
+            return window.CityStewardCommon && CityStewardCommon.getCurrentProject ? CityStewardCommon.getCurrentProject() : { name: '深圳南山智慧环卫项目' };
+        }
+        function updateContextTitle() {
+            if (!contextTitle) return;
+            var project = currentProject();
+            var role = CityStewardRole.getCurrentRole();
+            contextTitle.querySelector('.tc-context-project').textContent = project.name;
+            contextTitle.querySelector('.tc-context-role').textContent = role.name;
+            contextTitle.setAttribute('aria-label', '当前项目：' + project.name + '，当前角色：' + role.name + '，点击切换');
+        }
+        function closeContextPicker() {
+            if (!contextPicker) return;
+            contextPicker.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        function renderContextOptions() {
+            if (!contextProject || !contextRole) return;
+            var activeProject = currentProject();
+            contextProject.innerHTML = '';
+            CityStewardCommon.getProjects().forEach(function (project) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'context-picker__option' + (project.id === activeProject.id ? ' is-current' : '');
+                button.innerHTML = '<span></span><span class="context-picker__check" aria-hidden="true"></span>';
+                button.firstChild.textContent = project.name;
+                if (project.id === activeProject.id) button.lastChild.textContent = '✓';
+                button.addEventListener('click', function () {
+                    CityStewardCommon.setCurrentProject(project);
+                    updateContextTitle();
+                    renderContextOptions();
+                });
+                contextProject.appendChild(button);
+            });
+            var activeRole = CityStewardRole.getCurrentRole();
+            contextRole.innerHTML = '';
+            CityStewardRole.getRoles().forEach(function (role) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'context-picker__option' + (role.id === activeRole.id ? ' is-current' : '');
+                button.innerHTML = '<span></span><span class="context-picker__check" aria-hidden="true"></span>';
+                button.firstChild.textContent = role.name;
+                if (role.id === activeRole.id) button.lastChild.textContent = '✓';
+                button.addEventListener('click', function () {
+                    closeContextPicker();
+                    if (role.id === activeRole.id) return;
+                    CityStewardRole.setRole(role.id);
+                    window.location.href = CityStewardRole.getWorkspaceUrl(role.id, 'map');
+                });
+                contextRole.appendChild(button);
+            });
+        }
+        function openContextPicker() {
+            renderContextOptions();
+            contextPicker.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('contextPickerClose').focus();
+        }
+        function mountContextCapsule() {
+            if (!window.TopCapsule) return;
+            window.TopCapsule.mount(document.getElementById('js-capsule'), {
+                title: '当前工作上下文',
+                back: function () { requestExit(); },
+                moreItems: [
+                    { label: '刷新服务', action: function () { switchTab('service'); document.getElementById('panel-service').scrollTop = 0; } },
+                    { label: '退出城市管家', action: function () { requestExit(); } }
+                ],
+                onExit: function () { requestExit(); }
+            });
+            contextProject = document.getElementById('contextProjectOptions');
+            contextRole = document.getElementById('contextRoleOptions');
+            contextTitle = document.querySelector('#js-capsule .tc-title');
+            contextTitle.classList.add('tc-context-trigger');
+            contextTitle.setAttribute('role', 'button');
+            contextTitle.setAttribute('tabindex', '0');
+            contextTitle.innerHTML = '<span class="tc-context-project"></span><span class="tc-context-divider">·</span><span class="tc-context-role"></span><svg class="tc-context-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 10 5 5 5-5"/></svg>';
+            contextTitle.addEventListener('click', openContextPicker);
+            contextTitle.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openContextPicker(); } });
+            updateContextTitle();
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountContextCapsule); else mountContextCapsule();
+        document.getElementById('contextPickerClose').addEventListener('click', closeContextPicker);
+        contextPicker.addEventListener('click', function (event) { if (event.target === contextPicker) closeContextPicker(); });
         /* ===== 演示态透传（便于自测绑定/未绑定） ===== */
         (function () {
             var params = new URLSearchParams(location.search);
@@ -416,33 +501,6 @@
             if (name === 'service') {
                 document.getElementById('panel-service').scrollTop = 0;
             }
-        }
-
-        /* ===== 顶部胶囊挂载（小程序样式：返回 + 标题 + 右上更多/退出） ===== */
-        function mountTopCapsule() {
-            if (!window.TopCapsule) return;
-            window.TopCapsule.mount(document.getElementById('js-capsule'), {
-                title: '服务',
-                back: function () { requestExit(); },
-                moreItems: [
-                    { label: '刷新', action: function () { document.getElementById('panel-service').scrollTop = 0; } },
-                    { label: '退出用车管理', action: function () { requestExit(); } }
-                ],
-                onExit: function () { requestExit(); }
-            });
-        }
-        /* 项目切换：复用 app-common 的项目选择器 */
-        function bindProjectSwitch() {
-            var btn = document.getElementById('js-project-switch');
-            if (btn && window.CityStewardCommon && CityStewardCommon.openProjectPicker) {
-                btn.addEventListener('click', function () { CityStewardCommon.openProjectPicker(); });
-            }
-        }
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function () { mountTopCapsule(); bindProjectSwitch(); });
-        } else {
-            mountTopCapsule();
-            bindProjectSwitch();
         }
 
         /* ===== 退出用车管理（有进行中任务时二次确认） ===== */
@@ -514,5 +572,8 @@
             frame.src = 'map-workbench.html?' + queryParts.join('&');
         })();
     </script>
+    <script src="components/tab-apps-data.js"></script>
+    <script src="components/city-steward-services.js"></script>
+    <script>CityStewardServices.mount(document.querySelector('#panel-service .content-area'), 'driver');</script>
 </body>
 </html>

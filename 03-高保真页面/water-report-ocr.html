@@ -691,6 +691,7 @@
             color: #ffffff;
         }
     </style>
+    <script src="components/city-steward-role.js"></script>
 </head>
 <body data-no-project-switcher="true">
     <!-- 顶部导航 -->
@@ -1521,8 +1522,11 @@
             setTimeout(function() {
                 showToast('提交成功');
                 setTimeout(() => {
-                    const currentFrom = new URLSearchParams(window.location.search).get('from') || '';
-                    window.location.href = currentFrom ? 'records.html?from=' + currentFrom : 'records.html';
+                    const sourceParams = new URLSearchParams(window.location.search);
+                    const currentFrom = sourceParams.get('from') || '';
+                    const roleId = sourceParams.get('role');
+                    const workspace = roleId && CityStewardRole.getRole(roleId) ? CityStewardRole.getWorkspaceUrl(roleId, 'service') : '';
+                    window.location.href = sourceParams.get('returnUrl') || workspace || (currentFrom === 'inspection' ? 'inspection-management.html?tab=service' : currentFrom === 'vehicle' ? 'vehicle-management.html?tab=service' : currentFrom ? 'records.html?from=' + encodeURIComponent(currentFrom) : 'records.html');
                 }, 1500);
             }, 800);
         }
@@ -1540,7 +1544,9 @@
             if (backLink) {
                 if (returnUrl) backLink.href = returnUrl;
                 else if (from === 'ocr') backLink.href = 'home-ocr.html';
+                else if (params.get('role') && CityStewardRole.getRole(params.get('role'))) backLink.href = CityStewardRole.getWorkspaceUrl(params.get('role'), 'service');
                 else if (from === 'vehicle') backLink.href = 'vehicle-management.html?tab=service';
+                else if (from === 'inspection') backLink.href = 'inspection-management.html?tab=service';
                 else backLink.href = 'home.html';
             }
         })();

@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>品质巡查 - 城市管家</title>
+    <title>城市管家 - 巡查员</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="components/app-common.css">
+    <link rel="stylesheet" href="components/top-capsule.css">
+    <link rel="stylesheet" href="components/city-steward-role.css">
     <script src="components/app-common.js"></script>
+    <script src="components/city-steward-role.js"></script>
+    <script>CityStewardRole.setRole('inspector');</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
@@ -24,11 +28,32 @@
             overflow: hidden;
         }
         button, a { -webkit-tap-highlight-color: transparent; font: inherit; }
+        /* 项目与角色合并到与驾驶员页面一致的顶部胶囊。 */
+        #js-capsule { position: fixed; top: 0; left: 0; right: 0; z-index: 1100; max-width: 375px; margin: 0 auto; background: #ffffff; }
+        #js-capsule .tc-bar { position: relative; }
+        #js-capsule .tc-title.tc-context-trigger { position: absolute; left: 64px; right: 112px; min-width: 0; display: inline-flex; align-items: center; gap: 4px; overflow: hidden; cursor: pointer; font-size: 14px; }
+        .tc-context-project { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tc-context-divider { flex: none; color: #00000040; }
+        .tc-context-role { flex: none; max-width: 48px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1677ff; font-weight: 500; }
+        .tc-context-chevron { width: 13px; height: 13px; flex: none; color: #00000073; }
+        .tc-context-trigger:active { opacity: .7; }
+        .context-picker-overlay { position: fixed; inset: 0; z-index: 3200; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.5); }
+        .context-picker-overlay.show { display: flex; }
+        .context-picker { width: 100%; max-width: 375px; max-height: 82vh; overflow-y: auto; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 16px 16px 0 0; background: #ffffff; }
+        .context-picker__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .context-picker__title { color: #000000d9; font-size: 18px; font-weight: 600; line-height: 26px; }
+        .context-picker__close { width: 32px; height: 32px; border: 0; border-radius: 50%; background: #f5f5f5; color: #00000073; font-size: 22px; line-height: 32px; cursor: pointer; }
+        .context-picker__group + .context-picker__group { margin-top: 16px; }
+        .context-picker__label { display: block; margin-bottom: 8px; color: #00000073; font-size: 13px; line-height: 20px; }
+        .context-picker__option { width: 100%; min-height: 44px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #e8e8e8; border-radius: 8px; background: #ffffff; color: #000000d9; font-size: 14px; text-align: left; cursor: pointer; }
+        .context-picker__option + .context-picker__option { margin-top: 8px; }
+        .context-picker__option.is-current { border-color: #1677ff; background: #e6f4ff; color: #1677ff; }
+        .context-picker__check { color: #1677ff; font-size: 16px; }
 
         /* ===== 应用外壳（模式 A：独立应用，与用车管理同源） ===== */
         .app-shell {
             position: fixed;
-            top: 0;
+            top: 56px;
             left: 0;
             right: 0;
             bottom: calc(56px + env(safe-area-inset-bottom));
@@ -237,6 +262,7 @@
         .module-icon.fuel { background: #fff7e6; color: #fa8c16; }
         .module-icon.water { background: #e6f4ff; color: #1677ff; }
         .module-icon.charge { background: #f6ffed; color: #52c41a; }
+        .module-icon.records { background: #f2f0ff; color: #722ed1; }
         .module-icon.repair { background: #fff1f0; color: #ff4d4f; }
         .module-icon.stat { background: #f2f0ff; color: #722ed1; }
 
@@ -483,6 +509,7 @@
     </style>
 </head>
 <body>
+    <div id="js-capsule" data-top-capsule aria-label="当前工作上下文"></div>
     <div class="app-shell">
         <!-- 地图 Tab（默认）：嵌入巡查地图页 -->
         <section id="panel-map" class="tab-panel active" role="tabpanel" aria-label="地图">
@@ -491,35 +518,6 @@
 
         <!-- 服务 Tab：子功能入口 -->
         <section id="panel-service" class="tab-panel" role="tabpanel" aria-label="服务">
-            <div class="top-nav" data-no-project-switcher="true">
-                <button type="button" class="nav-back" id="js-service-back" aria-label="返回">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <span class="nav-title">服务</span>
-                <div class="nav-capsule">
-                    <button type="button" class="nav-capsule__btn" id="js-service-more" aria-label="更多" aria-haspopup="menu" aria-expanded="false">
-                        <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="14" r="2.2" fill="currentColor"/><circle cx="14" cy="14" r="2.8" fill="currentColor"/><circle cx="22" cy="14" r="2.2" fill="currentColor"/></svg>
-                    </button>
-                    <span class="nav-capsule__divider" aria-hidden="true"></span>
-                    <button type="button" class="nav-capsule__btn" id="js-service-exit" aria-label="退出品质巡查">
-                        <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="9.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="14" cy="14" r="3.25" fill="currentColor"/></svg>
-                    </button>
-                    <div class="nav-pop" id="js-service-pop">
-                        <button type="button" data-action="today">今日回顾</button>
-                        <button type="button" data-action="layer">图层设置</button>
-                        <button type="button" data-action="about">关于</button>
-                    </div>
-                </div>
-            </div>
-            <!-- 项目切换行（标题栏下方第一行） -->
-            <div class="project-bar" id="js-project-bar">
-                <span class="project-bar__label">当前项目</span>
-                <button type="button" class="project-bar__switch" id="js-project-switch" aria-label="切换项目">
-                    <span class="project-switcher-text">选择项目</span>
-                    <svg class="project-bar__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-            </div>
-
             <div class="content-area">
                 <!-- 品质管理：面向品质巡查业务，分为巡查任务、品质事件 -->
                 <div class="section-title">品质管理</div>
@@ -541,30 +539,36 @@
                 <!-- 车务管理：能耗类费用数据上报，复用水电油上报 OCR 版本 -->
                 <div class="section-title">车务管理</div>
                 <div class="module-grid">
-                    <a href="fuel-report-ocr.html" class="module-item">
+                    <a href="fuel-report-ocr.html?from=inspection" class="module-item">
                         <div class="module-icon fuel">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v17"/><path d="M3 14h12"/><path d="M15 8h2.5a1.5 1.5 0 0 1 1.5 1.5V18a2 2 0 0 0 4 0V9l-3-3"/></svg>
                         </div>
                         <span class="module-name">加油上报</span>
                     </a>
-                    <a href="water-report-ocr.html" class="module-item">
+                    <a href="water-report-ocr.html?from=inspection" class="module-item">
                         <div class="module-icon water">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.5S5 10 5 15a7 7 0 0 0 14 0c0-5-7-12.5-7-12.5Z"/><path d="M9 15a3 3 0 0 0 3 3"/></svg>
                         </div>
                         <span class="module-name">加水上报</span>
                     </a>
-                    <a href="charge-report-ocr.html" class="module-item">
+                    <a href="charge-report-ocr.html?from=inspection" class="module-item">
                         <div class="module-icon charge">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
                         </div>
                         <span class="module-name">充电上报</span>
+                    </a>
+                    <a href="records.html?from=inspection" class="module-item">
+                        <div class="module-icon records">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        </div>
+                        <span class="module-name">上报记录</span>
                     </a>
                 </div>
 
                 <!-- 维保管理：车辆故障报修和维修记录查看（不在本次范围内） -->
                 <div class="section-title">维保管理</div>
                 <div class="module-grid">
-                    <a href="placeholder.html?from=inspection-repair&title=故障报修" class="module-item">
+                    <a href="placeholder.html?from=inspection-repair&title=故障报修&returnUrl=inspection-management.html%3Ftab%3Dservice" class="module-item">
                         <div class="module-icon repair">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
                         </div>
@@ -575,13 +579,30 @@
                 <!-- 数据统计：以用户为维度进行数据统计（不在本次范围内） -->
                 <div class="section-title">数据统计</div>
                 <div class="module-grid">
-                    <a href="placeholder.html?from=inspection-stat&title=巡查统计" class="module-item">
+                    <a href="placeholder.html?from=inspection-stat&title=巡查统计&returnUrl=inspection-management.html%3Ftab%3Dservice" class="module-item">
                         <div class="module-icon stat">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
                         </div>
                         <span class="module-name">巡查统计</span>
                     </a>
                 </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="context-picker-overlay" id="contextPicker" role="dialog" aria-modal="true" aria-labelledby="contextPickerTitle">
+        <section class="context-picker">
+            <div class="context-picker__head">
+                <h2 class="context-picker__title" id="contextPickerTitle">切换项目与角色</h2>
+                <button type="button" class="context-picker__close" id="contextPickerClose" aria-label="关闭">×</button>
+            </div>
+            <div class="context-picker__group">
+                <span class="context-picker__label">项目</span>
+                <div id="contextProjectOptions"></div>
+            </div>
+            <div class="context-picker__group">
+                <span class="context-picker__label">角色</span>
+                <div id="contextRoleOptions"></div>
             </div>
         </section>
     </div>
@@ -627,7 +648,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
             <div class="confirm-title">有任务进行中</div>
-            <div class="confirm-desc">退出后任务仍会在后台记录，确认退出品质巡查？</div>
+            <div class="confirm-desc">退出后任务仍会在后台记录，确认退出城市管家？</div>
             <div class="confirm-buttons">
                 <button type="button" class="confirm-btn secondary" onclick="closeExitConfirm()">取消</button>
                 <button type="button" class="confirm-btn primary" onclick="confirmExit()">确认退出</button>
@@ -635,7 +656,98 @@
         </div>
     </div>
 
+    <script src="components/top-capsule.js"></script>
     <script>
+        var contextPicker = document.getElementById('contextPicker');
+        var contextTitle = null;
+        var contextProject = null;
+        var contextRole = null;
+        function currentProject() {
+            return window.CityStewardCommon && CityStewardCommon.getCurrentProject ? CityStewardCommon.getCurrentProject() : { name: '深圳南山智慧环卫项目' };
+        }
+        function updateContextTitle() {
+            if (!contextTitle) return;
+            var project = currentProject();
+            var role = CityStewardRole.getCurrentRole();
+            contextTitle.querySelector('.tc-context-project').textContent = project.name;
+            contextTitle.querySelector('.tc-context-role').textContent = role.name;
+            contextTitle.setAttribute('aria-label', '当前项目：' + project.name + '，当前角色：' + role.name + '，点击切换');
+        }
+        function closeContextPicker() {
+            if (!contextPicker) return;
+            contextPicker.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        function renderContextOptions() {
+            if (!contextProject || !contextRole) return;
+            var activeProject = currentProject();
+            contextProject.innerHTML = '';
+            CityStewardCommon.getProjects().forEach(function (project) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'context-picker__option' + (project.id === activeProject.id ? ' is-current' : '');
+                button.innerHTML = '<span></span><span class="context-picker__check" aria-hidden="true"></span>';
+                button.firstChild.textContent = project.name;
+                if (project.id === activeProject.id) button.lastChild.textContent = '✓';
+                button.addEventListener('click', function () {
+                    CityStewardCommon.setCurrentProject(project);
+                    updateContextTitle();
+                    renderContextOptions();
+                    document.dispatchEvent(new CustomEvent('projectChanged', { detail: project }));
+                });
+                contextProject.appendChild(button);
+            });
+            var activeRole = CityStewardRole.getCurrentRole();
+            contextRole.innerHTML = '';
+            CityStewardRole.getRoles().forEach(function (role) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'context-picker__option' + (role.id === activeRole.id ? ' is-current' : '');
+                button.innerHTML = '<span></span><span class="context-picker__check" aria-hidden="true"></span>';
+                button.firstChild.textContent = role.name;
+                if (role.id === activeRole.id) button.lastChild.textContent = '✓';
+                button.addEventListener('click', function () {
+                    closeContextPicker();
+                    if (role.id === activeRole.id) return;
+                    CityStewardRole.setRole(role.id);
+                    window.location.href = CityStewardRole.getWorkspaceUrl(role.id, 'map');
+                });
+                contextRole.appendChild(button);
+            });
+        }
+        function openContextPicker() {
+            renderContextOptions();
+            contextPicker.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('contextPickerClose').focus();
+        }
+        function mountContextCapsule() {
+            if (!window.TopCapsule) return;
+            window.TopCapsule.mount(document.getElementById('js-capsule'), {
+                title: '当前工作上下文',
+                back: function () { requestExit(); },
+                moreItems: [
+                    { label: '刷新服务', action: function () { switchTab('service'); document.getElementById('panel-service').scrollTop = 0; } },
+                    { label: '退出城市管家', action: function () { requestExit(); } }
+                ],
+                onExit: function () { requestExit(); }
+            });
+            contextProject = document.getElementById('contextProjectOptions');
+            contextRole = document.getElementById('contextRoleOptions');
+            contextTitle = document.querySelector('#js-capsule .tc-title');
+            contextTitle.classList.add('tc-context-trigger');
+            contextTitle.setAttribute('role', 'button');
+            contextTitle.setAttribute('tabindex', '0');
+            contextTitle.innerHTML = '<span class="tc-context-project"></span><span class="tc-context-divider">·</span><span class="tc-context-role"></span><svg class="tc-context-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 10 5 5 5-5"/></svg>';
+            contextTitle.addEventListener('click', openContextPicker);
+            contextTitle.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openContextPicker(); } });
+            updateContextTitle();
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountContextCapsule); else mountContextCapsule();
+        document.getElementById('contextPickerClose').addEventListener('click', closeContextPicker);
+        contextPicker.addEventListener('click', function (event) { if (event.target === contextPicker) closeContextPicker(); });
+        document.addEventListener('projectChanged', updateContextTitle);
+
         /* ===== Tab 切换 ===== */
         function switchTab(name) {
             document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
@@ -674,50 +786,6 @@
             document.addEventListener('keydown', function (event) {
                 if (event.key === 'Escape' && overlay.classList.contains('show')) closeQuickActions();
             });
-        })();
-
-        /* ===== 服务页顶部胶囊交互（与地图页同款） ===== */
-        (function () {
-            var back = document.getElementById('js-service-back');
-            var more = document.getElementById('js-service-more');
-            var exit = document.getElementById('js-service-exit');
-            var pop = document.getElementById('js-service-pop');
-            function toast(msg) {
-                var t = document.createElement('div');
-                t.textContent = msg;
-                t.setAttribute('style', 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 14px;border-radius:8px;background:rgba(0,0,0,0.76);color:#fff;font-size:14px;z-index:9999;pointer-events:none;');
-                document.body.appendChild(t);
-                setTimeout(function () { t.remove(); }, 2000);
-            }
-            if (back) back.addEventListener('click', function () { switchTab('map'); });
-            // 项目切换：复用 app-common 的项目选择器
-            var projSwitch = document.getElementById('js-project-switch');
-            if (projSwitch && typeof CityStewardCommon !== 'undefined' && CityStewardCommon.openProjectPicker) {
-                projSwitch.addEventListener('click', function () { CityStewardCommon.openProjectPicker(); });
-            }
-            if (more) {
-                more.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    pop.classList.toggle('show');
-                    more.setAttribute('aria-expanded', pop.classList.contains('show') ? 'true' : 'false');
-                });
-            }
-            document.addEventListener('click', function () {
-                pop.classList.remove('show');
-                more.setAttribute('aria-expanded', 'false');
-            });
-            if (pop) {
-                pop.addEventListener('click', function (e) {
-                    var action = e.target.getAttribute('data-action');
-                    if (!action) return;
-                    pop.classList.remove('show');
-                    more.setAttribute('aria-expanded', 'false');
-                    if (action === 'today') { toast('今日回顾将在全部任务完成后展示'); }
-                    else if (action === 'layer') { toast('辅助设施图层已切换'); }
-                    else if (action === 'about') { toast('品质巡查 v1.0'); }
-                });
-            }
-            if (exit) exit.addEventListener('click', function () { requestExit(); });
         })();
 
         /* ===== 退出品质巡查（有进行中任务时二次确认） ===== */
@@ -809,5 +877,8 @@
             frame.src = 'inspection-map.html?' + queryParts.join('&');
         })();
     </script>
+    <script src="components/tab-apps-data.js"></script>
+    <script src="components/city-steward-services.js"></script>
+    <script>CityStewardServices.mount(document.querySelector('#panel-service .content-area'), 'inspector');</script>
 </body>
 </html>

@@ -14,7 +14,9 @@
 
     var MAX_BIZ_TABS = 4;            // 业务 Tab 上限（含首页位）
     var MIN_BIZ_TABS = 1;            // 除更多外至少保留1个
-    var STORAGE_KEY = 'ctabConfig';  // sessionStorage key，存业务Tab funcKey 数组
+    var LEGACY_STORAGE_KEY = 'ctabConfig';
+    var STORAGE_PREFIX = 'ctabConfig.role.'; // 按角色保存，公共功能同样可配置
+    var loadedRoleId = null;
 
     // 当前业务 Tab 顺序（funcKey 数组，第一位为首页位）
     var bizTabs = [];
@@ -29,17 +31,44 @@
     // ===== 工具 =====
     function deepCopy(arr) { return arr.slice(); }
     function getFunc(funcKey) { return TabAppsData.getFunction(funcKey); }
+    function currentRoleId() { return window.CityStewardRole ? CityStewardRole.getCurrentRole().id : 'driver'; }
+    function storageKey(roleId) { return STORAGE_PREFIX + encodeURIComponent(roleId); }
+    function normalizeTabs(arr, roleId) {
+        var clean = [];
+        if (Array.isArray(arr)) arr.forEach(function (key) {
+            if (typeof key === 'string' && clean.indexOf(key) < 0 && TabAppsData.getFunction(key, roleId)) clean.push(key);
+        });
+        return clean.length ? clean.slice(0, MAX_BIZ_TABS) : TabAppsData.getDefaultTabs().slice();
+    }
+
+    // 将旧版混合业务配置一次性分配至已注册角色；新角色自然使用默认配置。
+    function migrateStorage() {
+        try {
+            if (sessionStorage.getItem(STORAGE_PREFIX + 'migrated') === '1') return;
+            var raw = sessionStorage.getItem(LEGACY_STORAGE_KEY);
+            var legacy = raw ? JSON.parse(raw) : null;
+            if (Array.isArray(legacy)) {
+                var roles = window.CityStewardRole ? CityStewardRole.getRoles() : [{ id: currentRoleId() }];
+                roles.forEach(function (role) {
+                    if (!sessionStorage.getItem(storageKey(role.id))) {
+                        sessionStorage.setItem(storageKey(role.id), JSON.stringify(normalizeTabs(legacy, role.id)));
+                    }
+                });
+            }
+            sessionStorage.setItem(STORAGE_PREFIX + 'migrated', '1');
+        } catch (e) {}
+    }
 
     // sessionStorage 持久化（跨页共享配置）
     function saveStorage() {
-        try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(bizTabs)); } catch (e) {}
+        try { sessionStorage.setItem(storageKey(loadedRoleId || currentRoleId()), JSON.stringify(bizTabs)); } catch (e) {}
     }
     function loadStorage() {
         try {
-            var raw = sessionStorage.getItem(STORAGE_KEY);
+            var raw = sessionStorage.getItem(storageKey(loadedRoleId || currentRoleId()));
             if (!raw) return null;
             var arr = JSON.parse(raw);
-            if (Array.isArray(arr) && arr.length >= MIN_BIZ_TABS) return arr;
+            if (Array.isArray(arr)) return normalizeTabs(arr, loadedRoleId || currentRoleId());
         } catch (e) {}
         return null;
     }
@@ -110,6 +139,8 @@
     }
 
     function goTarget(f) {
+        f = getFunc(f.funcKey);
+        if (!f) return;
         activeKey = f.funcKey;
         renderBar();
         // 跳转
@@ -134,6 +165,7 @@
 
     // ===== 长按添加业务 Tab =====
     function addTab(funcKey) {
+        if (!getFunc(funcKey)) return;
         if (bizTabs.indexOf(funcKey) >= 0) return; // 不可重复占位
         if (bizTabs.length >= MAX_BIZ_TABS) {
             toast('最多5个Tab');
@@ -349,14 +381,29 @@
         barEl = options.barEl || document.querySelector('.ctab-bar');
         if (!barEl) return;
 
-        // 初始业务 Tab：优先读 sessionStorage，无则用默认 消息/工作台/我的
+        loadedRoleId = currentRoleId();
+        migrateStorage();
+        // 初始业务 Tab：恢复当前角色配置，过滤已删除或不适用的功能
         var saved = loadStorage();
-        bizTabs = (saved && saved.length) ? saved.slice() : TabAppsData.getDefaultTabs().slice();
+        bizTabs = normalizeTabs(saved || TabAppsData.getDefaultTabs(), loadedRoleId);
         // 高亮：优先用调用方指定的 activeKey（当前页对应功能），否则高亮首页位
-        activeKey = options.activeKey || bizTabs[0] || null;
+        activeKey = options.activeKey && getFunc(options.activeKey) ? options.activeKey : bizTabs[0] || null;
 
         renderBar();
     }
+
+    window.addEventListener('city-steward-role-change', function () {
+        var nextRoleId = currentRoleId();
+        if (!barEl || nextRoleId === loadedRoleId) return;
+        // 放弃当前编辑快照，恢复后再载入新角色，避免写入其他角色的配置。
+        closeSheet();
+        loadedRoleId = nextRoleId;
+        migrateStorage();
+        bizTabs = normalizeTabs(loadStorage() || TabAppsData.getDefaultTabs(), loadedRoleId);
+        activeKey = bizTabs[0] || null;
+        renderBar();
+        renderSheetFunctions();
+    });
 
     // 暴露 API
     window.CustomTabbar = {

@@ -2,7 +2,7 @@
  * 工作台底部 Tab 自定义 - 小程序功能数据源
  * 定义用户权限范围内的各小程序及其具体功能清单。
  * - 功能粒度：小程序内的具体功能（funcKey 为最小配置单元）
- * - 后端可配置；示例阶段以用车管理小程序为准
+ * - 前端功能注册表：roleIds 关联角色，未配置 roleIds 的公共功能持续可用
  * - 图标统一用内联 SVG path（stroke 或 fill 由调用方决定），存于 iconSvg 字段
  */
 (function () {
@@ -43,31 +43,40 @@
     var APPS = [
         {
             appKey: 'vehicle',
-            appName: '用车管理',
+            appName: '城市管家',
+            groupKey: 'city-steward',
             tint: APP_TINTS.vehicle,
             functions: [
-                { funcKey: 'vehicle-map', name: '地图页', icon: 'map', target: 'vehicle-management.html' },
-                { funcKey: 'vehicle-schedule', name: '常规任务', icon: 'schedule', target: 'schedule-tasks.html' },
-                { funcKey: 'vehicle-dynamic', name: '动态任务', icon: 'dynamic', target: 'dynamic-tasks.html' },
-                { funcKey: 'vehicle-fuel', name: '加油上报', icon: 'fuel', target: 'fuel-report-ocr.html?from=vehicle' },
-                { funcKey: 'vehicle-water', name: '加水上报', icon: 'water', target: 'water-report-ocr.html?from=vehicle' },
-                { funcKey: 'vehicle-charge', name: '充电上报', icon: 'charge', target: 'charge-report-ocr.html?from=vehicle' },
-                { funcKey: 'vehicle-records', name: '上报记录', icon: 'records', target: 'records.html?from=vehicle' },
-                { funcKey: 'vehicle-repair', name: '故障报修', icon: 'repair', target: 'repair-bottomsheet.html?source=vehicle-management' },
-                { funcKey: 'vehicle-maintenance', name: '维修记录', icon: 'maintenance', target: 'placeholder.html?from=repair-records&title=维修记录' },
-                { funcKey: 'vehicle-stat-trip', name: '出车统计', icon: 'statTrip', target: 'placeholder.html?from=stats-trip&title=出车统计' },
-                { funcKey: 'vehicle-stat-task', name: '任务统计', icon: 'statTask', target: 'placeholder.html?from=stats-task&title=任务统计' }
+                { funcKey: 'vehicle-map', name: '地图页', icon: 'map', target: 'vehicle-management.html', roleIds: ['driver'], serviceVisible: false },
+                { funcKey: 'vehicle-schedule', name: '常规任务', icon: 'schedule', target: 'schedule-tasks.html', roleIds: ['driver'], section: '任务管理', serviceVisible: true },
+                { funcKey: 'vehicle-dynamic', name: '动态任务', icon: 'dynamic', target: 'dynamic-tasks.html', roleIds: ['driver'], section: '任务管理', serviceVisible: true },
+                { funcKey: 'vehicle-fuel', name: '加油上报', icon: 'fuel', target: 'fuel-report-ocr.html?from=vehicle', roleIds: ['driver'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'vehicle-water', name: '加水上报', icon: 'water', target: 'water-report-ocr.html?from=vehicle', roleIds: ['driver'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'vehicle-charge', name: '充电上报', icon: 'charge', target: 'charge-report-ocr.html?from=vehicle', roleIds: ['driver'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'vehicle-records', name: '上报记录', icon: 'records', target: 'records.html?from=vehicle', roleIds: ['driver'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'vehicle-repair', name: '故障报修', icon: 'repair', target: 'repair-bottomsheet.html?source=vehicle-management', roleIds: ['driver'], section: '维保管理', serviceVisible: true },
+                { funcKey: 'vehicle-maintenance', name: '维修记录', icon: 'maintenance', target: 'placeholder.html?from=repair-records&title=维修记录&returnUrl=vehicle-management.html%3Ftab%3Dservice', roleIds: ['driver'], section: '维保管理', serviceVisible: true },
+                { funcKey: 'vehicle-stat-trip', name: '出车统计', icon: 'statTrip', iconClass: 'stat-trip', target: 'placeholder.html?from=stats-trip&title=出车统计&returnUrl=vehicle-management.html%3Ftab%3Dservice', roleIds: ['driver'], section: '数据统计', serviceVisible: true },
+                { funcKey: 'vehicle-stat-task', name: '任务统计', icon: 'statTask', iconClass: 'stat-task', target: 'placeholder.html?from=stats-task&title=任务统计&returnUrl=vehicle-management.html%3Ftab%3Dservice', roleIds: ['driver'], section: '数据统计', serviceVisible: true }
             ]
         },
         {
             appKey: 'inspection',
-            appName: '品质巡查',
+            appName: '城市管家',
+            groupKey: 'city-steward',
             tint: APP_TINTS.inspection,
             functions: [
-                { funcKey: 'inspection-manage', name: '巡查管理', icon: 'grid', target: 'inspection-management.html' },
-                { funcKey: 'inspection-map', name: '巡查地图', icon: 'map', target: 'inspection-map.html' },
-                { funcKey: 'inspection-report', name: '问题上报', icon: 'repair', target: 'inspection-problem-report.html' },
-                { funcKey: 'inspection-list', name: '问题管理', icon: 'records', target: 'inspection-problem-management.html' }
+                { funcKey: 'inspection-manage', name: '巡查服务', icon: 'grid', target: 'inspection-management.html?tab=service', roleIds: ['inspector'], serviceVisible: false },
+                { funcKey: 'inspection-map', name: '巡查地图', icon: 'map', target: 'inspection-management.html?tab=map', roleIds: ['inspector'], serviceVisible: false },
+                { funcKey: 'inspection-task', name: '巡查任务', icon: 'schedule', iconClass: 'inspection', target: 'inspection-task-management.html', roleIds: ['inspector'], section: '品质管理', serviceVisible: true },
+                { funcKey: 'inspection-report', name: '事件上报', icon: 'repair', target: 'inspection-problem-report.html', roleIds: ['inspector'], serviceVisible: false },
+                { funcKey: 'inspection-list', name: '品质事件', icon: 'records', iconClass: 'problem', target: 'inspection-problem-management.html', roleIds: ['inspector'], section: '品质管理', serviceVisible: true },
+                { funcKey: 'inspection-fuel', name: '加油上报', icon: 'fuel', target: 'fuel-report-ocr.html?from=inspection', roleIds: ['inspector'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'inspection-water', name: '加水上报', icon: 'water', target: 'water-report-ocr.html?from=inspection', roleIds: ['inspector'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'inspection-charge', name: '充电上报', icon: 'charge', target: 'charge-report-ocr.html?from=inspection', roleIds: ['inspector'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'inspection-records', name: '上报记录', icon: 'records', target: 'records.html?from=inspection', roleIds: ['inspector'], section: '车务管理', serviceVisible: true },
+                { funcKey: 'inspection-repair', name: '故障报修', icon: 'repair', target: 'placeholder.html?from=inspection-repair&title=故障报修&returnUrl=inspection-management.html%3Ftab%3Dservice', roleIds: ['inspector'], section: '维保管理', serviceVisible: true },
+                { funcKey: 'inspection-stat', name: '巡查统计', icon: 'statTrip', iconClass: 'stat', target: 'placeholder.html?from=inspection-stat&title=巡查统计&returnUrl=inspection-management.html%3Ftab%3Dservice', roleIds: ['inspector'], section: '数据统计', serviceVisible: true }
             ]
         },
         {
@@ -75,7 +84,7 @@
             appName: '酷哇考勤',
             tint: APP_TINTS.attendance,
             functions: [
-                { funcKey: 'attendance-clock', name: '考勤打卡', icon: 'schedule', target: 'placeholder.html?from=attendance&title=酷哇考勤' }
+                { funcKey: 'attendance-clock', name: '考勤打卡', icon: 'schedule', target: 'placeholder.html?from=attendance&title=酷哇考勤', serviceVisible: false }
             ]
         },
         {
@@ -83,7 +92,7 @@
             appName: '酷哇审批',
             tint: APP_TINTS.approval,
             functions: [
-                { funcKey: 'approval-list', name: '审批列表', icon: 'records', target: 'placeholder.html?from=approval&title=酷哇审批' }
+                { funcKey: 'approval-list', name: '审批列表', icon: 'records', target: 'placeholder.html?from=approval&title=酷哇审批', serviceVisible: false }
             ]
         }
     ];
@@ -106,27 +115,59 @@
     }
 
     // 取全部可配置功能（系统Tab + 各小程序功能），扁平化，带 appKey/appName/tint
-    function getAllFunctions() {
+    function getRegisteredFunctions() {
         var list = [];
         SYSTEM_TABS.forEach(function (t) {
             list.push({
                 funcKey: t.funcKey, name: t.name, icon: t.icon, target: t.target,
-                appKey: 'system', appName: '系统', tint: t.tint, system: true
+                appKey: 'system', appName: '系统', tint: t.tint, system: true, serviceVisible: false
             });
         });
         APPS.forEach(function (app) {
             app.functions.forEach(function (f) {
                 list.push({
                     funcKey: f.funcKey, name: f.name, icon: f.icon, target: f.target,
-                    appKey: app.appKey, appName: app.appName, tint: app.tint, system: false
+                    appKey: app.appKey, appName: app.appName, groupKey: app.groupKey || app.appKey,
+                    tint: app.tint, system: false, roleIds: f.roleIds ? f.roleIds.slice() : [],
+                    section: f.section || '常用服务', serviceVisible: f.serviceVisible !== false,
+                    iconClass: f.iconClass || f.icon
                 });
             });
         });
         return list;
     }
 
+    function currentRoleId() {
+        return window.CityStewardRole ? CityStewardRole.getCurrentRole().id : 'driver';
+    }
+    function isAvailable(f, roleId) {
+        return !!f && (!f.roleIds || !f.roleIds.length || f.roleIds.indexOf(roleId || currentRoleId()) >= 0);
+    }
+    function roleTarget(f, roleId) {
+        if (!f.roleIds || !f.roleIds.length) return f.target;
+        var pieces = f.target.split('#');
+        var route = pieces[0].split('?');
+        var params = new URLSearchParams(route[1] || '');
+        params.set('role', roleId || currentRoleId());
+        // 共用服务页返回当前角色的工作空间，新增角色无需复制返回规则。
+        if (f.serviceVisible !== false && window.CityStewardRole) {
+            params.set('returnUrl', CityStewardRole.getWorkspaceUrl(roleId || currentRoleId(), 'service'));
+        }
+        // 共用服务页返回当前角色的工作空间，新增角色无需复制返回规则。
+        if (f.serviceVisible !== false && window.CityStewardRole) {
+            params.set('returnUrl', CityStewardRole.getWorkspaceUrl(roleId || currentRoleId(), 'service'));
+        }
+        return route[0] + '?' + params.toString() + (pieces[1] ? '#' + pieces[1] : '');
+    }
+    function getAllFunctions(roleId) {
+        return getRegisteredFunctions().filter(function (f) { return isAvailable(f, roleId); }).map(function (f) {
+            f.target = roleTarget(f, roleId);
+            return f;
+        });
+    }
+
     // 按 appKey 分组（系统项单独一组，小程序各自一组），返回 [{appKey,appName,tint,functions:[]}]
-    function getGroupedFunctions() {
+    function getGroupedFunctions(roleId) {
         var groups = [];
         // 系统组
         groups.push({
@@ -136,19 +177,40 @@
             })
         });
         APPS.forEach(function (app) {
-            groups.push({
-                appKey: app.appKey, appName: app.appName, tint: app.tint,
-                functions: app.functions.map(function (f) {
-                    return { funcKey: f.funcKey, name: f.name, icon: f.icon, target: f.target, system: false };
-                })
+            var functions = app.functions.filter(function (f) { return isAvailable(f, roleId); });
+            if (!functions.length) return;
+            var key = app.groupKey || app.appKey;
+            var group = groups.find(function (g) { return g.appKey === key; });
+            if (!group) {
+                group = { appKey: key, appName: app.appName, tint: app.tint, functions: [] };
+                groups.push(group);
+            }
+            functions.forEach(function (f) {
+                group.functions.push({ funcKey: f.funcKey, name: f.name, icon: f.icon, target: roleTarget(f, roleId),
+                    system: false, roleIds: f.roleIds ? f.roleIds.slice() : [] });
             });
         });
         return groups;
     }
 
     // 按 funcKey 查单个功能
-    function getFunction(funcKey) {
-        return getAllFunctions().find(function (f) { return f.funcKey === funcKey; }) || null;
+    function getFunction(funcKey, roleId) {
+        return getAllFunctions(roleId).find(function (f) { return f.funcKey === funcKey; }) || null;
+    }
+    function getRegisteredFunction(funcKey) {
+        return getRegisteredFunctions().find(function (f) { return f.funcKey === funcKey; }) || null;
+    }
+
+    // 新增功能只注册一次，可用 roleIds 同时关联一个或多个角色。
+    function registerFunction(appKey, entry) {
+        var app = APPS.find(function (item) { return item.appKey === appKey; });
+        if (!app || !entry || !entry.funcKey || !entry.name || !entry.target) return false;
+        var existing = getRegisteredFunction(entry.funcKey);
+        if (existing && existing.appKey !== appKey) return false;
+        var index = app.functions.findIndex(function (f) { return f.funcKey === entry.funcKey; });
+        if (index < 0) app.functions.push(entry); else app.functions[index] = entry;
+        window.dispatchEvent(new CustomEvent('city-steward-functions-change', { detail: { funcKey: entry.funcKey } }));
+        return true;
     }
 
     // 初始默认业务 Tab 配置：消息、工作台、我的（顺序即首页位→末位）
@@ -164,6 +226,10 @@
         getAllFunctions: getAllFunctions,
         getGroupedFunctions: getGroupedFunctions,
         getFunction: getFunction,
+        getRegisteredFunctions: getRegisteredFunctions,
+        getRegisteredFunction: getRegisteredFunction,
+        isAvailable: isAvailable,
+        registerFunction: registerFunction,
         getDefaultTabs: getDefaultTabs
     };
 })();

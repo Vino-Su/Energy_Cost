@@ -1,0 +1,22 @@
+/* 城市管家共用身份组件，遵循 UI_design_APP 的文字按钮及底部选择器规范。 */
+.cs-role-switcher { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 4px 10px; border: 0; border-radius: 8px; background: #e6f4ff; color: #1677ff; font: 500 12px/20px "PingFang SC", "Microsoft YaHei", sans-serif; cursor: pointer; white-space: nowrap; }
+.cs-role-switcher svg { width: 14px; height: 14px; }
+.cs-role-switcher:active, .cs-role-option:active { opacity: .85; }
+.cs-role-switcher:focus-visible, .cs-role-option:focus-visible, .cs-role-close:focus-visible { outline: 2px solid #1677ff; outline-offset: 2px; }
+.cs-role-overlay { position: fixed; inset: 0; z-index: 4000; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+.cs-role-sheet { box-sizing: border-box; width: 100%; max-width: 430px; max-height: 85vh; overflow-y: auto; background: #fff; border-radius: 16px 16px 0 0; padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 24px rgba(0,0,0,.08); animation: cs-role-rise .18s ease-out; }
+.cs-role-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.cs-role-sheet-header h2 { margin: 0; font-size: 18px; font-weight: 600; line-height: 26px; color: #000000d9; }
+.cs-role-sheet-header p { margin: 4px 0 0; color: #00000073; font-size: 14px; line-height: 22px; }
+.cs-role-close { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: #f5f5f5; color: #00000073; font: 24px/32px Arial, sans-serif; cursor: pointer; flex-shrink: 0; }
+.cs-role-option { box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 84px; margin-top: 12px; padding: 16px 12px; border: 1px solid #e8e8e8; border-radius: 12px; background: #fff; text-align: left; font-family: inherit; color: #000000d9; cursor: pointer; }
+.cs-role-option.is-current { background: #e6f4ff; border-color: #1677ff; }
+.cs-role-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #e6f4ff; color: #1677ff; border-radius: 10px; flex-shrink: 0; }
+.cs-role-icon svg { width: 24px; height: 24px; }
+.cs-role-copy { flex: 1; min-width: 0; }
+.cs-role-copy strong { display: block; font-size: 16px; line-height: 24px; font-weight: 500; }
+.cs-role-copy > span { display: block; margin-top: 4px; color: #00000073; font-size: 12px; line-height: 18px; }
+.cs-role-check { flex-shrink: 0; color: #00000073; font-size: 22px; }
+.cs-role-option.is-current .cs-role-check { color: #1677ff; }
+@keyframes cs-role-rise { from { transform: translateY(24px); opacity: .5; } to { transform: translateY(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cs-role-sheet { animation: none; } }

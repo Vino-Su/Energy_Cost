@@ -286,6 +286,7 @@
             }
         }
     </style>
+    <script src="components/city-steward-role.js"></script>
 </head>
 <body data-no-project-switcher="true">
     <header class="top-nav">
@@ -386,8 +387,11 @@
             const from = params.get('from');
             const backLink = document.getElementById('backLink');
             if (backLink) {
-                if (from === 'ocr') backLink.href = 'home-ocr.html';
+                if (params.get('returnUrl')) backLink.href = params.get('returnUrl');
+                else if (params.get('role') && CityStewardRole.getRole(params.get('role'))) backLink.href = CityStewardRole.getWorkspaceUrl(params.get('role'), 'service');
+                else if (from === 'ocr') backLink.href = 'home-ocr.html';
                 else if (from === 'vehicle') backLink.href = 'vehicle-management.html?tab=service';
+                else if (from === 'inspection') backLink.href = 'inspection-management.html?tab=service';
                 else backLink.href = 'home.html';
             }
         })();
@@ -523,7 +527,7 @@
             }
 
             container.innerHTML = visible.map(r => `
-                <a href="record-detail.html?type=${r.type}&id=${r.id}&from=${getFromParam()}" class="record-card" data-type="${r.type}">
+                <a href="record-detail.html?type=${r.type}&id=${r.id}&from=${getFromParam()}&role=${encodeURIComponent(new URLSearchParams(location.search).get('role') || '')}&returnUrl=${encodeURIComponent(new URLSearchParams(location.search).get('returnUrl') || '')}" class="record-card" data-type="${r.type}">
                     <div class="card-row1">
                         <span class="tag ${typeClasses[r.type]}">${typeLabels[r.type]}</span>
                         <span class="card-amount">¥${r.amount.toFixed(2)}</span>

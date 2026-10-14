@@ -161,6 +161,7 @@
         .action-btn.primary { background: #1677ff; color: #ffffff; }
         .action-btn:active { opacity: 0.85; }
     </style>
+    <script src="components/city-steward-role.js"></script>
 </head>
 <body data-no-project-switcher="true">
     <div class="top-nav">
@@ -291,7 +292,10 @@
 
         // 根据 URL ?source= 参数判断返回页面（vehicle-management / 其他）
         function getReturnPage() {
-            var src = new URLSearchParams(location.search).get('source');
+            var params = new URLSearchParams(location.search);
+            if (params.get('returnUrl')) return params.get('returnUrl');
+            if (params.get('role') && CityStewardRole.getRole(params.get('role'))) return CityStewardRole.getWorkspaceUrl(params.get('role'), 'service');
+            var src = params.get('source');
             if (src === 'vehicle-management') return 'vehicle-management.html?tab=service';
             return 'map-workbench.html';
         }

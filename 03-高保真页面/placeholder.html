@@ -109,9 +109,12 @@
             document.getElementById('navTitle').textContent = title;
             document.getElementById('featureTitle').textContent = title;
             document.title = title + ' - 城市管家';
+            var returnUrl = getQueryParam('returnUrl');
+            if (returnUrl) document.querySelectorAll('.top-nav-back, .placeholder-back-btn').forEach(function (link) { link.href = returnUrl; });
         })();
     </script>
     <script src="components/app-common.js"></script>
+    <script src="components/city-steward-role.js"></script>
     <script src="components/tab-apps-data.js"></script>
     <script src="components/custom-tabbar.js"></script>
     <script>

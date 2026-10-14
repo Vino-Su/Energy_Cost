@@ -22,7 +22,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
             margin: 0 auto;
-            max-width: 375px;
+            max-width: 430px;
             min-height: 100vh;
             background: #e9eef3;
         }
@@ -1425,6 +1425,7 @@
         html.is-embedded { background: #eef2f5; }
         html.is-embedded body { align-items: stretch; background: #eef2f5; }
         html.is-embedded .workbench { min-height: 100%; box-shadow: none; }
+        html.is-embedded .top-bar { display: none; }
 
         /* ===== 未绑定态 ===== */
         .connection-row.is-unbound .connection-row__plate { color: #00000073; font-weight: 400; }
@@ -2058,7 +2059,7 @@
                     <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="14" r="2.2" fill="currentColor"/><circle cx="14" cy="14" r="2.8" fill="currentColor"/><circle cx="22" cy="14" r="2.2" fill="currentColor"/></svg>
                 </span>
                 <span class="top-bar__capsule-divider" aria-hidden="true"></span>
-                <button type="button" class="top-bar__mini-action" id="jsTopExit" aria-label="退出用车管理">
+                <button type="button" class="top-bar__mini-action" id="jsTopExit" aria-label="退出城市管家">
                     <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="9.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="14" cy="14" r="3.25" fill="currentColor"/></svg>
                 </button>
             </div>

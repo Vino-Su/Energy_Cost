@@ -551,10 +551,13 @@
         // 根据入口来源设置返回地址
         const pageParams = new URLSearchParams(window.location.search);
         const fromParam = pageParams.get('from') || '';
+        const recordListParams = new URLSearchParams();
+        ['from', 'role', 'returnUrl'].forEach(function (key) { if (pageParams.get(key)) recordListParams.set(key, pageParams.get(key)); });
+        const recordListUrl = 'records.html' + (recordListParams.toString() ? '?' + recordListParams.toString() : '');
         (function() {
             const backLink = document.querySelector('.top-nav-back');
             if (backLink) {
-                backLink.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
+                backLink.href = recordListUrl;
             }
         })();
 
@@ -704,7 +707,7 @@
             document.getElementById('editActions').style.display = 'none';
             showToast('保存成功');
             setTimeout(() => {
-                window.location.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
+                window.location.href = recordListUrl;
             }, 1200);
         }
 
@@ -750,7 +753,7 @@
             closeDeleteConfirm();
             showToast('删除成功');
             setTimeout(() => {
-                window.location.href = fromParam === 'ocr' ? 'records.html?from=ocr' : 'records.html';
+                window.location.href = recordListUrl;
             }, 1200);
         }
 

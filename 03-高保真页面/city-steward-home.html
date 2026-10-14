@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>首页 - 城市管家</title>
+    <title>选择工作角色 - 城市管家</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="components/app-common.css">
     <link rel="stylesheet" href="components/custom-tabbar.css">
+    <link rel="stylesheet" href="components/city-steward-role.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
@@ -41,31 +42,38 @@
         }
         .top-nav-title { font-size: 16px; font-weight: 600; color: #000000d9; }
         .content-area {
-            padding-top: 44px;
-            padding-bottom: 56px;
+            padding: 84px 16px 80px;
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: stretch;
             flex-direction: column;
             color: #00000073;
         }
         .placeholder-icon {
-            width: 120px;
-            height: 120px;
+            width: 64px;
+            height: 64px;
             background: #e6f4ff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 16px;
+            margin: 0 auto 16px;
         }
-        .placeholder-icon svg { width: 48px; height: 48px; color: #1677ff; }
+        .placeholder-icon svg { width: 32px; height: 32px; color: #1677ff; }
+        .role-heading { text-align: center; margin-bottom: 24px; }
+        .role-heading h1 { color: #000000d9; font-size: 20px; font-weight: 600; line-height: 28px; }
+        .role-heading p { margin-top: 8px; font-size: 14px; line-height: 22px; color: #00000073; }
+        .role-entry { background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .role-entry:first-child { margin-top: 0; }
+        .role-note { font-size: 12px; line-height: 18px; text-align: center; margin-top: 24px; color: #00000073; }
+        .nav-back { position: absolute; left: 12px; display: grid; place-items: center; width: 32px; height: 32px; color: #000000d9; }
+        .nav-back svg { width: 20px; height: 20px; }
         /* 底部Tab 由 custom-tabbar.css 承载 */
     </style>
 </head>
 <body>
     <div class="top-nav">
+        <a class="nav-back" href="home.html" aria-label="返回工作台"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></a>
         <div class="top-nav-title">城市管家</div>
         <div class="project-switcher" role="button" aria-label="切换项目" onclick="CityStewardCommon.openProjectPicker()">
             <span class="project-switcher-text">选择项目</span>
@@ -73,23 +81,55 @@
         </div>
     </div>
 
-    <div class="content-area">
+    <main class="content-area">
         <div class="placeholder-icon">
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
         </div>
-        <div style="font-size:14px;">首页模块暂未开放</div>
-    </div>
+        <div class="role-heading"><h1>选择工作角色</h1><p>以对应身份进入地图与服务</p></div>
+        <div id="js-role-entries" aria-label="可用工作角色"></div>
+        <p class="role-note">进入后可随时切换角色</p>
+    </main>
 
     <!-- 底部Tab（自定义组件） -->
     <nav class="ctab-bar" aria-label="主导航"></nav>
     <script src="components/app-common.js"></script>
+    <script src="components/city-steward-role.js"></script>
     <script src="components/tab-apps-data.js"></script>
     <script src="components/custom-tabbar.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             CustomTabbar.init({ activeKey: 'sys-workbench' });
+            var roles = CityStewardRole.getRoles();
+            var params = new URLSearchParams(location.search);
+            var requested = CityStewardRole.getRole(params.get('role'));
+            if (requested) CityStewardRole.setRole(requested.id);
+            if (roles.length === 1) CityStewardRole.setRole(roles[0].id);
+            if (CityStewardRole.hasSelection() && params.get('choose') !== '1') {
+                location.replace(CityStewardRole.getWorkspaceUrl(CityStewardRole.getCurrentRole().id, params.get('tab') === 'service' ? 'service' : 'map'));
+                return;
+            }
+            var entries = document.getElementById('js-role-entries');
+            roles.forEach(function (role) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'cs-role-option role-entry';
+                button.setAttribute('data-role-id', role.id);
+                button.innerHTML = '<span class="cs-role-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + role.icon + '</svg></span><span class="cs-role-copy"></span><span class="cs-role-check" aria-hidden="true">›</span>';
+                var name = document.createElement('strong');
+                name.textContent = role.name;
+                var description = document.createElement('span');
+                description.textContent = role.description;
+                button.querySelector('.cs-role-copy').appendChild(name);
+                button.querySelector('.cs-role-copy').appendChild(description);
+                button.addEventListener('click', function () {
+                    CityStewardRole.setRole(role.id);
+                    location.href = CityStewardRole.getWorkspaceUrl(role.id, 'map');
+                });
+                entries.appendChild(button);
+            });
+            if (!CityStewardRole.hasSelection()) CityStewardRole.openRolePicker();
         });
     </script>
 </body>
